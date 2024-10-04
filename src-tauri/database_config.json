@@ -1,0 +1,8 @@
+{
+  "db_driver": "postgres",
+  "db_host": "localhost",
+  "port": "5432",
+  "username": "root",
+  "password": "root",
+  "db_name": "postgres"
+}

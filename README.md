@@ -34,12 +34,14 @@ Linux.
 - Cargo
 - pnpm
 
+To install Rust and Cargo, you can follow the instructions on the Tauri website
+
 ## Installation
 
 1. Clone the repository
 
 ```bash
-git clone
+git clone https://github.com/Maxime-Cllt/FileFlow.git
 ```
 
 2. Install the dependencies

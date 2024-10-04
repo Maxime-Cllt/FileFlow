@@ -20,6 +20,9 @@ jobs:
         with:
           node-version: lts/*
 
+      - name: install pnpm
+        run: npm install -g pnpm  # Installe pnpm globalement
+
       - name: get version
         run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
 
@@ -68,19 +71,18 @@ jobs:
       - name: install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
-          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
+          # Ceux-ci sont uniquement utilisés sur macOS, pour accélérer les builds Windows et Linux.
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: install dependencies (ubuntu only)
-        if: matrix.platform == 'ubuntu-22.04' # This must match the platform value defined above.
+        if: matrix.platform == 'ubuntu-22.04' # Cela doit correspondre à la plateforme définie plus haut.
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
-        # webkitgtk 4.0 is for Tauri v1 - webkitgtk 4.1 is for Tauri v2.
-        # You can remove the one that doesn't apply to your app to speed up the workflow a bit.
+        # webkitgtk 4.0 est pour Tauri v1 - webkitgtk 4.1 est pour Tauri v2.
 
       - name: install frontend dependencies
-        run: yarn install # change this to npm, pnpm or bun depending on which one you use.
+        run: pnpm install  # Utilise pnpm pour installer les dépendances frontend
 
       - uses: tauri-apps/tauri-action@v0
         env:

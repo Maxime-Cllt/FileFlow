@@ -59,16 +59,15 @@ async fn insert_csv_data(csv: InsertConfig, state: State<'_, Arc<DatabaseState>>
     let headers: Vec<String> = reader.headers().unwrap().iter().map(|h| h.to_string()).collect();
     let snake_case_headers: Vec<String> = headers.iter().map(|h| h.to_lowercase().replace(" ", "_")).collect();
 
-
     let mut line_count = 0;
     if csv.mode == "fast" {
         line_count = fast_insert(&conn, &mut reader, &snake_case_headers, &csv.table_name).await?;
     } else {
-        optimized_insert(&conn, &mut reader, &snake_case_headers, &csv.table_name).await?;
+        line_count = optimized_insert(&conn, &mut reader, &snake_case_headers, &csv.table_name).await?;
     }
 
     let duration = start.elapsed();
-    let ok = format!("Data inserted successfully in {:.2?}, {} rows inserted.", duration, line_count);
+    let ok = format!("Data inserted successfully in {:.2?}, {} rows inserted in table {}", duration, line_count, csv.table_name);
     Ok(ok)
 }
 
@@ -117,7 +116,7 @@ async fn get_size_of_file(file_path: String) -> Result<String, String> {
 
 fn main() {
     tauri::Builder::default()
-        .manage(Arc::new(DatabaseState(Mutex::new(None)))) // Initialize the shared state with Arc and tokio Mutex
+        .manage(Arc::new(DatabaseState(Mutex::new(None))))
         .invoke_handler(tauri::generate_handler![
             connect_to_database,
             disconnect_from_database,

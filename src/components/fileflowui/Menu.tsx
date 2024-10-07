@@ -17,7 +17,7 @@ interface MenuProps {
 const Menu: React.FC<MenuProps> = ({handleDeconnection, saveConfig, loadConfig}) => {
 
     return (
-        <div className="w-full">
+        <div>
             <Menubar>
                 <MenubarMenu>
                     <MenubarTrigger>Databases</MenubarTrigger>

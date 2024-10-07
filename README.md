@@ -10,6 +10,8 @@ be simple to use and to require no privilege to insert the data.
 Build with Rust and the Tauri framework, it is a cross-platform application that can be used on Windows, MacOS and
 Linux.
 
+See in the release section for the latest version of the application.
+
 ## Features
 
 <label>

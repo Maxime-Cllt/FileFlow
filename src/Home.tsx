@@ -132,6 +132,7 @@ const Home: React.FC = () => {
         setFilePath(null);
         setFileName('');
         setFileSize('');
+        setSqliteFilePath('');
     };
 
     const saveConfig = async (e: { preventDefault: () => void; }) => {

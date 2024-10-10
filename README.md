@@ -3,6 +3,10 @@
 <h1>FileFlow</h1>
 </div>
 
+<div align=center>
+<img src="/assets/FileFlowDemo.png" alt="FileFlow" width="65%" height="50%" />
+</div>
+
 ## Description
 
 FileFlow is a simple tool that allows you to insert data from a CSV file into a table in a database. It is designed to
@@ -50,6 +54,9 @@ git clone https://github.com/Maxime-Cllt/FileFlow.git
 
 ```bash
 cd FileFlow
+```
+
+```bash
 pnpm install
 ```
 
@@ -73,5 +80,14 @@ pnpm tauri dev
 4. Wait for the data to be inserted
 5. Done!
 
+## Information
+
+There are two mode to insert the data into the database:
+
+- **Optimised mode**: The data is inserted into a new table with the type of the columns optimised (VARCHAR(MAX_LENGHT))
+- **Fast mode**: The data is inserted into an existing table with the type of the columns as they are in the CSV file
+
+The optimised mode might take longer to insert the data but it will create a table with the type of the columns
+optimised.
 
 

@@ -2,21 +2,20 @@ use std::fs::File;
 use csv::Reader;
 use crate::DatabaseConnection;
 
-// Fast insert function (without checking max length)
 pub async fn fast_insert(
     conn: &DatabaseConnection,
     reader: &mut Reader<File>,
     snake_case_headers: &Vec<String>,
     final_table_name: &str,
 ) -> Result<u64, String> {
+
     let drop_final_table_query = format!("DROP TABLE IF EXISTS \"{}\"", final_table_name);
-    match conn.query(&drop_final_table_query).await {
-        Ok(_) => (),
-        Err(err) => return Err(format!("Failed to drop final table: {}", err)),
+    if let Err(err) = conn.query(&drop_final_table_query).await {
+        return Err(format!("Failed to drop final table: {}", err));
     }
 
     let create_table_query = format!(
-        "CREATE TABLE \"{}\" ({})",  // Ensure table name is quoted
+        "CREATE TABLE \"{}\" ({})",
         final_table_name,
         snake_case_headers
             .iter()
@@ -24,54 +23,42 @@ pub async fn fast_insert(
             .collect::<Vec<String>>()
             .join(", ")
     );
-
-    match conn.query(&create_table_query).await {
-        Ok(_) => (),
-        Err(err) => return Err(format!("Failed to create table: {}", err)),
+    if let Err(err) = conn.query(&create_table_query).await {
+        return Err(format!("Failed to create table: {}", err));
     }
 
-    let mut insert_query = format!("INSERT INTO \"{}\" ({}) VALUES", final_table_name, snake_case_headers.join(", "));
-    let mut first = true;
-
-    let mut batch_insert = String::new();
-
-    let mut count: u64 = 0;
+    let columns = snake_case_headers.join(", ");
     let mut line_count: u64 = 0;
+    let max_batch_size = 5000;
+    let mut batch = Vec::with_capacity(max_batch_size);
+
+    let insert_query_base = format!("INSERT INTO \"{}\" ({}) VALUES ", final_table_name, columns);
+
     for result in reader.records() {
         let record = result.unwrap();
-        let mut values = Vec::new();
 
-        for value in record.iter() {
-            let value = value.trim();
-            values.push(format!("'{}'", value.replace("'", "''")));  // Escape single quotes
-        }
+        let values: Vec<String> = record.iter()
+            .map(|v| format!("'{}'", v.trim().replace("'", "''")))
+            .collect();
 
-        if first {
-            first = false;
-        } else {
-            batch_insert.push_str(", ");
-        }
-        batch_insert.push_str(&format!("({})", values.join(", ")));
+        batch.push(format!("({})", values.join(", ")));
 
-        count += 1;
-        line_count += 1;
-        if count == 1000 {
-            insert_query.push_str(&batch_insert);
-            match conn.query(&insert_query).await {
-                Ok(_) => (),
-                Err(err) => return Err(format!("Failed to insert data: {}", err)),
+        if batch.len() == max_batch_size {
+            let insert_query = format!("{}{}", insert_query_base, batch.join(", "));
+            if let Err(err) = conn.query(&insert_query).await {
+                return Err(format!("Failed to insert data: {}", err));
             }
-            count = 0;
-            batch_insert.clear();
+            line_count += batch.len() as u64;
+            batch.clear();
         }
     }
 
-    if count > 0 {
-        insert_query.push_str(&batch_insert);
-        match conn.query(&insert_query).await {
-            Ok(_) => (),
-            Err(err) => return Err(format!("Failed to insert data: {}", err)),
+    if !batch.is_empty() {
+        let insert_query = format!("{}{}", insert_query_base, batch.join(", "));
+        if let Err(err) = conn.query(&insert_query).await {
+            return Err(format!("Failed to insert data: {}", err));
         }
+        line_count += batch.len() as u64;
     }
 
     Ok(line_count)

@@ -1,33 +1,19 @@
 import React, {useState} from 'react';
-import {Input} from "@/components/ui/input";
-import {Button} from "@/components/ui/button";
 import {invoke} from '@tauri-apps/api/tauri';
-import {Label} from "@/components/ui/label";
-import {Textarea} from "@/components/ui/textarea";
 import './Loader.css';
 
-import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group"
 
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
-
-import {
-    Card,
-    CardContent,
-    CardHeader,
-} from "@/components/ui/card"
-import {Database, Eraser, FileArchive, Upload} from "lucide-react";
-import Menu from "@/Menu.tsx";
-import {dialog} from "@tauri-apps/api";
+import {Card, CardContent, CardHeader,} from "@/components/ui/card"
+import Menu from "@/components/fileflowui/Menu.tsx";
 import Loader from "@/Loader.tsx";
+import FormComponent from "@/components/fileflowui/FormComponent.tsx";
+import ModeSelectionComponent from "@/components/fileflowui/ModeSelectionComponent.tsx";
+import ButtonGroupComponent from "@/components/fileflowui/ButtonGroupComponent.tsx";
+import LogComponent from "@/components/fileflowui/LogComponent.tsx";
+import SqliteFormComponent from "@/components/fileflowui/SqliteFormComponent.tsx";
 
+const Home: React.FC = () => {
 
-function Home() {
     const [dbDriver, setdbDriver] = useState('postgres');
     const [dbUrl, setDbUrl] = useState('localhost');
     const [port, setPort] = useState('5432');
@@ -41,37 +27,15 @@ function Home() {
     const [fileSize, setFileSize] = useState('');
     const [mode, setMode] = useState('fast');
     const [showLoader, setShowLoader] = useState(false);
-    const openFileDialog = async () => {
-        try {
-            const selectedFilePath = await dialog.open({
-                filters: [{name: 'CSV Files', extensions: ['csv']}],
-                multiple: false
-            });
+    const [sqlite, setSqlite] = useState(false);
+    const [sqliteFilePath, setSqliteFilePath] = useState('');
 
-            if (selectedFilePath) {
-
-                setTableName(normalizeTableName(selectedFilePath.toString()));
-                setFileName(selectedFilePath.toString().split('/').pop() || '');
-                setFilePath(selectedFilePath.toString());
-                const response = await invoke('get_size_of_file', {
-                    filePath: selectedFilePath
-                });
-
-                if (typeof response === "string") {
-                    setFileSize(response);
-                    return;
-                }
-            }
-        } catch (error) {
-            addLog(`Erreur lors de la sélection du fichier: ${error}`);
-        }
-    };
 
     const addLog = (message: string) => {
         setHistoLog((prev) => `${prev}\n${message}`);
     }
 
-    const handleSubmit = async (e: { preventDefault: () => void; }) => {
+    const handleConnection = async (e: { preventDefault: () => void; }) => {
         e.preventDefault();
 
         if (!dbUrl || !port || !username || !password || !dbName) {
@@ -90,6 +54,7 @@ function Home() {
                     password: password,
                     db_name: dbName,
                     table_name: tableName,
+                    sqlite_file_path: sqliteFilePath
                 }
             });
             addLog(response as string);
@@ -98,34 +63,9 @@ function Home() {
         }
     };
 
-    const handleDeconnection = async (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-        try {
-            const response = await invoke('disconnect_from_database');
-            addLog(response as string);
-        } catch (error) {
-            addLog(`Erreur de connexion: ${error}`);
-        }
-    };
-
-    const normalizeTableName = (tableName: string) => {
-        if (!tableName || tableName.length === 0 || tableName.indexOf('.') === -1) {
-            return '';
-        }
-        tableName = tableName.split('/').pop() as string;
-        tableName = tableName.split('.').shift() as string;
-        tableName = tableName.replace(/([A-Z])/g, '_$1');
-        tableName = tableName.replace(/[^a-zA-Z0-9_]/g, '');
-        tableName = tableName.replace(/^_/, '');
-        tableName = tableName.toLowerCase();
-        return tableName;
-
-    }
-
     const checkFields = () => {
         return !(!dbUrl || !port || !username || !password || !dbName || !tableName);
     }
-
 
     const handleInsert = async (e: { preventDefault: () => void; }) => {
         e.preventDefault();
@@ -162,12 +102,17 @@ function Home() {
     const handledbDriverChange = (value: React.SetStateAction<string>) => {
         setdbDriver(value);
         switch (value) {
-            case 'MySQL':
-            case 'MariaDB':
+            case 'mysql':
+            case 'mariadb':
                 setPort('3306');
+                setSqlite(false);
                 break;
-            case 'PostgreSQL':
+            case 'postgres':
                 setPort('5432');
+                setSqlite(false);
+                break;
+            case 'sqlite':
+                setSqlite(true);
                 break;
             default:
                 setPort('');
@@ -187,6 +132,7 @@ function Home() {
         setFilePath(null);
         setFileName('');
         setFileSize('');
+        setSqliteFilePath('');
     };
 
     const saveConfig = async (e: { preventDefault: () => void; }) => {
@@ -195,17 +141,19 @@ function Home() {
             const response = await invoke('save_database_config', {
                 save: {
                     db_driver: dbDriver.toString().toLowerCase(),
-                    db_host: dbUrl,
-                    port: port,
-                    username: username,
-                    password: password,
-                    db_name: dbName,
-                    table_name: tableName,
+                    db_host: dbUrl.toString(),
+                    port: port.toString(),
+                    username: username.toString(),
+                    password: password.toString(),
+                    db_name: dbName.toString(),
+                    table_name: tableName.toString(),
+                    sqlite_file_path: sqliteFilePath.toString()
                 }
             });
             addLog(response as string);
+            return;
         } catch (error) {
-            addLog(`Erreur de connexion: ${error}`);
+            addLog(`Erreur de sauvegarde: ${error}`);
         }
     };
 
@@ -215,197 +163,124 @@ function Home() {
             const response = await invoke('load_database_config');
             if (typeof response === "string") {
                 const dbConfig = JSON.parse(response);
-                setdbDriver(dbConfig.db_driver);
-                setDbUrl(dbConfig.db_host);
-                setPort(dbConfig.port);
-                setUsername(dbConfig.username);
-                setPassword(dbConfig.password);
-                setDbName(dbConfig.db_name);
-                setTableName(dbConfig.table_name);
+                setdbDriver(dbConfig.db_driver.toString());
+                setDbUrl(dbConfig.db_host.toString());
+                setPort(dbConfig.port.toString());
+                setUsername(dbConfig.username.toString());
+                setPassword(dbConfig.password.toString());
+                setDbName(dbConfig.db_name.toString());
+                setTableName(dbConfig.table_name.toString());
+
+                if (dbConfig.sqlite_file_path.toString().length > 0) {
+                    setSqliteFilePath(dbConfig.sqlite_file_path.toString());
+                    setSqlite(true);
+                }
+
+            } else {
+                addLog('Aucune configuration trouvée');
             }
         } catch (error) {
             addLog(`Erreur de connexion: ${error}`);
         }
     };
 
+    const renderForm = () => {
+        if (sqlite) {
+            return <SqliteFormComponent {...{
+                addLog,
+                sqliteFilePath,
+                setSqliteFilePath,
+                dbDriver,
+                handledbDriverChange,
+                fileName,
+                fileSize,
+                setFilePath,
+                setFileName,
+                setFileSize,
+                setTableName
+            }}/>;
+        }
+        return <FormComponent {...{
+            dbUrl,
+            setDbUrl,
+            port,
+            setPort,
+            username,
+            setUsername,
+            password,
+            setPassword,
+            dbName,
+            setDbName,
+            tableName,
+            setTableName,
+            dbDriver,
+            setdbDriver,
+            histoLog,
+            setHistoLog,
+            filePath,
+            setFilePath,
+            fileName,
+            setFileName,
+            fileSize,
+            setFileSize,
+            mode,
+            setMode,
+            addLog,
+            checkFields,
+            handleInsert,
+            handleSubmit: handleConnection,
+            handleReset,
+            handledbDriverChange,
+            sqlite,
+            setSqlite
+        }}/>;
+    };
 
     return (
         <div>
-            <Menu handleDeconnection={handleDeconnection} saveConfig={saveConfig} loadConfig={loadConfig}/>
+            <div className={"fixed top-0 w-full"}>
+                <Menu addLog={addLog} saveConfig={saveConfig} loadConfig={loadConfig}/>
+            </div>
 
-            {/* Card */}
-            <Card>
+            {/* Formulaire */}
+            <Card className={"mt-16"}>
                 <CardHeader>
                     <CardContent>
-                        {/* Formulaire */}
-                        <form className="grid grid-cols-2 gap-4">
 
-                            {/* Colonne gauche */}
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">URL de la base de données
-                                        :</label>
-                                    <Input
-                                        type="text"
-                                        value={dbUrl}
-                                        onChange={(e) => setDbUrl(e.target.value)}
-                                        placeholder="localhost"
-                                        required
-                                        className="w-full"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Port :</label>
-                                    <Input
-                                        type="number"
-                                        value={port}
-                                        onChange={(e) => setPort(e.target.value)}
-                                        placeholder="Port"
-                                        required
-                                        className="w-full"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Nom d'utilisateur :</label>
-                                    <Input
-                                        type="text"
-                                        value={username}
-                                        onChange={(e) => setUsername(e.target.value)}
-                                        placeholder="Username"
-                                        required
-                                        className="w-full"
-                                    />
-                                </div>
-                            </div>
+                        {/* Form */}
+                        {renderForm()}
 
-                            {/* Colonne droite */}
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Mot de passe :</label>
-                                    <Input
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        placeholder="Password"
-                                        required
-                                        className="w-full"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Nom de la base de données
-                                        :</label>
-                                    <Input
-                                        type="text"
-                                        value={dbName}
-                                        onChange={(e) => setDbName(e.target.value)}
-                                        placeholder="Database Name"
-                                        required
-                                        className="w-full"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium mb-1">Nom de la table :</label>
-                                    <Input
-                                        type="text"
-                                        value={tableName}
-                                        onChange={(e) => setTableName(e.target.value)}
-                                        placeholder="Table Name"
-                                        required
-                                        className="w-full"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Sélection du type de base de données et upload de fichier */}
-                            <div className="col-span-2 grid grid-cols-2 gap-4 items-center justify-center">
-                                {/* Sélection du type de base de données */}
-                                <Select onValueChange={handledbDriverChange} value={dbDriver}>
-                                    <SelectTrigger className="w-full">
-                                        <SelectValue placeholder="Type de base de données"/>
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="mysql">MySQL</SelectItem>
-                                        <SelectItem value="mariadb">MariaDB</SelectItem>
-                                        <SelectItem value="postgres">PostgreSQL</SelectItem>
-                                    </SelectContent>
-                                </Select>
-
-                                {/* Upload de fichier et affichage du nom du fichier dans un input à côté */}
-                                <div className="flex items-center gap-4">
-                                    <Button onClick={openFileDialog} className="bg-blue-500 hover:bg-blue-600">
-                                        <FileArchive/>
-                                    </Button>
-                                    <Input
-                                        type="text"
-                                        value={fileName ? `${fileName} (${fileSize})` : ''}
-                                        placeholder="Fichier CSV"
-                                        disabled
-                                        className="w-full"
-                                    />
-
-                                </div>
-                            </div>
-
-                        </form>
-
-                        {/* center the radio group  and inline the radio group items */}
-                        <div className="flex justify-center mt-10">
-                            <RadioGroup defaultValue="fast" className={"flex justify-center gap-10"}
-                                        onChange={(e) => {
-                                            // @ts-ignore
-                                            setMode(e.target.value as string);
-                                        }}
-                            >
-                                <div className="space-x-2">
-                                    <RadioGroupItem value="fast" id="r1"/>
-                                    <Label htmlFor="r1">Insertion rapide</Label>
-                                </div>
-                                <div className="space-x-2">
-                                    <RadioGroupItem value="optimized" id="r2"/>
-                                    <Label htmlFor="r2">Insertion optimisée</Label>
-                                </div>
-                            </RadioGroup>
-                        </div>
                     </CardContent>
 
-                    {/* Boutons */}
-                    <div className="flex items-center justify-center col-span-2 gap-4">
-                        <Button onClick={handleSubmit}
-                                type="submit"
-                                className=" mx-auto bg-green-600 hover:bg-green-700"
-                        >
-                            <Database/>
-                        </Button>
+                    {/* Mode selection pour l'insertion */}
+                    <ModeSelectionComponent {...{
+                        mode,
+                        setMode
+                    }}/>
 
-                        <Button
-                            type="button"
-                            onClick={handleInsert}
-                            className=" mx-auto bg-blue-500 hover:bg-blue-600"
-                        >
-                            <Upload/>
-                        </Button>
-
-                        <Button
-                            type="button"
-                            onClick={handleReset}
-                            className=" mx-auto bg-red-500 hover:bg-red-600"
-                        >
-                            <Eraser/>
-                        </Button>
-                    </div>
+                    {/* Loader */}
+                    {
+                        showLoader && <div className="flex justify-center mt-4">
+                            <Loader/>
+                        </div>
+                    }
 
                 </CardHeader>
 
+                {/* Boutons en bas */}
+                <ButtonGroupComponent {...{
+                    handleInsert,
+                    handleSubmit: handleConnection,
+                    handleReset
+                }}/>
+
             </Card>
 
-            {showLoader && <div className="flex justify-center mt-4">
-                <Loader/>
-            </div>}
-
             {/* TextArea tout en bas */}
-            <div className="flex flex-col mt-4 align-center">
-                <Textarea disabled value={histoLog} className="w-full h-72"/>
-            </div>
+            <LogComponent {...{
+                histoLog
+            }}/>
+
         </div>
     );
 }

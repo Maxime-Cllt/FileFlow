@@ -8,4 +8,5 @@ pub struct DbConfig {
     pub username: String,
     pub password: String,
     pub db_name: String,
+    pub sqlite_file_path: String,
 }

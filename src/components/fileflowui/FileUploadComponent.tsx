@@ -37,6 +37,8 @@ const FileUploadComponent: React.FC<FileUploadProps> = ({
                 setFileName(path.split('/').pop() || '');
                 setFilePath(path);
 
+                setTableName(normalizeTableName(path));
+
                 const response = await invoke('get_size_of_file', {filePath: path});
                 setFileSize(typeof response === 'string' ? response : '');
             }
@@ -44,6 +46,20 @@ const FileUploadComponent: React.FC<FileUploadProps> = ({
             addLog(`Erreur lors de la sélection du fichier: ${error}`);
         }
     };
+
+
+    const normalizeTableName = (tableName: string) => {
+        if (!tableName || tableName.length === 0 || tableName.indexOf('.') === -1) {
+            return '';
+        }
+        tableName = tableName.split('/').pop() as string;
+        tableName = tableName.split('.').shift() as string;
+        tableName = tableName.replace(/([A-Z])/g, '_$1');
+        tableName = tableName.replace(/[^a-zA-Z0-9_]/g, '');
+        tableName = tableName.replace(/^_/, '');
+        tableName = tableName.toLowerCase();
+        return tableName;
+    }
 
     return (
         <div className="flex items-center gap-4">

@@ -5,12 +5,12 @@ import './Loader.css';
 
 import {Card, CardContent, CardHeader,} from "@/components/ui/card"
 import Menu from "@/components/fileflowui/Menu.tsx";
-import {dialog} from "@tauri-apps/api";
 import Loader from "@/Loader.tsx";
 import FormComponent from "@/components/fileflowui/FormComponent.tsx";
 import ModeSelectionComponent from "@/components/fileflowui/ModeSelectionComponent.tsx";
 import ButtonGroupComponent from "@/components/fileflowui/ButtonGroupComponent.tsx";
 import LogComponent from "@/components/fileflowui/LogComponent.tsx";
+import SqliteFormComponent from "@/components/fileflowui/SqliteFormComponent.tsx";
 
 const Home: React.FC = () => {
 
@@ -28,32 +28,8 @@ const Home: React.FC = () => {
     const [mode, setMode] = useState('fast');
     const [showLoader, setShowLoader] = useState(false);
     const [sqlite, setSqlite] = useState(false);
+    const [sqliteFilePath, setSqliteFilePath] = useState('');
 
-    const openFileDialog = async () => {
-        try {
-            const selectedFilePath = await dialog.open({
-                filters: [{name: 'CSV Files', extensions: ['csv']}],
-                multiple: false
-            });
-
-            if (selectedFilePath) {
-
-                setTableName(normalizeTableName(selectedFilePath.toString()));
-                setFileName(selectedFilePath.toString().split('/').pop() || '');
-                setFilePath(selectedFilePath.toString());
-                const response = await invoke('get_size_of_file', {
-                    filePath: selectedFilePath
-                });
-
-                if (typeof response === "string") {
-                    setFileSize(response);
-                    return;
-                }
-            }
-        } catch (error) {
-            addLog(`Erreur lors de la sélection du fichier: ${error}`);
-        }
-    };
 
     const addLog = (message: string) => {
         setHistoLog((prev) => `${prev}\n${message}`);
@@ -78,6 +54,7 @@ const Home: React.FC = () => {
                     password: password,
                     db_name: dbName,
                     table_name: tableName,
+                    sqlite_file_path: sqliteFilePath
                 }
             });
             addLog(response as string);
@@ -85,30 +62,6 @@ const Home: React.FC = () => {
             addLog(`Erreur de connexion: ${error}`);
         }
     };
-
-    const handleDeconnection = async (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-        try {
-            const response = await invoke('disconnect_from_database');
-            addLog(response as string);
-        } catch (error) {
-            addLog(`Erreur de connexion: ${error}`);
-        }
-    };
-
-    const normalizeTableName = (tableName: string) => {
-        if (!tableName || tableName.length === 0 || tableName.indexOf('.') === -1) {
-            return '';
-        }
-        tableName = tableName.split('/').pop() as string;
-        tableName = tableName.split('.').shift() as string;
-        tableName = tableName.replace(/([A-Z])/g, '_$1');
-        tableName = tableName.replace(/[^a-zA-Z0-9_]/g, '');
-        tableName = tableName.replace(/^_/, '');
-        tableName = tableName.toLowerCase();
-        return tableName;
-
-    }
 
     const checkFields = () => {
         return !(!dbUrl || !port || !username || !password || !dbName || !tableName);
@@ -187,17 +140,19 @@ const Home: React.FC = () => {
             const response = await invoke('save_database_config', {
                 save: {
                     db_driver: dbDriver.toString().toLowerCase(),
-                    db_host: dbUrl,
-                    port: port,
-                    username: username,
-                    password: password,
-                    db_name: dbName,
-                    table_name: tableName,
+                    db_host: dbUrl.toString(),
+                    port: port.toString(),
+                    username: username.toString(),
+                    password: password.toString(),
+                    db_name: dbName.toString(),
+                    table_name: tableName.toString(),
+                    sqlite_file_path: sqliteFilePath.toString()
                 }
             });
             addLog(response as string);
+            return;
         } catch (error) {
-            addLog(`Erreur de connexion: ${error}`);
+            addLog(`Erreur de sauvegarde: ${error}`);
         }
     };
 
@@ -207,66 +162,93 @@ const Home: React.FC = () => {
             const response = await invoke('load_database_config');
             if (typeof response === "string") {
                 const dbConfig = JSON.parse(response);
-                setdbDriver(dbConfig.db_driver);
-                setDbUrl(dbConfig.db_host);
-                setPort(dbConfig.port);
-                setUsername(dbConfig.username);
-                setPassword(dbConfig.password);
-                setDbName(dbConfig.db_name);
-                setTableName(dbConfig.table_name);
+                setdbDriver(dbConfig.db_driver.toString());
+                setDbUrl(dbConfig.db_host.toString());
+                setPort(dbConfig.port.toString());
+                setUsername(dbConfig.username.toString());
+                setPassword(dbConfig.password.toString());
+                setDbName(dbConfig.db_name.toString());
+                setTableName(dbConfig.table_name.toString());
+
+                if (dbConfig.sqlite_file_path.toString().length > 0) {
+                    setSqliteFilePath(dbConfig.sqlite_file_path.toString());
+                    setSqlite(true);
+                }
+
+            } else {
+                addLog('Aucune configuration trouvée');
             }
         } catch (error) {
             addLog(`Erreur de connexion: ${error}`);
         }
     };
 
+    const renderForm = () => {
+        if (sqlite) {
+            return <SqliteFormComponent {...{
+                addLog,
+                sqliteFilePath,
+                setSqliteFilePath,
+                dbDriver,
+                handledbDriverChange,
+                fileName,
+                fileSize,
+                setFilePath,
+                setFileName,
+                setFileSize,
+                setTableName
+            }}/>;
+        }
+        return <FormComponent {...{
+            dbUrl,
+            setDbUrl,
+            port,
+            setPort,
+            username,
+            setUsername,
+            password,
+            setPassword,
+            dbName,
+            setDbName,
+            tableName,
+            setTableName,
+            dbDriver,
+            setdbDriver,
+            histoLog,
+            setHistoLog,
+            filePath,
+            setFilePath,
+            fileName,
+            setFileName,
+            fileSize,
+            setFileSize,
+            mode,
+            setMode,
+            addLog,
+            checkFields,
+            handleInsert,
+            handleSubmit: handleConnection,
+            handleReset,
+            handledbDriverChange,
+            sqlite,
+            setSqlite
+        }}/>;
+    };
 
     return (
         <div>
             <div className={"fixed top-0 w-full"}>
-                <Menu handleDeconnection={handleDeconnection} saveConfig={saveConfig} loadConfig={loadConfig}/>
+                <Menu addLog={addLog} saveConfig={saveConfig} loadConfig={loadConfig}/>
             </div>
 
             {/* Formulaire */}
             <Card className={"mt-16"}>
                 <CardHeader>
                     <CardContent>
-                        <FormComponent {...{
-                            dbUrl,
-                            setDbUrl,
-                            port,
-                            setPort,
-                            username,
-                            setUsername,
-                            password,
-                            setPassword,
-                            dbName,
-                            setDbName,
-                            tableName,
-                            setTableName,
-                            dbDriver,
-                            setdbDriver,
-                            histoLog,
-                            setHistoLog,
-                            filePath,
-                            setFilePath,
-                            fileName,
-                            setFileName,
-                            fileSize,
-                            setFileSize,
-                            mode,
-                            setMode,
-                            addLog,
-                            checkFields,
-                            openFileDialog,
-                            handleInsert,
-                            handleSubmit: handleConnection,
-                            handleReset,
-                            handledbDriverChange,
-                            sqlite,
-                            setSqlite
-                        }}
-                        />
+
+                        {/* Form */}
+                        {renderForm()}
+
                     </CardContent>
 
                     {/* Mode selection pour l'insertion */}
@@ -292,7 +274,6 @@ const Home: React.FC = () => {
                 }}/>
 
             </Card>
-
 
             {/* TextArea tout en bas */}
             <LogComponent {...{

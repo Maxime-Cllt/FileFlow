@@ -25,14 +25,13 @@ struct DatabaseState(Mutex<Option<DatabaseConnection>>);
 async fn connect_to_database(config: DbConfig, state: State<'_, Arc<DatabaseState>>) -> Result<String, String> {
     let mut conn_guard = state.0.lock().await;
 
-    // Check if there is already an active connection
     if conn_guard.is_some() {
         return Err("Already connected to the database.".to_string());
     }
 
     match DatabaseConnection::connect(&config).await {
         Ok(connection) => {
-            *conn_guard = Some(connection); // Store the connection in the shared state
+            *conn_guard = Some(connection);
             Ok(format!(
                 "Connected to {} database at {} with user {}",
                 config.db_driver, config.db_host, config.username
@@ -59,7 +58,7 @@ async fn insert_csv_data(csv: InsertConfig, state: State<'_, Arc<DatabaseState>>
     let headers: Vec<String> = reader.headers().unwrap().iter().map(|h| h.to_string()).collect();
     let snake_case_headers: Vec<String> = headers.iter().map(|h| h.to_lowercase().replace(" ", "_")).collect();
 
-    let mut line_count = 0;
+    let line_count: u64;
     if csv.mode == "fast" {
         line_count = fast_insert(&conn, &mut reader, &snake_case_headers, &csv.table_name).await?;
     } else {
@@ -67,7 +66,7 @@ async fn insert_csv_data(csv: InsertConfig, state: State<'_, Arc<DatabaseState>>
     }
 
     let duration = start.elapsed();
-    let ok = format!("Data inserted successfully in {:.2?}, {} rows inserted in table {}", duration, line_count, csv.table_name);
+    let ok = format!("Data inserted successfully in {:.2?}, {} rows inserted in table {}", duration, &line_count, csv.table_name);
     Ok(ok)
 }
 
@@ -92,10 +91,32 @@ async fn disconnect_from_database(state: State<'_, Arc<DatabaseState>>) -> Resul
 #[tauri::command]
 async fn save_database_config(save: SaveConfig) -> Result<String, String> {
     let path = PathBuf::from("database_config.json");
-    let _config = serde_json::to_string(&save).map_err(|e| format!("Failed to serialize config: {}", e))?;
-    let file = File::create(&path).map_err(|e| format!("Failed to create file: {}", e))?;
-    serde_json::to_writer_pretty(file, &save).map_err(|e| format!("Failed to write to file: {}", e))?;
-    Ok(format!("Database configuration saved to file located at {}", path.display()))
+
+    let _ = match serde_json::to_string(&save) {
+        Ok(config) => config,
+        Err(e) => {
+            println!("Failed to serialize config: {}", e);
+            return Err(format!("Failed to serialize config: {}", e));
+        }
+    };
+
+    let file = match File::create(&path) {
+        Ok(file) => file,
+        Err(e) => {
+            println!("Failed to create file: {}", e);
+            return Err(format!("Failed to create file: {}", e));
+        }
+    };
+
+    if let Err(e) = serde_json::to_writer_pretty(file, &save) {
+        println!("Failed to write to file: {}", e);
+        return Err(format!("Failed to write to file: {}", e));
+    }
+
+    Ok(format!(
+        "Database configuration saved to file located at {}",
+        path.display()
+    ))
 }
 
 #[tauri::command]

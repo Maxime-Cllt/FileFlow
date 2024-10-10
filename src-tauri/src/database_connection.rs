@@ -1,5 +1,4 @@
-
-use sqlx::{PgPool, MySqlPool, Error}; // Assuming sqlx is being used for database connections
+use sqlx::{PgPool, MySqlPool, SqlitePool, Error}; // Import SqlitePool for SQLite support
 pub(crate) mod db_config;
 pub(crate) mod insert_config;
 pub(crate) mod save_config;
@@ -9,10 +8,10 @@ use db_config::DbConfig;
 pub enum DatabaseConnection {
     Postgres(PgPool),
     MySQL(MySqlPool),
+    SQLite(SqlitePool),
 }
 
 impl DatabaseConnection {
-    // Connect to the appropriate database based on the database_connection
     pub async fn connect(config: &DbConfig) -> Result<DatabaseConnection, Error> {
         match config.db_driver.as_str() {
             "postgres" => {
@@ -31,10 +30,14 @@ impl DatabaseConnection {
                     .await?;
                 Ok(DatabaseConnection::MySQL(pool))
             }
+            "sqlite" => {
+                let pool = SqlitePool::connect(&config.sqlite_file_path).await?;
+                Ok(DatabaseConnection::SQLite(pool))
+            }
             _ => Err(Error::Protocol(format!(
                 "Unsupported database driver: {}",
                 config.db_driver
-            ))),
+            ).into())),
         }
     }
 
@@ -45,6 +48,9 @@ impl DatabaseConnection {
                 sqlx::query(query).execute(pool).await?;
             }
             DatabaseConnection::MySQL(pool) => {
+                sqlx::query(query).execute(pool).await?;
+            }
+            DatabaseConnection::SQLite(pool) => {
                 sqlx::query(query).execute(pool).await?;
             }
         }

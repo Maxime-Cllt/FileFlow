@@ -1,14 +1,21 @@
 import React from 'react';
-import { Textarea } from "@/components/ui/textarea.tsx";
 
 interface LogProps {
     histoLog: string;
 }
 
-const LogComponent: React.FC<LogProps> = ({ histoLog }) => {
+const LogComponent: React.FC<LogProps> = ({histoLog}) => {
     return (
-        <div className="flex flex-col mt-4 align-center h-60 min-h-4 max-h-full">
-            <Textarea disabled value={histoLog} className="w-full h-72" />
+        <div
+            className="flex flex-col mt-6 items-center justify-center h-auto max-h-full p-4">
+            <label htmlFor="logArea" className="text-lg font-semibold mb-2 text-gray-700"></label>
+            <textarea
+                id="logArea"
+                disabled
+                value={histoLog}
+                className="w-full h-72 p-3 border border-gray-300 rounded-md bg-gray-50 text-gray-600 resize-none shadow-sm"
+                placeholder="Log history will appear here..."
+            ></textarea>
         </div>
     );
 };

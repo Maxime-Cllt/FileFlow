@@ -1,5 +1,4 @@
 import React from 'react';
-import {Button} from "@/components/ui/button.tsx";
 import {Database, Eraser, Upload} from "lucide-react";
 
 interface ButtonGroupProps {
@@ -10,17 +9,32 @@ interface ButtonGroupProps {
 
 const ButtonGroupComponent: React.FC<ButtonGroupProps> = ({handleSubmit, handleInsert, handleReset}) => {
     return (
-        <div className="flex items-center justify-center col-span-2 gap-4 mb-4">
-            <Button onClick={handleSubmit} className=" mx-auto bg-green-600 hover:bg-green-700">
-                <Database/>
-            </Button>
-            <Button onClick={handleInsert} className=" mx-auto bg-blue-500 hover:bg-blue-600">
-                <Upload/>
-            </Button>
-            <Button onClick={handleReset} className=" mx-auto bg-red-500 hover:bg-red-600">
-                <Eraser/>
-            </Button>
+        <div className="flex items-center justify-center gap-6 mb-6 p-4">
+            <button
+                onClick={handleSubmit}
+                className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white p-3 rounded-full shadow-lg transition duration-300"
+                aria-label="Submit to Database"
+            >
+                <Database className="w-5 h-5"/>
+            </button>
+
+            <button
+                onClick={handleInsert}
+                className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full shadow-lg transition duration-300"
+                aria-label="Insert Data"
+            >
+                <Upload className="w-5 h-5"/>
+            </button>
+
+            <button
+                onClick={handleReset}
+                className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white p-3 rounded-full shadow-lg transition duration-300"
+                aria-label="Reset"
+            >
+                <Eraser className="w-5 h-5"/>
+            </button>
         </div>
+
     );
 };
 

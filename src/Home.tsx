@@ -2,7 +2,6 @@ import React, {useState} from 'react';
 import {invoke} from '@tauri-apps/api/tauri';
 import './Loader.css';
 
-
 import {Card, CardContent, CardHeader,} from "@/components/ui/card"
 import Menu from "@/components/fileflowui/Menu.tsx";
 import Loader from "@/Loader.tsx";
@@ -14,12 +13,12 @@ import SqliteFormComponent from "@/components/fileflowui/SqliteFormComponent.tsx
 
 const Home: React.FC = () => {
 
-    const [dbDriver, setdbDriver] = useState('postgres');
-    const [dbUrl, setDbUrl] = useState('localhost');
-    const [port, setPort] = useState('5432');
-    const [username, setUsername] = useState('root');
-    const [password, setPassword] = useState('root');
-    const [dbName, setDbName] = useState('postgres');
+    const [dbDriver, setdbDriver] = useState('');
+    const [dbUrl, setDbUrl] = useState('');
+    const [port, setPort] = useState('');
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [dbName, setDbName] = useState('');
     const [tableName, setTableName] = useState('');
     const [histoLog, setHistoLog] = useState('Historique des logs');
     const [filePath, setFilePath] = useState<string | null>(null);
@@ -30,7 +29,6 @@ const Home: React.FC = () => {
     const [sqlite, setSqlite] = useState(false);
     const [sqliteFilePath, setSqliteFilePath] = useState('');
 
-
     const addLog = (message: string) => {
         setHistoLog((prev) => `${prev}\n${message}`);
     }
@@ -38,7 +36,7 @@ const Home: React.FC = () => {
     const handleConnection = async (e: { preventDefault: () => void; }) => {
         e.preventDefault();
 
-        if (!dbUrl || !port || !username || !password || !dbName) {
+        if (!dbUrl || !port || !username) {
             addLog('Veuillez remplir tous les champs');
             return;
         }
@@ -163,13 +161,12 @@ const Home: React.FC = () => {
             const response = await invoke('load_database_config');
             if (typeof response === "string") {
                 const dbConfig = JSON.parse(response);
-                setdbDriver(dbConfig.db_driver.toString());
-                setDbUrl(dbConfig.db_host.toString());
-                setPort(dbConfig.port.toString());
-                setUsername(dbConfig.username.toString());
-                setPassword(dbConfig.password.toString());
-                setDbName(dbConfig.db_name.toString());
-                setTableName(dbConfig.table_name.toString());
+                setdbDriver(dbConfig.db_driver.toString() ?? "");
+                setDbUrl(dbConfig.db_host.toString() ?? "");
+                setPort(dbConfig.port.toString() ?? "");
+                setUsername(dbConfig.username.toString() ?? "");
+                setPassword(dbConfig.password.toString() ?? "");
+                setDbName(dbConfig.db_name.toString() ?? "");
 
                 if (dbConfig.sqlite_file_path.toString().length > 0) {
                     setSqliteFilePath(dbConfig.sqlite_file_path.toString());
@@ -265,15 +262,16 @@ const Home: React.FC = () => {
                         </div>
                     }
 
+
+                    {/* Boutons en bas */}
+                    <ButtonGroupComponent {...{
+                        handleInsert,
+                        handleSubmit: handleConnection,
+                        handleReset
+                    }}/>
+
+
                 </CardHeader>
-
-                {/* Boutons en bas */}
-                <ButtonGroupComponent {...{
-                    handleInsert,
-                    handleSubmit: handleConnection,
-                    handleReset
-                }}/>
-
             </Card>
 
             {/* TextArea tout en bas */}

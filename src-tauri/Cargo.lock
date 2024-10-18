@@ -3,7 +3,7 @@
 version = 3
 
 [[package]]
-name = "Datastorm"
+name = "FileFlow"
 version = "1.0.0"
 dependencies = [
  "csv",

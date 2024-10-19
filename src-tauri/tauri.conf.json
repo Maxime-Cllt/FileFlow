@@ -6,8 +6,8 @@
     "distDir": "../dist"
   },
   "package": {
-    "productName": "fileflow",
-    "version": "0.1.0"
+    "productName": "FileFlow",
+    "version": "1.0.0"
   },
   "tauri": {
     "allowlist": {

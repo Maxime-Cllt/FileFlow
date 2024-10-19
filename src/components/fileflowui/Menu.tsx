@@ -23,7 +23,7 @@ const Menu: React.FC<MenuProps> = ({addLog, saveConfig, loadConfig}) => {
             const response = await invoke('disconnect_from_database');
             addLog(response as string);
         } catch (error) {
-            addLog(`Erreur de connexion: ${error}`);
+            addLog(error as string);
         }
     };
 
@@ -41,6 +41,13 @@ const Menu: React.FC<MenuProps> = ({addLog, saveConfig, loadConfig}) => {
                     <MenubarContent>
                         <MenubarItem onClick={saveConfig}>Sauvegarder</MenubarItem>
                         <MenubarItem onClick={loadConfig}>Importer</MenubarItem>
+                    </MenubarContent>
+                </MenubarMenu>
+                <MenubarMenu>
+                    <MenubarTrigger>Other</MenubarTrigger>
+                    <MenubarContent>
+                        <MenubarItem onClick={() => window.location.href = "/"}>Home</MenubarItem>
+                        <MenubarItem onClick={() => window.location.href = "/about"}>About</MenubarItem>
                     </MenubarContent>
                 </MenubarMenu>
             </Menubar>

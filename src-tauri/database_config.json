@@ -4,5 +4,6 @@
   "port": "5432",
   "username": "root",
   "password": "root",
-  "db_name": "postgres"
+  "db_name": "postgres",
+  "sqlite_file_path": ""
 }

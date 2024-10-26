@@ -3,7 +3,6 @@
 
 mod optimized_insert;
 mod fast_insert;
-
 mod fileflow;
 
 use crate::fast_insert::fast_insert;
@@ -12,12 +11,10 @@ use csv::{Reader, ReaderBuilder};
 use std::fs::File;
 use std::path::PathBuf;
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::{Instant};
 use tauri::command;
 use tauri::State;
 use tokio::sync::Mutex;
-
-
 use fileflow::db_config::DbConfig;
 use fileflow::insert_config::InsertConfig;
 use fileflow::save_config::SaveConfig;
@@ -69,9 +66,7 @@ async fn insert_csv_data(csv: InsertConfig, state: State<'_, Arc<DatabaseState>>
         line_count = optimized_insert(&conn, &mut reader, &snake_case_headers, &csv.table_name, &csv.db_driver).await?;
     }
 
-    let duration: Duration = start.elapsed();
-    let ok: String = format!("Data inserted successfully in {:.2?}, {} rows inserted in table {}", duration, &line_count, csv.table_name);
-    Ok(ok)
+    Ok(format!("Data inserted successfully in {:.2?}, {} rows inserted in table {}", start.elapsed(), &line_count, csv.table_name))
 }
 
 #[command]
@@ -131,8 +126,16 @@ async fn load_database_config() -> Result<String, String> {
 
 #[tauri::command]
 async fn get_size_of_file(file_path: String) -> Result<String, String> {
-    let metadata = std::fs::metadata(file_path).map_err(|e| format!("Failed to get metadata: {}", e))?;
-    let size = metadata.len() as f64 / 1024.0 / 1024.0;
+    let metadata = std::fs::metadata(file_path).unwrap();
+    match metadata.is_file() {
+        false => return Err("Path is not a file".to_string()),
+        true => {
+            if metadata.len() == 0 {
+                return Err("File is empty".to_string());
+            }
+        }
+    }
+    let size: f64 = metadata.len() as f64 / 1024.0 / 1024.0;
     Ok(format!("{:.2} MB", size))
 }
 

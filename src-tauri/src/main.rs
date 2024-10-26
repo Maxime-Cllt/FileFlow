@@ -4,20 +4,24 @@
 mod optimized_insert;
 mod fast_insert;
 
+mod fileflow;
+
 use crate::fast_insert::fast_insert;
 use crate::optimized_insert::optimized_insert;
-use csv::ReaderBuilder;
+use csv::{Reader, ReaderBuilder};
 use std::fs::File;
 use std::path::PathBuf;
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 use tauri::command;
 use tauri::State;
 use tokio::sync::Mutex;
-mod database_connection;
-use crate::database_connection::db_config::DbConfig;
-use crate::database_connection::insert_config::InsertConfig;
-use crate::database_connection::save_config::SaveConfig;
-use crate::database_connection::DatabaseConnection;
+
+
+use fileflow::db_config::DbConfig;
+use fileflow::insert_config::InsertConfig;
+use fileflow::save_config::SaveConfig;
+use fileflow::database_connection::DatabaseConnection;
 
 struct DatabaseState(Mutex<Option<DatabaseConnection>>);
 
@@ -41,7 +45,7 @@ async fn connect_to_database(config: DbConfig, state: State<'_, Arc<DatabaseStat
     }
 }
 
-#[tauri::command]
+#[command]
 async fn insert_csv_data(csv: InsertConfig, state: State<'_, Arc<DatabaseState>>) -> Result<String, String> {
     let conn_guard = state.0.lock().await;
 
@@ -49,24 +53,24 @@ async fn insert_csv_data(csv: InsertConfig, state: State<'_, Arc<DatabaseState>>
         return Err("No active database connection.".to_string());
     }
 
-    let conn = conn_guard.as_ref().unwrap();
-    let start = std::time::Instant::now();
+    let conn: &DatabaseConnection = conn_guard.as_ref().unwrap();
+    let start: Instant = Instant::now();
 
-    let file = File::open(csv.file_path).unwrap();
-    let mut reader = ReaderBuilder::new().has_headers(true).from_reader(file);
+    let file: File = File::open(csv.file_path).unwrap();
+    let mut reader: Reader<File> = ReaderBuilder::new().has_headers(true).from_reader(file);
 
     let headers: Vec<String> = reader.headers().unwrap().iter().map(|h| h.to_string()).collect();
     let snake_case_headers: Vec<String> = headers.iter().map(|h| h.to_lowercase().replace(" ", "_")).collect();
 
     let line_count: u64;
     if csv.mode == "fast" {
-        line_count = fast_insert(&conn, &mut reader, &snake_case_headers, &csv.table_name).await?;
+        line_count = fast_insert(&conn, &mut reader, &snake_case_headers, &csv.table_name, &csv.db_driver).await?;
     } else {
-        line_count = optimized_insert(&conn, &mut reader, &snake_case_headers, &csv.table_name).await?;
+        line_count = optimized_insert(&conn, &mut reader, &snake_case_headers, &csv.table_name, &csv.db_driver).await?;
     }
 
-    let duration = start.elapsed();
-    let ok = format!("Data inserted successfully in {:.2?}, {} rows inserted in table {}", duration, &line_count, csv.table_name);
+    let duration: Duration = start.elapsed();
+    let ok: String = format!("Data inserted successfully in {:.2?}, {} rows inserted in table {}", duration, &line_count, csv.table_name);
     Ok(ok)
 }
 
@@ -74,23 +78,20 @@ async fn insert_csv_data(csv: InsertConfig, state: State<'_, Arc<DatabaseState>>
 async fn disconnect_from_database(state: State<'_, Arc<DatabaseState>>) -> Result<String, String> {
     let mut conn_guard = state.0.lock().await;
 
-    // Check if there's an active connection to disconnect
     if conn_guard.is_none() {
         return Err("No active database connection to disconnect.".to_string());
     }
 
-    // Drop the connection
     let conn = conn_guard.take().unwrap();
     conn.disconnect();
 
-    // Take ownership of the connection and replace it with None
     conn_guard.take();
     Ok("Disconnected from the database.".to_string())
 }
 
-#[tauri::command]
+#[command]
 async fn save_database_config(save: SaveConfig) -> Result<String, String> {
-    let path = PathBuf::from("database_config.json");
+    let path: PathBuf = PathBuf::from("database_config.json");
 
     let _ = match serde_json::to_string(&save) {
         Ok(config) => config,
@@ -119,7 +120,7 @@ async fn save_database_config(save: SaveConfig) -> Result<String, String> {
     ))
 }
 
-#[tauri::command]
+#[command]
 async fn load_database_config() -> Result<String, String> {
     let path = PathBuf::from("database_config.json");
     let file = File::open(&path).map_err(|e| format!("Failed to open file: {}", e))?;

@@ -1,9 +1,6 @@
-use sqlx::{PgPool, MySqlPool, SqlitePool, Error}; // Import SqlitePool for SQLite support
-pub(crate) mod db_config;
-pub(crate) mod insert_config;
-pub(crate) mod save_config;
+use sqlx::{Error, MySqlPool, PgPool, Pool, Sqlite, SqlitePool};
 
-use db_config::DbConfig;
+use crate::fileflow::db_config::DbConfig;
 
 pub enum DatabaseConnection {
     Postgres(PgPool),
@@ -22,7 +19,7 @@ impl DatabaseConnection {
                     .await?;
                 Ok(DatabaseConnection::Postgres(pool))
             }
-            "mysql" => {
+            "mysql" | "mariadb" => {
                 let pool = MySqlPool::connect(&format!(
                     "mysql://{}:{}@{}:{}/{}",
                     config.username, config.password, config.db_host, config.port, config.db_name
@@ -31,7 +28,7 @@ impl DatabaseConnection {
                 Ok(DatabaseConnection::MySQL(pool))
             }
             "sqlite" => {
-                let pool = SqlitePool::connect(&config.sqlite_file_path).await?;
+                let pool: Pool<Sqlite> = SqlitePool::connect(&config.sqlite_file_path).await?;
                 Ok(DatabaseConnection::SQLite(pool))
             }
             _ => Err(Error::Protocol(format!(
@@ -41,7 +38,6 @@ impl DatabaseConnection {
         }
     }
 
-    // Query method for later usage
     pub async fn query(&self, query: &str) -> Result<(), Error> {
         match self {
             DatabaseConnection::Postgres(pool) => {

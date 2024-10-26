@@ -1,41 +1,36 @@
 use std::fs::File;
-use csv::Reader;
-use crate::DatabaseConnection;
+use csv::{Reader, StringRecord};
+use crate::{DatabaseConnection};
 
-pub async fn fast_insert(
+use crate::fileflow::fileflow::{get_drop_statement, get_create_statement, get_insert_into_statement};
+
+pub(crate) async fn fast_insert(
     conn: &DatabaseConnection,
     reader: &mut Reader<File>,
     snake_case_headers: &Vec<String>,
     final_table_name: &str,
+    db_driver: &str,
 ) -> Result<u64, String> {
 
-    let drop_final_table_query = format!("DROP TABLE IF EXISTS \"{}\"", final_table_name);
-    if let Err(err) = conn.query(&drop_final_table_query).await {
+    // Drop the table if it exists
+    if let Err(err) = conn.query(&get_drop_statement(db_driver, final_table_name)?).await {
         return Err(format!("Failed to drop final table: {}", err));
     }
 
-    let create_table_query = format!(
-        "CREATE TABLE \"{}\" ({})",
-        final_table_name,
-        snake_case_headers
-            .iter()
-            .map(|h| format!("{} TEXT", h))
-            .collect::<Vec<String>>()
-            .join(", ")
-    );
-    if let Err(err) = conn.query(&create_table_query).await {
+    // Create the table
+    if let Err(err) = conn.query(&get_create_statement(db_driver, final_table_name, snake_case_headers)?).await {
         return Err(format!("Failed to create table: {}", err));
     }
 
-    let columns = snake_case_headers.join(", ");
+    let columns: &str = &snake_case_headers.join(", ");
     let mut line_count: u64 = 0;
-    let max_batch_size = 5000;
-    let mut batch = Vec::with_capacity(max_batch_size);
+    let max_batch_size: u16 = 5000;
+    let mut batch: Vec<String> = Vec::with_capacity(max_batch_size as usize);
 
-    let insert_query_base = format!("INSERT INTO \"{}\" ({}) VALUES ", final_table_name, columns);
+    let insert_query_base: &str = &get_insert_into_statement(db_driver, final_table_name, &columns)?;
 
     for result in reader.records() {
-        let record = result.unwrap();
+        let record: StringRecord = result.unwrap();
 
         let values: Vec<String> = record.iter()
             .map(|v| format!("'{}'", v.trim().replace("'", "''")))
@@ -43,8 +38,8 @@ pub async fn fast_insert(
 
         batch.push(format!("({})", values.join(", ")));
 
-        if batch.len() == max_batch_size {
-            let insert_query = format!("{}{}", insert_query_base, batch.join(", "));
+        if batch.len() == max_batch_size as usize {
+            let insert_query: String = format!("{}{}", &insert_query_base, batch.join(", "));
             if let Err(err) = conn.query(&insert_query).await {
                 return Err(format!("Failed to insert data: {}", err));
             }
@@ -53,8 +48,9 @@ pub async fn fast_insert(
         }
     }
 
+    // Insert the remaining records if any
     if !batch.is_empty() {
-        let insert_query = format!("{}{}", insert_query_base, batch.join(", "));
+        let insert_query: &str = &format!("{}{}", &insert_query_base, batch.join(", "));
         if let Err(err) = conn.query(&insert_query).await {
             return Err(format!("Failed to insert data: {}", err));
         }

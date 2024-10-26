@@ -15,15 +15,15 @@ interface MenuProps {
     loadConfig: (e: React.MouseEvent) => Promise<void>;
 }
 
-const Menu: React.FC<MenuProps> = ({addLog, saveConfig, loadConfig}) => {
+const Menu: React.FC<MenuProps> = (props: MenuProps) => {
 
     const handleDeconnection = async (e: { preventDefault: () => void; }) => {
         e.preventDefault();
         try {
-            const response = await invoke('disconnect_from_database');
-            addLog(response as string);
+            const response: unknown = await invoke('disconnect_from_database');
+            props.addLog(response as string);
         } catch (error) {
-            addLog(error as string);
+            props.addLog(error as string);
         }
     };
 
@@ -39,15 +39,15 @@ const Menu: React.FC<MenuProps> = ({addLog, saveConfig, loadConfig}) => {
                 <MenubarMenu>
                     <MenubarTrigger>Configuration</MenubarTrigger>
                     <MenubarContent>
-                        <MenubarItem onClick={saveConfig}>Sauvegarder</MenubarItem>
-                        <MenubarItem onClick={loadConfig}>Importer</MenubarItem>
+                        <MenubarItem onClick={props.saveConfig}>Sauvegarder</MenubarItem>
+                        <MenubarItem onClick={props.loadConfig}>Importer</MenubarItem>
                     </MenubarContent>
                 </MenubarMenu>
                 <MenubarMenu>
                     <MenubarTrigger>Other</MenubarTrigger>
                     <MenubarContent>
-                        <MenubarItem onClick={() => window.location.href = "/"}>Home</MenubarItem>
-                        <MenubarItem onClick={() => window.location.href = "/about"}>About</MenubarItem>
+                        <MenubarItem onClick={(): string => window.location.href = "/"}>Home</MenubarItem>
+                        <MenubarItem onClick={(): string => window.location.href = "/about"}>About</MenubarItem>
                     </MenubarContent>
                 </MenubarMenu>
             </Menubar>

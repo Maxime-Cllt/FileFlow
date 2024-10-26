@@ -1,143 +1,97 @@
 import React from 'react';
-import {Input} from "@/components/ui/input.tsx";
+import { Input } from "@/components/ui/input.tsx";
 import FileUploadComponent from "@/components/fileflowui/FileUploadComponent.tsx";
 import SelectDatabaseComponent from "@/components/fileflowui/SelectDatabaseComponent.tsx";
 
 interface FormProps {
-    dbUrl: string;
-    setDbUrl: (value: string) => void;
-    port: string;
-    setPort: (value: string) => void;
-    username: string;
-    setUsername: (value: string) => void;
-    password: string;
-    setPassword: (value: string) => void;
-    dbName: string;
-    setDbName: (value: string) => void;
-    tableName: string;
-    fileName: string;
-    fileSize: string;
-    setFilePath: (filePath: string | null) => void;
-    setFileName: (name: string) => void;
-    setFileSize: (size: string) => void;
-    setTableName: (tableName: string) => void;
-    addLog: (message: string) => void;
-
-    setMode: (mode: string) => void;
-
-    dbDriver: string;
-    handledbDriverChange: (value: string) => void;
+    dbConfig: {
+        dbUrl: string;
+        port: string;
+        username: string;
+        password: string;
+        dbName: string;
+        tableName: string;
+        dbDriver: string;
+    };
+    uiState: {
+        fileName: string;
+        fileSize: string;
+    };
+    setters: {
+        setDbUrl: (value: string) => void;
+        setPort: (value: string) => void;
+        setUsername: (value: string) => void;
+        setPassword: (value: string) => void;
+        setDbName: (value: string) => void;
+        setTableName: (value: string) => void;
+        setFilePath: (filePath: string | null) => void;
+        setFileName: (name: string) => void;
+        setFileSize: (size: string) => void;
+        setMode: (mode: string) => void;
+    };
+    actions: {
+        addLog: (message: string) => void;
+        handledbDriverChange: (value: string) => void;
+    };
 }
 
-const FormComponent: React.FC<FormProps> = ({
-                                                dbUrl, setDbUrl, port, setPort, username, setUsername,
-                                                password, setPassword, dbName, setDbName, tableName, setTableName,
-                                                fileName, fileSize, setFilePath, setFileName, setFileSize, addLog,
-                                                dbDriver, handledbDriverChange
-
-                                            }) => {
+const FormComponent: React.FC<FormProps> = ({ dbConfig, uiState, setters, actions } : FormProps) => {
     return (
         <form className="grid grid-cols-2 gap-4">
 
-            {/*Colonne de gauche */}
+            {/* Left Column */}
             <div className="space-y-4">
-                <div>
-                    <label className="block text-sm font-medium mb-1">URL de la base de données
-                        :</label>
-                    <Input
-                        type="text"
-                        value={dbUrl}
-                        onChange={(e) => setDbUrl(e.target.value)}
-                        placeholder="localhost"
-                        required
-                        className="w-full"
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium mb-1">Port :</label>
-                    <Input
-                        type="number"
-                        value={port}
-                        onChange={(e) => setPort(e.target.value)}
-                        placeholder="Port"
-                        required
-                        className="w-full"
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium mb-1">Nom d'utilisateur :</label>
-                    <Input
-                        type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        placeholder="Username"
-                        required
-                        className="w-full"
-                    />
-                </div>
-
+                <FormInput label="URL de la base de données" value={dbConfig.dbUrl} onChange={setters.setDbUrl} placeholder="localhost" required />
+                <FormInput label="Port" type="number" value={dbConfig.port} onChange={setters.setPort} placeholder="Port" required />
+                <FormInput label="Nom d'utilisateur" value={dbConfig.username} onChange={setters.setUsername} placeholder="Username" required />
             </div>
 
-            {/*Colonne de droite */}
+            {/* Right Column */}
             <div className="space-y-4">
-                <div>
-                    <label className="block text-sm font-medium mb-1">Mot de passe :</label>
-                    <Input
-                        type="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Password"
-                        required
-                        className="w-full"
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium mb-1">Nom de la base de données
-                        :</label>
-                    <Input
-                        type="text"
-                        value={dbName}
-                        onChange={(e) => setDbName(e.target.value)}
-                        placeholder="Database Name"
-                        required
-                        className="w-full"
-                    />
-                </div>
-                <div>
-                    <label className="block text-sm font-medium mb-1">Nom de la table :</label>
-                    <Input
-                        type="text"
-                        value={tableName}
-                        onChange={(e) => setTableName(e.target.value)}
-                        placeholder="Table Name"
-                        required
-                        className="w-full"
-                    />
-                </div>
-
+                <FormInput label="Mot de passe" type="password" value={dbConfig.password} onChange={setters.setPassword} placeholder="Password" required />
+                <FormInput label="Nom de la base de données" value={dbConfig.dbName} onChange={setters.setDbName} placeholder="Database Name" required />
+                <FormInput label="Nom de la table" value={dbConfig.tableName} onChange={setters.setTableName} placeholder="Table Name" required />
             </div>
 
-
-            {/* Sélection du type de base de données et upload de fichier */}
+            {/* Database Type Selection and File Upload */}
             <div className="col-span-2 grid grid-cols-2 gap-4 items-center justify-center">
-
-                {/* Sélection du type de base de données */}
-                <SelectDatabaseComponent handledbDriverChange={handledbDriverChange} dbDriver={dbDriver}/>
-
-                {/* Upload de fichier et affichage du nom du fichier dans un input à côté */}
-                <FileUploadComponent {...{
-                    fileName,
-                    fileSize,
-                    setFilePath,
-                    setFileName,
-                    setFileSize,
-                    setTableName,
-                    addLog
-                }} />
+                <SelectDatabaseComponent handledbDriverChange={actions.handledbDriverChange} dbDriver={dbConfig.dbDriver} />
+                <FileUploadComponent
+                    setFileName={setters.setFileName}
+                    setFileSize={setters.setFileSize}
+                    setTableName={setters.setTableName}
+                    addLog={actions.addLog}
+                    setFilePath={setters.setFilePath}
+                    fileName={uiState.fileName}
+                    fileSize={uiState.fileSize}
+                />
             </div>
-
         </form>
     );
 };
+
+interface FormInputProps {
+    label: string;
+    type?: string;
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+    required?: boolean;
+}
+const FormInput: React.FC<FormInputProps> = ({ label, type = "text", value, onChange, placeholder, required }) => (
+    <div>
+        <label className="block text-sm font-medium mb-1">{label}</label>
+        <Input
+            type={type}
+            autoComplete="off"
+            autoCorrect="off"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            required={required}
+            className="w-full"
+        />
+    </div>
+);
 
 export default FormComponent;

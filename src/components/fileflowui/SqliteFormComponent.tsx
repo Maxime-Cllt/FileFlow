@@ -20,19 +20,7 @@ interface SqliteFormProps {
     setTableName: (tableName: string) => void;
 }
 
-const SqliteFormComponent: React.FC<SqliteFormProps> = ({
-                                                            addLog,
-                                                            sqliteFilePath,
-                                                            setSqliteFilePath,
-                                                            dbDriver,
-                                                            handledbDriverChange,
-                                                            fileName,
-                                                            fileSize,
-                                                            setFilePath,
-                                                            setFileName,
-                                                            setFileSize,
-                                                            setTableName
-                                                        }) => {
+const SqliteFormComponent: React.FC<SqliteFormProps> = (props) => {
 
     const openFileDialog = async () => {
         try {
@@ -42,10 +30,10 @@ const SqliteFormComponent: React.FC<SqliteFormProps> = ({
             });
 
             if (selectedFilePath) {
-                setSqliteFilePath(selectedFilePath.toString());
+                props.setSqliteFilePath(selectedFilePath.toString());
             }
         } catch (error) {
-            addLog(`Erreur lors de la sélection de la base de données SQLite : ${error}`);
+            props.addLog(`Erreur lors de la sélection de la base de données SQLite : ${error}`);
         }
     };
 
@@ -53,9 +41,7 @@ const SqliteFormComponent: React.FC<SqliteFormProps> = ({
     return (
         <div className="flex items-center gap-6">
 
-
-            <SelectDatabaseComponent handledbDriverChange={handledbDriverChange} dbDriver={dbDriver}/>
-
+            <SelectDatabaseComponent handledbDriverChange={props.handledbDriverChange} dbDriver={props.dbDriver}/>
 
             <div className={"w-full"}>
                 <div className={"flex items-center gap-4 mb-8"}>
@@ -65,7 +51,7 @@ const SqliteFormComponent: React.FC<SqliteFormProps> = ({
                     </Button>
                     <Input
                         type="text"
-                        value={sqliteFilePath}
+                        value={props.sqliteFilePath}
                         placeholder="Fichier SQLite"
                         disabled
                         className="w-full"
@@ -74,13 +60,13 @@ const SqliteFormComponent: React.FC<SqliteFormProps> = ({
 
                 {/* Upload de fichier et affichage du nom du fichier dans un input à côté */}
                 <FileUploadComponent {...{
-                    fileName,
-                    fileSize,
-                    setFilePath,
-                    setFileName,
-                    setFileSize,
-                    setTableName,
-                    addLog
+                    fileName: props.fileName,
+                    fileSize: props.fileSize,
+                    setFilePath: props.setFilePath,
+                    setFileName: props.setFileName,
+                    setFileSize: props.setFileSize,
+                    setTableName: props.setTableName,
+                    addLog: props.addLog
                 }} />
             </div>
 

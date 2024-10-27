@@ -15,15 +15,8 @@ interface FileUploadProps {
     addLog: (message: string) => void;
 }
 
-const FileUploadComponent: React.FC<FileUploadProps> = ({
-                                                            fileName,
-                                                            fileSize,
-                                                            setFilePath,
-                                                            setFileName,
-                                                            setFileSize,
-                                                            setTableName,
-                                                            addLog
-                                                        }) => {
+const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) => {
+
     const openFileDialog = async () => {
         try {
             const selectedFilePath = await dialog.open({
@@ -33,33 +26,30 @@ const FileUploadComponent: React.FC<FileUploadProps> = ({
 
             if (selectedFilePath) {
                 const path = selectedFilePath.toString();
-                setTableName(path.split('/').pop()?.split('.')[0]?.toLowerCase() || '');
-                setFileName(path.split('/').pop() || '');
-                setFilePath(path);
+                const normalizedTableName = getNormalizedTableName(path);
 
-                setTableName(normalizeTableName(path));
+                props.setFileName(getFileNameFromPath(path));
+                props.setFilePath(path);
+                props.setTableName(normalizedTableName);
 
                 const response = await invoke('get_size_of_file', {filePath: path});
-                setFileSize(typeof response === 'string' ? response : '');
+                props.setFileSize(typeof response === 'string' ? response : '');
             }
         } catch (error) {
-            addLog(`Erreur lors de la sélection du fichier: ${error}`);
+            props.addLog(`Erreur lors de la sélection du fichier: ${error}`);
         }
     };
 
+    const getFileNameFromPath = (path: string) => path.split('/').pop() || '';
 
-    const normalizeTableName = (tableName: string) => {
-        if (!tableName || tableName.length === 0 || tableName.indexOf('.') === -1) {
-            return '';
-        }
-        tableName = tableName.split('/').pop() as string;
-        tableName = tableName.split('.').shift() as string;
-        tableName = tableName.replace(/([A-Z])/g, '_$1');
-        tableName = tableName.replace(/[^a-zA-Z0-9_]/g, '');
-        tableName = tableName.replace(/^_/, '');
-        tableName = tableName.toLowerCase();
-        return tableName;
-    }
+    const getNormalizedTableName = (path: string) => {
+        const fileName = getFileNameFromPath(path).split('.').shift() || '';
+        return fileName
+            .replace(/([A-Z])/g, '_$1')
+            .replace(/[^a-zA-Z0-9_]/g, '')
+            .replace(/^_/, '')
+            .toLowerCase();
+    };
 
     return (
         <div className="flex items-center gap-4">
@@ -68,7 +58,7 @@ const FileUploadComponent: React.FC<FileUploadProps> = ({
             </Button>
             <Input
                 type="text"
-                value={fileName ? `${fileName} (${fileSize})` : ''}
+                value={props.fileName ? `${props.fileName} (${props.fileSize})` : ''}
                 placeholder="Fichier CSV"
                 disabled
                 className="w-full"

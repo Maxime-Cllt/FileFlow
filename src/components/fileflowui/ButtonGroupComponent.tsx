@@ -7,11 +7,11 @@ interface ButtonGroupProps {
     handleReset: () => void;
 }
 
-const ButtonGroupComponent: React.FC<ButtonGroupProps> = ({handleSubmit, handleInsert, handleReset}) => {
+const ButtonGroupComponent: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) => {
     return (
         <div className="flex items-center justify-center gap-6 mb-6 p-4">
             <button
-                onClick={handleSubmit}
+                onClick={props.handleSubmit}
                 className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white p-3 rounded-full shadow-lg transition duration-300"
                 aria-label="Submit to Database"
             >
@@ -19,7 +19,7 @@ const ButtonGroupComponent: React.FC<ButtonGroupProps> = ({handleSubmit, handleI
             </button>
 
             <button
-                onClick={handleInsert}
+                onClick={props.handleInsert}
                 className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full shadow-lg transition duration-300"
                 aria-label="Insert Data"
             >
@@ -27,7 +27,7 @@ const ButtonGroupComponent: React.FC<ButtonGroupProps> = ({handleSubmit, handleI
             </button>
 
             <button
-                onClick={handleReset}
+                onClick={props.handleReset}
                 className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white p-3 rounded-full shadow-lg transition duration-300"
                 aria-label="Reset"
             >

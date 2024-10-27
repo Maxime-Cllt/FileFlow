@@ -6,14 +6,16 @@ interface ModeSelectionProps {
     setMode: (mode: string) => void;
 }
 
-const ModeSelectionComponent: React.FC<ModeSelectionProps> = ({setMode}) => {
+const ModeSelectionComponent: React.FC<ModeSelectionProps> = (props: ModeSelectionProps) => {
     return (
         <div className="flex justify-center mt-10">
             <RadioGroup defaultValue="fast" className="flex justify-center gap-10"
-                        onChange={(e) => {
-                            // @ts-ignore
-                            setMode(e.target.value as string);
-                        }}>
+                        onValueChange={(e: string): void => {
+                            if (e === "fast" || e === "optimized") {
+                                props.setMode(e);
+                            }
+                        }
+                        }>
                 <div className="space-x-2">
                     <RadioGroupItem value="fast" id="r1"/>
                     <Label htmlFor="r1">Insertion rapide</Label>

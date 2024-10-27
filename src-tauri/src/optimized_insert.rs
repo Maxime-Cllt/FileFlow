@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fs::File;
 use csv::Reader;
-use crate::DatabaseConnection;
+use crate::fileflow::database_connection::DatabaseConnection;
 
 use crate::fileflow::fileflow::{get_drop_statement, get_create_statement, get_insert_into_statement};
 

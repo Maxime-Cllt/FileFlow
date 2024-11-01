@@ -20,6 +20,7 @@ interface SqliteFormProps {
     setTableName: (tableName: string) => void;
 }
 
+
 const SqliteFormComponent: React.FC<SqliteFormProps> = (props: SqliteFormProps) => {
 
     const openFileDialog = async () => {

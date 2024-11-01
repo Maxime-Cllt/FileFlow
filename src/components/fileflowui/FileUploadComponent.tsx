@@ -60,6 +60,7 @@ const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) 
                 type="text"
                 value={props.fileName ? `${props.fileName} (${props.fileSize})` : ''}
                 placeholder="Select a CSV file"
+                placeholder="Fichier CSV"
                 disabled
                 className="w-full"
             />

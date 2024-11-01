@@ -14,7 +14,7 @@ export const initialDbConfig = {
 };
 
 export const initialUiState = {
-    histoLog: 'Historique des logs',
+    histoLog: 'Logs will appear here',
     filePath: null as string | null,
     fileName: '',
     fileSize: '',

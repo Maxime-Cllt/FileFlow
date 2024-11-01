@@ -18,11 +18,11 @@ const ModeSelectionComponent: React.FC<ModeSelectionProps> = (props: ModeSelecti
                         }>
                 <div className="space-x-2">
                     <RadioGroupItem value="fast" id="r1"/>
-                    <Label htmlFor="r1">Insertion rapide</Label>
+                    <Label htmlFor="r1">Fast Insertion</Label>
                 </div>
                 <div className="space-x-2">
                     <RadioGroupItem value="optimized" id="r2"/>
-                    <Label htmlFor="r2">Insertion optimisée</Label>
+                    <Label htmlFor="r2">Optimized Insertion</Label>
                 </div>
             </RadioGroup>
         </div>

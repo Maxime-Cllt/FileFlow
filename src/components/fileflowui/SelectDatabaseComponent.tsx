@@ -14,12 +14,12 @@ const SelectDatabaseComponent: React.FC<SelectDatabaseProps> = (props: SelectDat
             {/* Sélection du type de base de données */}
             <Select onValueChange={props.handledbDriverChange} value={props.dbDriver}>
                 <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Type de base de données"/>
+                    <SelectValue placeholder="Select a database driver" />
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="mysql">MySQL</SelectItem>
                     <SelectItem value="mariadb">MariaDB</SelectItem>
-                    <SelectItem value="postgres">PostgreSQL</SelectItem>
+                    <SelectItem value="postgres">Postgres</SelectItem>
                     <SelectItem value="sqlite">SQLite</SelectItem>
                 </SelectContent>
             </Select>

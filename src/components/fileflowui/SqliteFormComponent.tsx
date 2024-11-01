@@ -20,7 +20,8 @@ interface SqliteFormProps {
     setTableName: (tableName: string) => void;
 }
 
-const SqliteFormComponent: React.FC<SqliteFormProps> = (props) => {
+
+const SqliteFormComponent: React.FC<SqliteFormProps> = (props: SqliteFormProps) => {
 
     const openFileDialog = async () => {
         try {
@@ -33,7 +34,7 @@ const SqliteFormComponent: React.FC<SqliteFormProps> = (props) => {
                 props.setSqliteFilePath(selectedFilePath.toString());
             }
         } catch (error) {
-            props.addLog(`Erreur lors de la sélection de la base de données SQLite : ${error}`);
+            props.addLog(`Error opening file dialog: ${error}`);
         }
     };
 
@@ -52,13 +53,13 @@ const SqliteFormComponent: React.FC<SqliteFormProps> = (props) => {
                     <Input
                         type="text"
                         value={props.sqliteFilePath}
-                        placeholder="Fichier SQLite"
+                        placeholder="Select SQLite file"
                         disabled
                         className="w-full"
                     />
                 </div>
 
-                {/* Upload de fichier et affichage du nom du fichier dans un input à côté */}
+                {/* Upload file */}
                 <FileUploadComponent {...{
                     fileName: props.fileName,
                     fileSize: props.fileSize,

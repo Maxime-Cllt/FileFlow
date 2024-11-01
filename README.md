@@ -1,5 +1,5 @@
 <div align=center>
-<img src="https://github.com/Maxime-Cllt/DataStorm/blob/main/assets/datastorm.png" width="100px" height="100px"  alt="DataStorm" align="center" />
+<img src="https://github.com/Maxime-Cllt/DataStorm/blob/main/assets/datastorm.png" width="100px" height="100px"  alt="FileFlow" align="center" />
 <h1>FileFlow</h1>
 </div>
 
@@ -33,6 +33,17 @@ See in the release section for the latest version of the application.
 <label>
 <input type="checkbox" style="margin-right: 10px" checked>
 </label> Don't require <span style="font-weight: bold;">ANY</span> privilege to insert the data <br>
+
+## Supported databases
+
+<div align=center>
+
+![MySQL](https://img.shields.io/badge/MySQL-00758F?style=for-the-badge&logo=mysql&logoColor=white)
+![MySQL](https://img.shields.io/badge/MariaDB-003545?style=for-the-badge&logo=mariadb&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
+
+</div>
 
 ## Requirements
 

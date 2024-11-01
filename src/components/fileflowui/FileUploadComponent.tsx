@@ -36,7 +36,7 @@ const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) 
                 props.setFileSize(typeof response === 'string' ? response : '');
             }
         } catch (error) {
-            props.addLog(`Erreur lors de la sélection du fichier: ${error}`);
+            props.addLog(`Error opening file: ${error}`);
         }
     };
 
@@ -59,6 +59,7 @@ const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) 
             <Input
                 type="text"
                 value={props.fileName ? `${props.fileName} (${props.fileSize})` : ''}
+                placeholder="Select a CSV file"
                 placeholder="Fichier CSV"
                 disabled
                 className="w-full"

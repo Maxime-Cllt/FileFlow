@@ -33,14 +33,14 @@ const Menu: React.FC<MenuProps> = (props: MenuProps) => {
                 <MenubarMenu>
                     <MenubarTrigger>Databases</MenubarTrigger>
                     <MenubarContent>
-                        <MenubarItem onClick={handleDeconnection}>Deconnection</MenubarItem>
+                        <MenubarItem onClick={handleDeconnection}>Disconnect</MenubarItem>
                     </MenubarContent>
                 </MenubarMenu>
                 <MenubarMenu>
                     <MenubarTrigger>Configuration</MenubarTrigger>
                     <MenubarContent>
-                        <MenubarItem onClick={props.saveConfig}>Sauvegarder</MenubarItem>
-                        <MenubarItem onClick={props.loadConfig}>Importer</MenubarItem>
+                        <MenubarItem onClick={props.saveConfig}>Save this</MenubarItem>
+                        <MenubarItem onClick={props.loadConfig}>Import</MenubarItem>
                     </MenubarContent>
                 </MenubarMenu>
                 <MenubarMenu>

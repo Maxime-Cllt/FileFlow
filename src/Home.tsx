@@ -33,11 +33,11 @@ const Home: React.FC = () => {
         e.preventDefault();
 
         if (!dbConfig.dbUrl || !dbConfig.port || !dbConfig.username) {
-            addLog('Veuillez remplir tous les champs');
+            addLog('Please fill all fields');
             return;
         }
 
-        addLog('Tentative de connexion...');
+        addLog('Trying to connect...');
 
         try {
             const response = await invoke('connect_to_database', {
@@ -54,7 +54,7 @@ const Home: React.FC = () => {
             });
             addLog(response as string);
         } catch (error) {
-            addLog(`Erreur de connexion: ${error}`);
+            addLog(`Connection error: ${error}`);
         }
     };
 
@@ -66,16 +66,16 @@ const Home: React.FC = () => {
         e.preventDefault();
 
         if (!uiState.filePath) {
-            addLog('Veuillez sélectionner un fichier à importer');
+            addLog('Please select a file');
             return;
         }
 
         if (!checkFields()) {
-            addLog('Veuillez remplir tous les champs');
+            addLog('Please fill all fields');
             return;
         }
 
-        addLog('Insertion en cours...');
+        addLog('Inserting data...');
         updateUiStateField('showLoader', true);
 
         try {
@@ -91,7 +91,7 @@ const Home: React.FC = () => {
             updateUiStateField('showLoader', false);
             addLog(response as string);
         } catch (error) {
-            addLog(`Erreur d'insertion: ${error}`);
+            addLog(`Insert error: ${error}`);
         }
     };
 
@@ -118,7 +118,7 @@ const Home: React.FC = () => {
         });
 
         setUiState({
-            histoLog: 'Historique des logs',
+            histoLog: 'Logs history',
             filePath: null,
             fileName: '',
             fileSize: '',
@@ -145,7 +145,7 @@ const Home: React.FC = () => {
             });
             addLog(response as string);
         } catch (error) {
-            addLog(`Erreur de sauvegarde: ${error}`);
+            addLog(`Error saving config: ${error}`);
         }
     };
 
@@ -167,10 +167,10 @@ const Home: React.FC = () => {
                 });
                 updateUiStateField('sqlite', !!loadDbConfig.sqlite_file_path);
             } else {
-                addLog('Aucune configuration trouvée');
+                addLog('Error loading config');
             }
         } catch (error) {
-            addLog(`Erreur de connexion: ${error}`);
+            addLog(`Error loading config: ${error}`);
         }
     };
 

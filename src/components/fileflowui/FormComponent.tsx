@@ -1,5 +1,5 @@
 import React from 'react';
-import { Input } from "@/components/ui/input.tsx";
+import {Input} from "@/components/ui/input.tsx";
 import FileUploadComponent from "@/components/fileflowui/FileUploadComponent.tsx";
 import SelectDatabaseComponent from "@/components/fileflowui/SelectDatabaseComponent.tsx";
 
@@ -35,27 +35,34 @@ interface FormProps {
     };
 }
 
-const FormComponent: React.FC<FormProps> = ({ dbConfig, uiState, setters, actions } : FormProps) => {
+const FormComponent: React.FC<FormProps> = ({dbConfig, uiState, setters, actions}: FormProps) => {
     return (
         <form className="grid grid-cols-2 gap-4">
 
             {/* Left Column */}
             <div className="space-y-4">
-                <FormInput label="URL de la base de données" value={dbConfig.dbUrl} onChange={setters.setDbUrl} placeholder="localhost" required />
-                <FormInput label="Port" type="number" value={dbConfig.port} onChange={setters.setPort} placeholder="Port" required />
-                <FormInput label="Nom d'utilisateur" value={dbConfig.username} onChange={setters.setUsername} placeholder="Username" required />
+                <FormInput label="URL of the database" value={dbConfig.dbUrl} onChange={setters.setDbUrl}
+                           placeholder="localhost" required/>
+                <FormInput label="Port" type="number" value={dbConfig.port} onChange={setters.setPort}
+                           placeholder="Port" required/>
+                <FormInput label="Username" value={dbConfig.username} onChange={setters.setUsername}
+                           placeholder="Username" required/>
             </div>
 
             {/* Right Column */}
             <div className="space-y-4">
-                <FormInput label="Mot de passe" type="password" value={dbConfig.password} onChange={setters.setPassword} placeholder="Password" required />
-                <FormInput label="Nom de la base de données" value={dbConfig.dbName} onChange={setters.setDbName} placeholder="Database Name" required />
-                <FormInput label="Nom de la table" value={dbConfig.tableName} onChange={setters.setTableName} placeholder="Table Name" required />
+                <FormInput label="Password" type="password" value={dbConfig.password} onChange={setters.setPassword}
+                           placeholder="Password" required/>
+                <FormInput label="Name of the database" value={dbConfig.dbName} onChange={setters.setDbName}
+                           placeholder="Database Name" required/>
+                <FormInput label="Name of the table" value={dbConfig.tableName} onChange={setters.setTableName}
+                           placeholder="Table Name" required/>
             </div>
 
             {/* Database Type Selection and File Upload */}
             <div className="col-span-2 grid grid-cols-2 gap-4 items-center justify-center">
-                <SelectDatabaseComponent handledbDriverChange={actions.handledbDriverChange} dbDriver={dbConfig.dbDriver} />
+                <SelectDatabaseComponent handledbDriverChange={actions.handledbDriverChange}
+                                         dbDriver={dbConfig.dbDriver}/>
                 <FileUploadComponent
                     setFileName={setters.setFileName}
                     setFileSize={setters.setFileSize}
@@ -78,7 +85,15 @@ interface FormInputProps {
     placeholder?: string;
     required?: boolean;
 }
-const FormInput: React.FC<FormInputProps> = ({ label, type = "text", value, onChange, placeholder, required }) => (
+
+const FormInput: React.FC<FormInputProps> = ({
+                                                 label,
+                                                 type = "text",
+                                                 value,
+                                                 onChange,
+                                                 placeholder,
+                                                 required
+                                             }: FormInputProps) => (
     <div>
         <label className="block text-sm font-medium mb-1">{label}</label>
         <Input

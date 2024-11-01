@@ -38,8 +38,6 @@ const Home: React.FC = () => {
         }
 
         addLog('Trying to connect...');
-            return;
-        }
 
         try {
             const response = await invoke('connect_to_database', {
@@ -107,15 +105,6 @@ const Home: React.FC = () => {
         updateUiStateField('sqlite', value === 'sqlite');
     };
 
-    const handledbDriverChange = (value: string) => {
-        const portMap: Record<string, string> = {mysql: '3306', mariadb: '3306', postgres: '5432'};
-        setDbConfig(prev => ({
-            ...prev,
-            dbDriver: value,
-            port: portMap[value] || '',
-        }));
-        updateUiStateField('sqlite', value === 'sqlite');
-    };
 
     const handleReset = () => {
         setDbConfig({
@@ -279,6 +268,6 @@ const Home: React.FC = () => {
 
         </div>
     );
-}
+};
 
 export default Home;

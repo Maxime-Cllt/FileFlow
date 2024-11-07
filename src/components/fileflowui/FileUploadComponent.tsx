@@ -45,10 +45,8 @@ const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) 
     const getNormalizedTableName = (path: string) => {
         const fileName = getFileNameFromPath(path).split('.').shift() || '';
         return fileName
-            .replace(/([A-Z])/g, '_$1')
             .replace(/[^a-zA-Z0-9_]/g, '')
-            .replace(/^_/, '')
-            .toLowerCase();
+            .replace(/^_/, '');
     };
 
     return (

@@ -24,15 +24,14 @@ custom-protocol = ["tauri/custom-protocol"]
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.
-codegen-units = 1
+codegen-units = 16 # Compile your binary in smaller steps. The higher the number, the faster the compilation. The lower the number, the smaller the binary size.
 opt-level = 0 # Prioritizes fast compilation.
 panic = "unwind" # Allows for better debugging.
 debug = true # Enables debug symbols.
 
 
 [profile.release]
-codegen-units = 1 # Allows LLVM to perform better optimization.
+codegen-units = 1 # Compile your binary in smaller steps.
 opt-level = 2 # Prioritizes small binary size. Use `3` if you prefer speed.
 panic = "abort" # Higher performance by disabling panic handlers.
 strip = true # Ensures debug symbols are removed.
-

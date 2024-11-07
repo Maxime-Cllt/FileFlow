@@ -59,7 +59,7 @@ const Home: React.FC = () => {
     };
 
     const checkFields = () => {
-        return dbConfig.dbDriver && dbConfig.dbUrl && dbConfig.port && dbConfig.username && dbConfig.dbName && dbConfig.tableName;
+        return dbConfig.dbDriver && dbConfig.dbUrl && dbConfig.port && dbConfig.username && dbConfig.dbName;
     };
 
     const handleInsert = async (e: React.FormEvent) => {

@@ -1,7 +1,6 @@
 use std::fs::File;
 use csv::{Reader, StringRecord};
 use crate::fileflow::database_connection::DatabaseConnection;
-
 use crate::fileflow::fileflow::{get_drop_statement, get_create_statement, get_insert_into_statement};
 
 pub(crate) async fn fast_insert(

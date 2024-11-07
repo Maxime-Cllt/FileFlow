@@ -1,25 +1,20 @@
 // src/fileflow/action/actions.rs
 
-use std::fs::File;
+use std::fs::{File, Metadata};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
 use csv::{Reader, ReaderBuilder};
 use tauri::{command, State};
 use tokio::sync::Mutex;
-use crate::fast_insert::fast_insert;
+use crate::fileflow::fast_insert::fast_insert;
 use crate::fileflow::database_connection::DatabaseConnection;
-use crate::fileflow::db_config::DbConfig;
-use crate::fileflow::insert_config::InsertConfig;
-use crate::fileflow::save_config::SaveConfig;
-use crate::optimized_insert::optimized_insert;
+use crate::fileflow::stuct::db_config::DbConfig;
+use crate::fileflow::stuct::insert_config::InsertConfig;
+use crate::fileflow::stuct::save_config::SaveConfig;
+use crate::fileflow::optimized_insert::optimized_insert;
 
 pub struct DatabaseState(pub Mutex<Option<DatabaseConnection>>);
-
-#[allow(dead_code)]
-pub struct DatabaseService {
-    state: Arc<DatabaseState>,
-}
 
 #[command]
 pub async fn connect_to_database(state: State<'_, Arc<DatabaseState>>, config: DbConfig) -> Result<String, String> {
@@ -55,7 +50,14 @@ pub async fn insert_csv_data(state: State<'_, Arc<DatabaseState>>, csv: InsertCo
     let file: File = File::open(csv.file_path).unwrap();
     let mut reader: Reader<File> = ReaderBuilder::new().has_headers(true).from_reader(file);
 
-    let headers: Vec<String> = reader.headers().unwrap().iter().map(|h| h.to_string()).collect();
+    let mut headers: Vec<String> = reader.headers().unwrap().iter().map(|h| h.to_string()).collect();
+
+    for i in 0..headers.len() {
+        if headers[i].trim().len() == 0 {
+            headers[i] = format!("column_{}", i + 1);
+        }
+    }
+
     let snake_case_headers: Vec<String> = headers.iter().map(|h| h.to_lowercase().replace(" ", "_")).collect();
 
     let line_count: u64;
@@ -65,7 +67,7 @@ pub async fn insert_csv_data(state: State<'_, Arc<DatabaseState>>, csv: InsertCo
         line_count = optimized_insert(&conn, &mut reader, &snake_case_headers, &csv.table_name, &csv.db_driver).await?;
     }
 
-    Ok(format!("Data inserted successfully in {:.2?}, {} rows inserted in table {}", start.elapsed(), &line_count, csv.table_name))
+    Ok(format!("Data inserted successfully in {:.2?}, {} rows inserted in table {}", start.elapsed(), &line_count, &csv.table_name))
 }
 
 #[command]
@@ -76,7 +78,7 @@ pub async fn disconnect_from_database(state: State<'_, Arc<DatabaseState>>) -> R
         return Err("No active database connection to disconnect.".to_string());
     }
 
-    let conn = conn_guard.take().unwrap();
+    let conn: DatabaseConnection = conn_guard.take().unwrap();
     conn.disconnect();
 
     Ok("Disconnected from the database.".to_string())
@@ -86,23 +88,23 @@ pub async fn disconnect_from_database(state: State<'_, Arc<DatabaseState>>) -> R
 pub async fn save_database_config(save: SaveConfig) -> Result<String, String> {
     let path: PathBuf = PathBuf::from("database_config.json");
     let _config = serde_json::to_string(&save).map_err(|e| format!("Failed to serialize config: {}", e))?;
-    let file = File::create(&path).map_err(|e| format!("Failed to create file: {}", e))?;
+    let file: File = File::create(&path).map_err(|e| format!("Failed to create file: {}", e))?;
     serde_json::to_writer_pretty(file, &save).map_err(|e| format!("Failed to write to file: {}", e))?;
     Ok(format!("Database configuration saved to file located at {}", path.display()))
 }
 
 #[command]
 pub async fn load_database_config() -> Result<String, String> {
-    let path = PathBuf::from("database_config.json");
-    let file = File::open(&path).map_err(|e| format!("Failed to open file: {}", e))?;
+    let path: PathBuf = PathBuf::from("database_config.json");
+    let file: File = File::open(&path).map_err(|e| format!("Failed to open file: {}", e))?;
     let config: SaveConfig = serde_json::from_reader(file).map_err(|e| format!("Failed to read file: {}", e))?;
-    let config_json = serde_json::to_string(&config).map_err(|e| format!("Failed to serialize config: {}", e))?;
+    let config_json: String = serde_json::to_string(&config).map_err(|e| format!("Failed to serialize config: {}", e))?;
     Ok(config_json)
 }
 
 #[command]
 pub async fn get_size_of_file(file_path: String) -> Result<String, String> {
-    let metadata = std::fs::metadata(&file_path).map_err(|e| format!("Failed to get metadata: {}", e))?;
+    let metadata: Metadata = std::fs::metadata(&file_path).map_err(|e| format!("Failed to get metadata: {}", e))?;
     if !metadata.is_file() {
         return Err("Path is not a file".to_string());
     }

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::fs::File;
-use csv::Reader;
+use csv::{Reader, StringRecord};
 use crate::fileflow::database_connection::DatabaseConnection;
 
 use crate::fileflow::fileflow::{get_drop_statement, get_create_statement, get_insert_into_statement};
@@ -12,10 +12,11 @@ pub async fn optimized_insert(
     final_table_name: &str,
     db_driver: &str,
 ) -> Result<u64, String> {
+
     let temporary_table_name: &str = &format!("{}_temporary", final_table_name);
 
     for table_name in &[&temporary_table_name, final_table_name] {
-        let drop_table_query = get_drop_statement(db_driver, table_name)?;
+        let drop_table_query: String = get_drop_statement(db_driver, table_name)?;
         if let Err(err) = conn.query(&drop_table_query).await {
             return Err(format!("Failed to drop table '{}': {}", table_name, err));
         }
@@ -36,12 +37,12 @@ pub async fn optimized_insert(
     let mut line_count: u64 = 0;
 
     for result in reader.records() {
-        let record = result.unwrap();
+        let record: StringRecord = result.unwrap();
         let mut values: Vec<String> = Vec::with_capacity(record.len());
 
         for (i, value) in record.iter().enumerate() {
-            let value = value.trim().replace("'", "''");
-            let max_length = map_max_length.get_mut(snake_case_headers[i].as_str()).unwrap();
+            let value: String = value.trim().replace("'", "''");
+            let max_length: &mut usize = map_max_length.get_mut(snake_case_headers[i].as_str()).unwrap();
             if value.len() > *max_length {
                 *max_length = value.len() + 1;
             }
@@ -51,7 +52,7 @@ pub async fn optimized_insert(
         batch.push(format!("({})", values.join(", ")));
 
         if batch.len() >= max_batch_size {
-            let insert_query = format!("{}{}", insert_query_base, batch.join(", "));
+            let insert_query: String = format!("{}{}", insert_query_base, batch.join(", "));
             if let Err(err) = conn.query(&insert_query).await {
                 return Err(format!("Failed to insert batch data: {}", err));
             }
@@ -61,7 +62,7 @@ pub async fn optimized_insert(
     }
 
     if !batch.is_empty() {
-        let insert_query = format!("{}{}", insert_query_base, batch.join(", "));
+        let insert_query: String = format!("{}{}", insert_query_base, batch.join(", "));
         if let Err(err) = conn.query(&insert_query).await {
             return Err(format!("Failed to insert remaining batch: {}", err));
         }

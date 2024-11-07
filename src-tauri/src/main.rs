@@ -1,15 +1,14 @@
 // main.rs
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-mod optimized_insert;
-mod fast_insert;
 mod fileflow;
+mod tests;
 
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use crate::fileflow::action::actions::{
-    DatabaseState, connect_to_database, insert_csv_data, disconnect_from_database,
-    save_database_config, load_database_config, get_size_of_file,
+    connect_to_database, disconnect_from_database, get_size_of_file, insert_csv_data,
+    load_database_config, save_database_config, DatabaseState,
 };
 
 

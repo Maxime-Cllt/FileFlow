@@ -35,6 +35,30 @@ impl DatabaseConnection {
         Ok(())
     }
 
+    pub async fn bind_query(&self, query: &str, params: Vec<&str>) -> Result<(), Error> {
+        match self {
+            DatabaseConnection::Postgres(pool) => {
+                sqlx::query(query).bind(params).execute(pool).await?;
+            }
+            DatabaseConnection::MySQL(pool) => {
+                sqlx::query(query).bind(params).execute(pool).await?;
+            }
+            DatabaseConnection::SQLite(pool) => {
+                sqlx::query(query).bind(params).execute(pool).await?;
+            }
+        }
+        Ok(())
+    }
+
+
+    pub async fn fetch_one_sqlite(&self, query: &str) -> Result<sqlx::sqlite::SqliteRow, Error> {
+        if let DatabaseConnection::SQLite(pool) = self {
+            sqlx::query(query).fetch_one(pool).await
+        } else {
+            Err(Error::Configuration("Not a SQLite connection".into()))
+        }
+    }
+
     pub fn get_connection_url(config: &DbConfig) -> Result<String, Error> {
         match config.db_driver.as_str() {
             "postgres" => Ok(format!(

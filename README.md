@@ -3,7 +3,13 @@
 <h1>FileFlow</h1>
 </div>
 
-<div align=center>
+<div align="center">
+    <img src="https://img.shields.io/badge/Rust-dea584?style=for-the-badge&logo=rust&logoColor=white" alt="Rust" />
+    <img src="https://img.shields.io/badge/Tauri-ffc130?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri" />
+    <img src="https://img.shields.io/badge/Version-1.0.2-7073f6?style=for-the-badge" alt="Version" />
+</div>
+
+<div align=center style="margin-top: 20px">
 <img src="/assets/FileFlowDemo.png" alt="FileFlow" width="65%" height="50%" />
 </div>
 

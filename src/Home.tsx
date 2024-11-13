@@ -1,9 +1,9 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {invoke} from '@tauri-apps/api/core';
 import './Loader.css';
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import Menu from "@/components/fileflowui/Menu.tsx";
-import Loader from "@/Loader.tsx";
+import Loader from "@/components/fileflowui/Loader.tsx";
 import FormComponent from "@/components/fileflowui/FormComponent.tsx";
 import ModeSelectionComponent from "@/components/fileflowui/ModeSelectionComponent.tsx";
 import ButtonGroupComponent from "@/components/fileflowui/ButtonGroupComponent.tsx";
@@ -14,11 +14,6 @@ import {initialDbConfig, initialUiState} from "@/components/object/initialState.
 const Home: React.FC = () => {
     const [dbConfig, setDbConfig] = useState(initialDbConfig);
     const [uiState, setUiState] = useState(initialUiState);
-
-    useEffect(() => {
-        console.log("on modifie")
-        console.log(uiState)
-    }, [uiState]);
 
     const updateDbConfigField = useCallback((field: keyof typeof dbConfig, value: string) => {
         setDbConfig(prev => ({...prev, [field]: value}));
@@ -291,7 +286,7 @@ const Home: React.FC = () => {
                 </div>
             </div>
         </div>
-    );
+    )
 };
 
 export default Home;

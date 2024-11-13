@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {invoke} from '@tauri-apps/api/tauri';
 import './Loader.css';
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
@@ -15,6 +15,11 @@ const Home: React.FC = () => {
     const [dbConfig, setDbConfig] = useState(initialDbConfig);
     const [uiState, setUiState] = useState(initialUiState);
 
+    useEffect(() => {
+        console.log("on modifie")
+        console.log(uiState)
+    }, [uiState]);
+
     const updateDbConfigField = useCallback((field: keyof typeof dbConfig, value: string) => {
         setDbConfig(prev => ({...prev, [field]: value}));
     }, []);
@@ -29,6 +34,7 @@ const Home: React.FC = () => {
 
     const handleConnection = async (e: React.FormEvent) => {
         e.preventDefault();
+        const newConfig = {...dbConfig};
 
         if (!dbConfig.dbUrl || !dbConfig.port || !dbConfig.username) {
             addLog('Please fill all fields');
@@ -51,14 +57,14 @@ const Home: React.FC = () => {
                 },
             });
             addLog(response as string);
-            dbConfig.is_connected = true;
+            newConfig.is_connected = true;
             addLog('Connected successfully!');
         } catch (error) {
             addLog(`Connection error: ${error}`);
-            dbConfig.is_connected = false;
+            newConfig.is_connected = false;
             addLog('Connection failed!');
         }
-        setDbConfig({...dbConfig}); // Trigger re-render by updating state
+        setDbConfig(newConfig); // Trigger re-render by updating state
     };
 
     const handleInsert = async (e: React.FormEvent) => {

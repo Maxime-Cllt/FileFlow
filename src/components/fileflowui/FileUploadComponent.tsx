@@ -17,9 +17,9 @@ interface FileUploadProps {
 
 const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) => {
 
-    const openFileDialog = async () => {
+    const openFileDialog = async (e: any) => {
+        e.preventDefault();
         try {
-
             const selectedFilePath = await dialog.open({
                 filters: [{name: 'CSV Files', extensions: ['csv']}],
                 multiple: false,
@@ -27,7 +27,7 @@ const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) 
             });
 
             if (selectedFilePath && selectedFilePath !== props.fileName) {
-                const path: string = selectedFilePath.toString();
+                const path: string = selectedFilePath?.toString();
                 const normalizedTableName: string = getNormalizedTableName(path);
 
                 props.setFileName(getFileNameFromPath(path));
@@ -41,7 +41,6 @@ const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) 
             props.addLog(`Error opening file: ${error}`);
         }
     };
-
 
     const getFileNameFromPath = (path: string) => path.split('/').pop() || '';
 

@@ -53,8 +53,7 @@ pub async fn insert_csv_data(state: State<'_, Arc<DatabaseState>>, csv: InsertCo
     let file: File = File::open(csv.file_path).unwrap();
     let mut reader: Reader<File> = ReaderBuilder::new().has_headers(true).from_reader(file);
 
-    let headers: Vec<String> = reader.headers().unwrap().iter().map(|h| h.to_string()).collect();
-    let snake_case_headers: Vec<String> = get_formated_column_names(headers);
+    let snake_case_headers: Vec<String> = get_formated_column_names(reader.headers().unwrap().iter().map(|h| h.to_string()).collect());
 
     let line_count: u64;
     if csv.mode == "fast" {
@@ -120,8 +119,7 @@ pub async fn generate_load_data_sql(load_data_config: &GenerateLoadData) -> Resu
     let file: File = File::open(&load_data_config.file_path).map_err(|e| format!("Failed to open file: {}", e))?;
     let mut reader: Reader<File> = ReaderBuilder::new().has_headers(true).from_reader(file);
 
-    let headers: Vec<String> = reader.headers().unwrap().iter().map(|h| h.to_string()).collect();
-    let formatted_headers: Vec<String> = get_formated_column_names(headers);
+    let formatted_headers: Vec<String> = get_formated_column_names(reader.headers().unwrap().iter().map(|h| h.to_string()).collect());
 
     let mut size_map: HashMap<&str, usize> = HashMap::new();
     for header in &formatted_headers {
@@ -142,7 +140,7 @@ pub async fn generate_load_data_sql(load_data_config: &GenerateLoadData) -> Resu
 
     let mut sql: String = String::new();
     sql.push_str(get_create_statement_with_fixed_size(&load_data_config.db_driver, &load_data_config.table_name, &size_map, &formatted_headers).unwrap().as_str());
-    sql.push_str("\n");
+    sql.push_str(";\n");
 
     sql.push_str("LOAD DATA LOCAL INFILE '");
     sql.push_str(load_data_config.file_path.as_str());

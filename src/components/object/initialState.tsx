@@ -11,6 +11,7 @@ export const initialDbConfig = {
     dbName: '',
     tableName: '',
     sqliteFilePath: '',
+    is_connected: false
 };
 
 export const initialUiState = {
@@ -20,5 +21,5 @@ export const initialUiState = {
     fileSize: '',
     mode: 'fast',
     showLoader: false,
-    sqlite: false,
+    sqlite: false
 };

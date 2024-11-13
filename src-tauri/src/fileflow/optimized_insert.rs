@@ -2,8 +2,9 @@ use std::collections::HashMap;
 use std::fs::File;
 use csv::{Reader, StringRecord};
 use crate::fileflow::database_connection::DatabaseConnection;
+use crate::fileflow::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
 
-use crate::fileflow::fileflow::{get_drop_statement, get_create_statement, get_insert_into_statement};
+use crate::fileflow::fileflow::{get_drop_statement, get_create_statement, get_insert_into_statement, get_create_statement_with_fixed_size};
 
 pub async fn optimized_insert(
     connection: &DatabaseConnection,
@@ -12,7 +13,6 @@ pub async fn optimized_insert(
     final_table_name: &str,
     db_driver: &str,
 ) -> Result<u64, String> {
-
     let temporary_table_name: &str = &format!("{}_temporary", final_table_name);
 
     for table_name in &[&temporary_table_name, final_table_name] {
@@ -48,6 +48,9 @@ pub async fn optimized_insert(
             values.push(format!("'{}'", value));
         }
 
+        let values: Vec<String> = values.iter()
+            .map(|v| v.replace("\\", "\\\\"))
+            .collect();
         batch.push(format!("({})", values.join(", ")));
 
         if batch.len() >= max_batch_size {
@@ -68,7 +71,7 @@ pub async fn optimized_insert(
         line_count += batch.len() as u64;
     }
 
-    let create_final_table_query: &str = &get_create_final_statement(db_driver, final_table_name, &map_max_length, &snake_case_headers)?;
+    let create_final_table_query: &str = &get_create_statement_with_fixed_size(db_driver, final_table_name, &map_max_length, &snake_case_headers)?;
 
     if let Err(err) = connection.query(&create_final_table_query).await {
         return Err(format!("Failed to create final table: {}", err));
@@ -89,21 +92,21 @@ pub async fn optimized_insert(
 
 fn get_copy_temp_to_final_table(driver: &str, temporary_table_name: &str, final_table_name: &str) -> Result<String, String> {
     match driver {
-        "sqlite" => {
+        SQLITE => {
             Ok(format!(
                 "INSERT INTO \"{}\" SELECT * FROM \"{}\"",
                 final_table_name,
                 temporary_table_name
             ))
         }
-        "mysql" | "mariadb" => {
+        MYSQL | MARIADB => {
             Ok(format!(
                 "INSERT INTO `{}` SELECT * FROM `{}`",
                 final_table_name,
                 temporary_table_name
             ))
         }
-        "postgres" => {
+        POSTGRES => {
             Ok(format!(
                 "INSERT INTO \"{}\" SELECT * FROM \"{}\"",
                 final_table_name,
@@ -111,55 +114,5 @@ fn get_copy_temp_to_final_table(driver: &str, temporary_table_name: &str, final_
             ))
         }
         _ => Err(format!("Unsupported database driver: {}", driver)),
-    }
-}
-
-fn get_create_final_statement(driver: &str, final_table_name: &str, map_max_length: &HashMap<&str, usize>, snake_case_headers: &Vec<String>) -> Result<String, String> {
-    match driver {
-        "postgres" => {
-            Ok(format!(
-                "CREATE TABLE \"{}\" ({})",
-                final_table_name,
-                snake_case_headers
-                    .iter()
-                    .map(|header| {
-                        let max_length = map_max_length.get(header.as_str()).unwrap();
-                        format!("\"{}\" VARCHAR({})", header, max_length)
-                    })
-                    .collect::<Vec<String>>()
-                    .join(", ")
-            ))
-        }
-        "mysql" | "mariadb" => {
-            Ok(format!(
-                "CREATE TABLE `{}` ({})",
-                final_table_name,
-                snake_case_headers
-                    .iter()
-                    .map(|header| {
-                        let max_length = map_max_length.get(header.as_str()).unwrap();
-                        format!("`{}` VARCHAR({})", header, max_length)
-                    })
-                    .collect::<Vec<String>>()
-                    .join(", ")
-            ))
-        }
-        "sqlite" => {
-            Ok(format!(
-                "CREATE TABLE \"{}\" ({})",
-                final_table_name,
-                snake_case_headers
-                    .iter()
-                    .map(|header| {
-                        let max_length = map_max_length.get(header.as_str()).unwrap();
-                        format!("\"{}\" VARCHAR({})", header, max_length)
-                    })
-                    .collect::<Vec<String>>()
-                    .join(", ")
-            ))
-        }
-        _ => {
-            Err(format!("Unsupported database driver: {}", driver))
-        }
     }
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Input } from "@/components/ui/input.tsx";
+import {Input} from "@/components/ui/input.tsx";
 import FileUploadComponent from "@/components/fileflowui/FileUploadComponent.tsx";
 import SelectDatabaseComponent from "@/components/fileflowui/SelectDatabaseComponent.tsx";
 
@@ -12,6 +12,7 @@ interface FormProps {
         dbName: string;
         tableName: string;
         dbDriver: string;
+        is_connected: boolean;
     };
     uiState: {
         fileName: string;
@@ -44,18 +45,21 @@ const FormComponent: React.FC<FormProps> = ({dbConfig, uiState, setters, actions
             <div className="space-y-4">
                 <FormInput label="URL of the database" value={dbConfig.dbUrl} onChange={setters.setDbUrl}
                            placeholder="localhost" required/>
-                <FormInput label="Port" type="number" value={dbConfig.port} onChange={setters.setPort}
-                           placeholder="Port" required/>
+
                 <FormInput label="Username" value={dbConfig.username} onChange={setters.setUsername}
                            placeholder="Username" required/>
+
+                <FormInput label="Name of the database" value={dbConfig.dbName} onChange={setters.setDbName}
+                           placeholder="Database Name" required/>
             </div>
 
             {/* Right Column */}
             <div className="space-y-4">
+                <FormInput label="Port" type="number" value={dbConfig.port} onChange={setters.setPort}
+                           placeholder="Port" required/>
                 <FormInput label="Password" type="password" value={dbConfig.password} onChange={setters.setPassword}
                            placeholder="Password" required/>
-                <FormInput label="Name of the database" value={dbConfig.dbName} onChange={setters.setDbName}
-                           placeholder="Database Name" required/>
+
                 <FormInput label="Name of the table" value={dbConfig.tableName} onChange={setters.setTableName}
                            placeholder="Table Name" required/>
             </div>
@@ -74,6 +78,7 @@ const FormComponent: React.FC<FormProps> = ({dbConfig, uiState, setters, actions
                     fileSize={uiState.fileSize}
                 />
             </div>
+
         </form>
     );
 };

@@ -5,6 +5,7 @@ interface ButtonGroupProps {
     handleSubmit: (e: React.FormEvent) => void;
     handleInsert: (e: React.FormEvent) => void;
     handleReset: () => void;
+    is_connected: boolean;
 }
 
 const ButtonGroupComponent: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) => {
@@ -12,23 +13,31 @@ const ButtonGroupComponent: React.FC<ButtonGroupProps> = (props: ButtonGroupProp
         <div className="flex items-center justify-center gap-6 mb-6 p-4">
             <button
                 onClick={props.handleSubmit}
-                className="flex items-center justify-center bg-green-600 hover:bg-green-700 text-white p-3 rounded-full shadow-lg transition duration-300"
-                aria-label="Submit to Database" title="Connect to Database"
+                className={`flex items-center justify-center p-3 rounded-full shadow-lg transition duration-300 ${
+                    props.is_connected ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 text-white'
+                }`}
+                aria-label="Submit to Database"
+
+                title={props.is_connected ? "Submit data to the specified database" : "Connect to a database first"}
             >
                 <Database className="w-5 h-5"/>
             </button>
 
             <button
                 onClick={props.handleInsert}
-                className="flex items-center justify-center bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full shadow-lg transition duration-300"
-                aria-label="Insert Data" title={"Insert data into the specified database"}
+                className={`flex items-center justify-center p-3 rounded-full shadow-lg transition duration-300 ${
+                    props.is_connected ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-gray-500 text-gray-700'
+                }`}
+                aria-label="Insert Data"
+
+                title={props.is_connected ? "Insert data to the specified database" : "Connect to a database first"}
             >
                 <Upload className="w-5 h-5"/>
             </button>
 
             <button
                 onClick={props.handleReset}
-                className="flex items-center justify-center bg-red-500 hover:bg-red-600 text-white p-3 rounded-full shadow-lg transition duration-300"
+                className="flex items-center justify-center bg-yellow-500 hover:bg-yellow-600 text-white p-3 rounded-full shadow-lg transition duration-300"
                 aria-label="Reset" title={"Reset the form"}
             >
                 <Eraser className="w-5 h-5"/>

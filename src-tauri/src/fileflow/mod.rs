@@ -4,3 +4,4 @@ pub mod action;
 pub(crate) mod fast_insert;
 mod optimized_insert;
 pub mod stuct;
+pub mod constants;

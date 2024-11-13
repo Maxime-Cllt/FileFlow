@@ -35,6 +35,9 @@ pub(crate) async fn fast_insert(
             .map(|v| format!("'{}'", v.trim().replace("'", "''")))
             .collect();
 
+        let values: Vec<String> = values.iter()
+            .map(|v| v.replace("\\", "\\\\"))
+            .collect();
         batch.push(format!("({})", values.join(", ")));
 
         if batch.len() == max_batch_size as usize {

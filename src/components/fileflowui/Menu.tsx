@@ -6,26 +6,22 @@ import {
     MenubarTrigger
 } from "@/components/ui/menubar.tsx";
 import React from "react";
-import {invoke} from "@tauri-apps/api/tauri";
-
 
 interface MenuProps {
-    addLog: (message: string) => void;
-    saveConfig: (e: React.MouseEvent) => Promise<void>;
-    loadConfig: (e: React.MouseEvent) => Promise<void>;
+    saveConfig?: (e: React.MouseEvent) => Promise<void>;
+    loadConfig?: (e: React.MouseEvent) => Promise<void>;
+    handleDeconnection?: (e: React.MouseEvent) => Promise<void>;
 }
 
-const Menu: React.FC<MenuProps> = (props: MenuProps) => {
+const Menu: React.FC<MenuProps> = ({
+                                       saveConfig = async () => {
+                                       },
+                                       loadConfig = async () => {
+                                       },
+                                       handleDeconnection = async () => {
+                                       },
 
-    const handleDeconnection = async (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-        try {
-            const response: unknown = await invoke('disconnect_from_database');
-            props.addLog(response as string);
-        } catch (error) {
-            props.addLog(error as string);
-        }
-    };
+                                   }) => {
 
     return (
         <div>
@@ -39,15 +35,15 @@ const Menu: React.FC<MenuProps> = (props: MenuProps) => {
                 <MenubarMenu>
                     <MenubarTrigger>Configuration</MenubarTrigger>
                     <MenubarContent>
-                        <MenubarItem onClick={props.saveConfig}>Save this</MenubarItem>
-                        <MenubarItem onClick={props.loadConfig}>Import</MenubarItem>
+                        <MenubarItem onClick={saveConfig}>Save this</MenubarItem>
+                        <MenubarItem onClick={loadConfig}>Import</MenubarItem>
                     </MenubarContent>
                 </MenubarMenu>
                 <MenubarMenu>
                     <MenubarTrigger>Other</MenubarTrigger>
                     <MenubarContent>
-                        <MenubarItem onClick={(): string => window.location.href = "/"}>Home</MenubarItem>
-                        <MenubarItem onClick={(): string => window.location.href = "/about"}>About</MenubarItem>
+                        <MenubarItem onClick={() => (window.location.href = "/")}>Home</MenubarItem>
+                        <MenubarItem onClick={() => (window.location.href = "/about")}>About</MenubarItem>
                     </MenubarContent>
                 </MenubarMenu>
             </Menubar>

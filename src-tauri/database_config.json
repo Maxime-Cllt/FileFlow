@@ -1,9 +1,9 @@
 {
-  "db_driver": "postgres",
+  "db_driver": "mariadb",
   "db_host": "localhost",
-  "port": "5432",
+  "port": "3306",
   "username": "root",
   "password": "root",
-  "db_name": "postgres",
+  "db_name": "test",
   "sqlite_file_path": ""
 }

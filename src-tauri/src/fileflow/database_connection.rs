@@ -1,6 +1,6 @@
-use sqlx::{Error, MySqlPool, PgPool, SqlitePool};
-use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
+use crate::fileflow::stuct::db_config::DbConfig;
+use sqlx::{Error, MySqlPool, PgPool, SqlitePool};
 
 pub enum DatabaseConnection {
     Postgres(PgPool),
@@ -61,17 +61,31 @@ impl DatabaseConnection {
             POSTGRES => Ok(format!(
                 "postgres://{}{}@{}:{}/{}",
                 config.username,
-                if config.password.is_empty() { "".to_string() } else { format!(":{}", config.password) },
-                config.db_host, config.port, config.db_name)
-            ),
+                if config.password.is_empty() {
+                    "".to_string()
+                } else {
+                    format!(":{}", config.password)
+                },
+                config.db_host,
+                config.port,
+                config.db_name
+            )),
             MYSQL | MARIADB => Ok(format!(
                 "mysql://{}{}@{}:{}/{}",
                 config.username,
-                if config.password.is_empty() { "".to_string() } else { format!(":{}", config.password) },
-                config.db_host, config.port, config.db_name
+                if config.password.is_empty() {
+                    "".to_string()
+                } else {
+                    format!(":{}", config.password)
+                },
+                config.db_host,
+                config.port,
+                config.db_name
             )),
             SQLITE => Ok(config.sqlite_file_path.clone()),
-            _ => Err(Error::Protocol(format!("Unsupported database driver: {}", config.db_driver).into())),
+            _ => Err(Error::Protocol(
+                format!("Unsupported database driver: {}", config.db_driver).into(),
+            )),
         }
     }
 

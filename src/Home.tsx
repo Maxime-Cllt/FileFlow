@@ -1,5 +1,5 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {invoke} from '@tauri-apps/api/tauri';
+import {invoke} from '@tauri-apps/api/core';
 import './Loader.css';
 import {Card, CardContent, CardHeader} from "@/components/ui/card";
 import Menu from "@/components/fileflowui/Menu.tsx";

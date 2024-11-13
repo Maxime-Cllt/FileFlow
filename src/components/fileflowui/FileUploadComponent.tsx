@@ -2,8 +2,9 @@ import React from 'react';
 import {Input} from "@/components/ui/input.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {FileArchive} from "lucide-react";
-import {dialog} from "@tauri-apps/api";
-import {invoke} from "@tauri-apps/api/tauri";
+import {} from "@tauri-apps/api";
+import {invoke} from "@tauri-apps/api/core";
+import * as dialog from "@tauri-apps/plugin-dialog"
 
 interface FileUploadProps {
     fileName: string;
@@ -17,8 +18,7 @@ interface FileUploadProps {
 
 const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) => {
 
-    const openFileDialog = async (e: any) => {
-        e.preventDefault();
+    const openFileDialog = async () => {
         try {
             const selectedFilePath = await dialog.open({
                 filters: [{name: 'CSV Files', extensions: ['csv']}],
@@ -53,7 +53,7 @@ const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) 
 
     return (
         <div className="flex items-center gap-4">
-            <Button onClick={openFileDialog} className="bg-blue-500 hover:bg-blue-600">
+            <Button type="button" onClick={openFileDialog} className="bg-blue-500 hover:bg-blue-600">
                 <FileArchive/>
             </Button>
             <Input

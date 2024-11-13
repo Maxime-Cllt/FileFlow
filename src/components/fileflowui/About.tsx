@@ -1,32 +1,18 @@
 import React from 'react';
 import Menu from "@/components/fileflowui/Menu.tsx";
-import { Card } from "@/components/ui/card.tsx";
-
+import {Card} from "@/components/ui/card.tsx";
 
 const AboutComponent: React.FC = () => {
-
-    const addLog = () => {
-        return;
-    }
-    const saveConfig = async (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-        return;
-    };
-
-    const loadConfig = async (e: { preventDefault: () => void; }) => {
-        e.preventDefault();
-        return;
-    };
-
     return (
         <div className="bg-gray-100">
             {/* Menu */}
             <div className="fixed top-0 w-full bg-white shadow-md z-10">
-                <Menu addLog={addLog} saveConfig={saveConfig} loadConfig={loadConfig} />
+                <Menu/>
             </div>
 
             {/* Hero Section */}
-            <div className="flex items-center justify-center h-64 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+            <div
+                className="flex items-center justify-center h-64 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
                 <h1 className="text-6xl font-bold">FileFlow</h1>
             </div>
 
@@ -38,8 +24,10 @@ const AboutComponent: React.FC = () => {
                     <Card className="p-8 shadow-lg bg-white">
                         <h2 className="text-3xl font-bold text-center mb-4">About FileFlow</h2>
                         <p className="text-lg text-gray-700 text-center">
-                            FileFlow is a simple tool that allows you to insert data from a CSV file into a database table,
-                            built with Rust and Tauri framework. It's cross-platform and can be used on Windows, MacOS, and Linux.
+                            FileFlow is a simple tool that allows you to insert data from a CSV file into a database
+                            table,
+                            built with Rust and Tauri framework. It's cross-platform and can be used on Windows, MacOS,
+                            and Linux.
                         </p>
                     </Card>
 
@@ -74,11 +62,16 @@ const AboutComponent: React.FC = () => {
                     <Card className="p-6 shadow-md bg-white mb-16">
                         <h2 className="text-2xl font-semibold mb-4">Modes of Insertion</h2>
                         <ul className="list-disc list-inside text-gray-700 space-y-2">
-                            <li><strong>Optimized mode:</strong> Inserts data into a new table with optimized column types (VARCHAR(MAX_LENGTH))</li>
-                            <li><strong>Fast mode:</strong> Inserts data into an existing table with columns as defined in the CSV</li>
+                            <li><strong>Optimized mode:</strong> Inserts data into a new table with optimized column
+                                types (VARCHAR(MAX_LENGTH))
+                            </li>
+                            <li><strong>Fast mode:</strong> Inserts data into an existing table with columns as defined
+                                in the CSV
+                            </li>
                         </ul>
                         <p className="text-sm text-gray-500 mt-4">
-                            <strong>Note:</strong> Optimized mode may take longer, but ensures better data type management.
+                            <strong>Note:</strong> Optimized mode may take longer, but ensures better data type
+                            management.
                         </p>
 
                     </Card>

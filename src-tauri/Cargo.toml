@@ -1,6 +1,6 @@
 [package]
 name = "FileFlow"
-version = "1.0.0"
+version = "1.0.2"
 description = "An app to insert CSV data into a DMBS with a GUI"
 authors = ["Maxime-Cllt"]
 edition = "2021"
@@ -8,15 +8,23 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1", features = [] }
+tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "1", features = ["api-all"] }
+tauri = { version = "2", features = [] }
 serde = { version = "1.0.214", features = ["derive"] }
 serde_json = "1.0.132"
 sqlx = { version = "0.8.2", features = ["runtime-tokio-native-tls", "mysql", "postgres", "sqlite"] }
-tokio = { version = "1.41.0", features = ["full"] }
-csv = "1.3.0"
+tokio = { version = "1.41.1", features = ["full"] }
+csv = "1.3.1"
+tauri-plugin-http = "2"
+tauri-plugin-process = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-os = "2"
+tauri-plugin-clipboard-manager = "2.0.2"
+tauri-plugin-dialog = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-shell = "2"
 
 [features]
 # This feature is used for production builds or when a dev server is not specified, DO NOT REMOVE!!
@@ -24,15 +32,17 @@ custom-protocol = ["tauri/custom-protocol"]
 
 [profile.dev]
 incremental = true # Compile your binary in smaller steps.
-codegen-units = 1
+codegen-units = 16 # Compile your binary in smaller steps. The higher the number, the faster the compilation. The lower the number, the smaller the binary size.
 opt-level = 0 # Prioritizes fast compilation.
 panic = "unwind" # Allows for better debugging.
 debug = true # Enables debug symbols.
 
 
 [profile.release]
-codegen-units = 1 # Allows LLVM to perform better optimization.
+codegen-units = 1 # Compile your binary in smaller steps.
 opt-level = 2 # Prioritizes small binary size. Use `3` if you prefer speed.
 panic = "abort" # Higher performance by disabling panic handlers.
 strip = true # Ensures debug symbols are removed.
 
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-global-shortcut = "2"

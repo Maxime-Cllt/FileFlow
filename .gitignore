@@ -27,3 +27,4 @@ dist-ssr
 *.sqlite
 *.bak
 mariadb
+/src-tauri/database_config.json

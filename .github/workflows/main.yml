@@ -1,8 +1,7 @@
 name: "publish"
 
 on:
-  pull_request:
-  workflow_dispatch:  # Ajoute cette ligne pour permettre le déclenchement manuel
+  workflow_dispatch:
 
 jobs:
   create-release:

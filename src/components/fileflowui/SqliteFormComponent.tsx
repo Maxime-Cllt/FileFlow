@@ -1,10 +1,11 @@
 import React from 'react';
 import {Input} from "@/components/ui/input.tsx";
 import {Button} from "@/components/ui/button.tsx";
-import {dialog} from "@tauri-apps/api";
+import {} from "@tauri-apps/api";
 import {HardDrive} from "lucide-react";
 import SelectDatabaseComponent from "@/components/fileflowui/SelectDatabaseComponent.tsx";
 import FileUploadComponent from "@/components/fileflowui/FileUploadComponent.tsx";
+import * as dialog from "@tauri-apps/plugin-dialog"
 
 interface SqliteFormProps {
     addLog: (message: string) => void;

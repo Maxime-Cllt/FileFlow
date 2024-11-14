@@ -53,13 +53,13 @@ pub async fn insert_csv_data(
         return Err("No active database connection.".to_string());
     }
 
-    let conn: &DatabaseConnection = conn_guard.as_ref().unwrap();
+    let connection: &DatabaseConnection = conn_guard.as_ref().unwrap();
     let start: Instant = Instant::now();
 
     let file: File = File::open(csv.file_path).unwrap();
     let mut reader: Reader<File> = ReaderBuilder::new().has_headers(true).from_reader(file);
 
-    let snake_case_headers: Vec<String> = get_formated_column_names(
+    let final_columns_name: Vec<String> = get_formated_column_names(
         reader
             .headers()
             .unwrap()
@@ -71,22 +71,22 @@ pub async fn insert_csv_data(
     let line_count: u64;
     if csv.mode == "fast" {
         line_count = fast_insert(
-            &conn,
+            &connection,
             &mut reader,
-            &snake_case_headers,
+            &final_columns_name,
             &csv.table_name,
             &csv.db_driver,
         )
-        .await?;
+            .await?;
     } else {
         line_count = optimized_insert(
-            &conn,
+            &connection,
             &mut reader,
-            &snake_case_headers,
+            &final_columns_name,
             &csv.table_name,
             &csv.db_driver,
         )
-        .await?;
+            .await?;
     }
 
     Ok(format!(
@@ -153,16 +153,16 @@ pub async fn get_size_of_file(file_path: String) -> Result<String, String> {
 }
 
 #[command]
-pub async fn generate_load_data_sql(load_data_config: &GenerateLoadData) -> Result<String, String> {
-    if load_data_config.file_path.is_empty() {
+pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, String> {
+    if load.file_path.is_empty() {
         return Err("File path is empty".to_string());
     }
 
-    let file: File = File::open(&load_data_config.file_path)
+    let file: File = File::open(&load.file_path)
         .map_err(|e| format!("Failed to open file: {}", e))?;
     let mut reader: Reader<File> = ReaderBuilder::new().has_headers(true).from_reader(file);
 
-    let formatted_headers: Vec<String> = get_formated_column_names(
+    let final_columns_name: Vec<String> = get_formated_column_names(
         reader
             .headers()
             .unwrap()
@@ -171,9 +171,9 @@ pub async fn generate_load_data_sql(load_data_config: &GenerateLoadData) -> Resu
             .collect(),
     );
 
-    let mut size_map: HashMap<&str, usize> = HashMap::new();
-    for header in &formatted_headers {
-        size_map.insert(header, 0);
+    let mut columns_size_map: HashMap<&str, usize> = HashMap::new();
+    for header in &final_columns_name {
+        columns_size_map.insert(header, 0);
     }
 
     for record in reader.records() {
@@ -181,7 +181,7 @@ pub async fn generate_load_data_sql(load_data_config: &GenerateLoadData) -> Resu
 
         for i in 0..record.len() {
             let value: String = record.get(i).unwrap().trim().to_string();
-            let max_length: &mut usize = size_map.get_mut(formatted_headers[i].as_str()).unwrap();
+            let max_length: &mut usize = columns_size_map.get_mut(final_columns_name[i].as_str()).unwrap();
             if value.len() > *max_length {
                 *max_length = value.len() + 1;
             }
@@ -191,24 +191,23 @@ pub async fn generate_load_data_sql(load_data_config: &GenerateLoadData) -> Resu
     let mut sql: String = String::new();
     sql.push_str(
         get_create_statement_with_fixed_size(
-            &load_data_config.db_driver,
-            &load_data_config.table_name,
-            &size_map,
-            &formatted_headers,
-        )
-        .unwrap()
-        .as_str(),
+            &load.db_driver,
+            &load.table_name,
+            &columns_size_map,
+            &final_columns_name,
+        )?
+            .as_str(),
     );
-    sql.push_str(";\n");
+    sql.push_str("\n\n");
 
     sql.push_str("LOAD DATA LOCAL INFILE '");
-    sql.push_str(load_data_config.file_path.as_str());
-    sql.push_str("' INTO TABLE ");
-    sql.push_str(load_data_config.table_name.as_str());
+    sql.push_str(load.file_path.as_str());
+    sql.push_str("'\nINTO TABLE ");
+    sql.push_str(load.table_name.as_str());
     sql.push_str(
-        " FIELDS TERMINATED BY ',' ENCLOSED BY '\"' LINES TERMINATED BY '\\n' IGNORE 1 ROWS (",
+        "\nFIELDS TERMINATED BY ','\nENCLOSED BY '\"'\nLINES TERMINATED BY '\\n'\nIGNORE 1 ROWS (",
     );
-    sql.push_str(&formatted_headers.join(", "));
+    sql.push_str(&final_columns_name.join(", "));
     sql.push_str(");");
 
     Ok(sql)

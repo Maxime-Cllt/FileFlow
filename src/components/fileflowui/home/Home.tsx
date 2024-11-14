@@ -1,15 +1,16 @@
 import React, {useCallback, useState} from 'react';
 import {invoke} from '@tauri-apps/api/core';
-import './Loader.css';
-import {Card, CardContent, CardHeader} from "@/components/ui/card";
-import Menu from "@/components/fileflowui/Menu.tsx";
+import '../../../Loader.css';
+import {Card, CardContent, CardHeader} from "@/components/ui/card.tsx";
+import Menu from "@/components/fileflowui/home/Menu.tsx";
 import Loader from "@/components/fileflowui/Loader.tsx";
-import FormComponent from "@/components/fileflowui/FormComponent.tsx";
-import ModeSelectionComponent from "@/components/fileflowui/ModeSelectionComponent.tsx";
-import ButtonGroupComponent from "@/components/fileflowui/ButtonGroupComponent.tsx";
-import LogComponent from "@/components/fileflowui/LogComponent.tsx";
-import SqliteFormComponent from "@/components/fileflowui/SqliteFormComponent.tsx";
+import FormComponent from "@/components/fileflowui/home/FormComponent.tsx";
+import ModeSelectionComponent from "@/components/fileflowui/home/ModeSelectionComponent.tsx";
+import ButtonGroupComponent from "@/components/fileflowui/home/ButtonGroupComponent.tsx";
+import LogComponent from "@/components/fileflowui/home/LogComponent.tsx";
+import SqliteFormComponent from "@/components/fileflowui/home/SqliteFormComponent.tsx";
 import {initialDbConfig, initialUiState} from "@/components/object/initialState.tsx";
+import {toast} from "sonner";
 
 const Home: React.FC = () => {
     const [dbConfig, setDbConfig] = useState(initialDbConfig);
@@ -32,11 +33,9 @@ const Home: React.FC = () => {
         const newConfig = {...dbConfig};
 
         if (!dbConfig.dbUrl || !dbConfig.port || !dbConfig.username) {
-            addLog('Please fill all fields');
+            toast.warning('Please fill all the fields');
             return;
         }
-
-        addLog('Trying to connect...');
 
         try {
             const response = await invoke('connect_to_database', {
@@ -53,25 +52,25 @@ const Home: React.FC = () => {
             });
             addLog(response as string);
             newConfig.is_connected = true;
-            addLog('Connected successfully!');
+            toast.success('Connected successfully');
         } catch (error) {
             addLog(`Connection error: ${error}`);
             newConfig.is_connected = false;
-            addLog('Connection failed!');
+            toast.error('Connection failed');
         }
-        setDbConfig(newConfig); // Trigger re-render by updating state
+        setDbConfig(newConfig);
     };
 
     const handleInsert = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!uiState.filePath) {
-            addLog('Please select a file');
+            toast.warning('Please select a file');
             return;
         }
 
         if (!dbConfig.is_connected) {
-            addLog('Please connect to the database');
+            toast.warning('Please connect to the database');
             return;
         }
 
@@ -90,9 +89,11 @@ const Home: React.FC = () => {
 
             updateUiStateField('showLoader', false);
             addLog(response as string);
+            toast.success('Data inserted successfully');
         } catch (error) {
             addLog(`Insert error: ${error}`);
             updateUiStateField('showLoader', false);
+            toast.error('Error inserting data');
         }
     };
 
@@ -123,7 +124,6 @@ const Home: React.FC = () => {
         setUiState(prev => ({
             ...prev,
             fileName: '',
-            fileSize: '',
             filePath: null,
             histoLog: '',
             showLoader: false,
@@ -133,7 +133,7 @@ const Home: React.FC = () => {
     const saveConfig = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const response = await invoke('save_database_config', {
+            await invoke('save_database_config', {
                 save: {
                     db_driver: dbConfig.dbDriver.toLowerCase(),
                     db_host: dbConfig.dbUrl,
@@ -145,9 +145,10 @@ const Home: React.FC = () => {
                     sqlite_file_path: dbConfig.sqliteFilePath,
                 },
             });
-            addLog(response as string);
+            toast.success('Config saved successfully');
         } catch (error) {
             addLog(`Error saving config: ${error}`);
+            toast.error('Error saving config');
         }
     };
 
@@ -170,25 +171,28 @@ const Home: React.FC = () => {
                     is_connected: false,
                 });
                 updateUiStateField('sqlite', !!loadDbConfig.sqlite_file_path);
+                toast.success('Config loaded successfully');
             } else {
                 addLog('Error loading config');
+                toast.error('Error loading config');
             }
         } catch (error) {
             addLog(`Error loading config: ${error}`);
+            toast.error('Error loading config');
         }
     };
 
     const handleDeconnection = async (e: React.MouseEvent) => {
         e.preventDefault();
         try {
-            const response: unknown = await invoke('disconnect_from_database');
-            addLog(response as string);
-            dbConfig.is_connected = false;
+            await invoke('disconnect_from_database');
+            setDbConfig(prev => ({...prev, is_connected: false}));
+            toast.success('Disconnected successfully');
         } catch (error) {
             addLog(error as string);
+            toast.error('Error disconnecting');
         }
     };
-
 
     const renderForm = () => {
         if (uiState.sqlite) {
@@ -201,10 +205,8 @@ const Home: React.FC = () => {
                         dbDriver: dbConfig.dbDriver,
                         handledbDriverChange,
                         fileName: uiState.fileName,
-                        fileSize: uiState.fileSize,
                         setFilePath: (value: string | null) => updateUiStateField('filePath', value),
                         setFileName: (value: string) => updateUiStateField('fileName', value),
-                        setFileSize: (value: string) => updateUiStateField('fileSize', value),
                         setTableName: (value: string) => updateDbConfigField('tableName', value),
                     }}
                 />
@@ -225,7 +227,6 @@ const Home: React.FC = () => {
                         setTableName: (value: string) => updateDbConfigField('tableName', value),
                         setFilePath: (filePath: string | null) => updateUiStateField('filePath', filePath),
                         setFileName: (name: string) => updateUiStateField('fileName', name),
-                        setFileSize: (size: string) => updateUiStateField('fileSize', size),
                         setMode: (mode: string) => updateUiStateField('mode', mode),
                     },
                     actions: {
@@ -281,7 +282,7 @@ const Home: React.FC = () => {
                 </Card>
 
                 {/* Logs Section */}
-                <div className="mt-8 bg-gray-50 p-4 rounded-lg shadow-inner">
+                <div className="bg-gray-50 p-4 rounded-lg shadow-inner">
                     <LogComponent histoLog={uiState.histoLog}/>
                 </div>
             </div>

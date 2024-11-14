@@ -6,6 +6,7 @@ import {
     MenubarTrigger
 } from "@/components/ui/menubar.tsx";
 import React from "react";
+import {Link} from "react-router-dom";
 
 interface MenuProps {
     saveConfig?: (e: React.MouseEvent) => Promise<void>;
@@ -42,8 +43,9 @@ const Menu: React.FC<MenuProps> = ({
                 <MenubarMenu>
                     <MenubarTrigger>Other</MenubarTrigger>
                     <MenubarContent>
-                        <MenubarItem onClick={() => (window.location.href = "/")}>Home</MenubarItem>
-                        <MenubarItem onClick={() => (window.location.href = "/about")}>About</MenubarItem>
+                        <MenubarItem><Link to={"/"}>Home</Link></MenubarItem>
+                        <MenubarItem><Link to={"/load"}>Load</Link></MenubarItem>
+                        <MenubarItem><Link to={"/about"}>About</Link></MenubarItem>
                     </MenubarContent>
                 </MenubarMenu>
             </Menubar>

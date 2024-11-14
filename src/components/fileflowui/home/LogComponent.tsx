@@ -7,7 +7,7 @@ interface LogProps {
 const LogComponent: React.FC<LogProps> = (props: LogProps) => {
     return (
         <div
-            className="flex flex-col mt-6 items-center justify-center h-auto max-h-full p-4">
+            className="flex flex-col items-center justify-center h-auto max-h-full">
             <label htmlFor="logArea" className="text-lg font-semibold mb-2 text-gray-700"></label>
             <textarea
                 id="logArea"

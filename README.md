@@ -38,6 +38,9 @@ See in the release section for the latest version of the application.
 <label>
 <input type="checkbox" style="margin-right: 10px" checked>
 </label> Don't require <span style="font-weight: bold;">ANY</span> privilege to insert the data <br>
+<label>
+<input type="checkbox" style="margin-right: 10px" checked>
+</label> Generate LOAD DATA sql query to insert faster<br>
 
 ## Supported databases
 
@@ -90,11 +93,13 @@ pnpm tauri dev
 
 ## Usage
 
-1. Select the CSV file you want to insert into the database
-2. Select the database you want to insert the data into
-3. Click on the "Insert" button
-4. Wait for the data to be inserted
-5. Done!
+<ol>
+    <li> Select the CSV file you want to insert into the database </li>
+    <li> Select the database you want to insert the data into </li>
+    <li> Click on the "Insert" button </li>
+    <li> Wait for the data to be inserted </li>
+    <li> Done! </li>
+</ol>
 
 ## Information
 

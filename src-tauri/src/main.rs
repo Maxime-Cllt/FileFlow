@@ -6,7 +6,7 @@ mod tests;
 
 use crate::fileflow::action::actions::{
     connect_to_database, disconnect_from_database, get_size_of_file, insert_csv_data,
-    load_database_config, save_database_config, DatabaseState,
+    load_database_config, save_database_config,generate_load_data_sql, DatabaseState
 };
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -31,7 +31,8 @@ fn main() {
             disconnect_from_database,
             save_database_config,
             load_database_config,
-            get_size_of_file
+            get_size_of_file,
+            generate_load_data_sql
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

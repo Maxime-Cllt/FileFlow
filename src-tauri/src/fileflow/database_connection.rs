@@ -46,6 +46,7 @@ impl DatabaseConnection {
         }
     }
 
+    #[warn(dead_code)]
     pub async fn fetch_one_sqlite(&self, query: &str) -> Result<sqlx::sqlite::SqliteRow, Error> {
         match self {
             DatabaseConnection::SQLite(pool) => {

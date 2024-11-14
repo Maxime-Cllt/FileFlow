@@ -12,7 +12,7 @@ use crate::fileflow::fileflow::{
 pub async fn optimized_insert(
     connection: &DatabaseConnection,
     reader: &mut Reader<File>,
-    snake_case_headers: &Vec<String>,
+    final_columns_name: &Vec<String>,
     final_table_name: &str,
     db_driver: &str,
 ) -> Result<u64, String> {
@@ -25,8 +25,7 @@ pub async fn optimized_insert(
         }
     }
 
-    let create_table_query: &str =
-        &get_create_statement(db_driver, &temporary_table_name, &snake_case_headers)?;
+    let create_table_query: &str = &get_create_statement(db_driver, &temporary_table_name, &final_columns_name)?;
 
     if let Err(err) = connection.query(&create_table_query).await {
         return Err(format!("Failed to create temporary table: {}", err));
@@ -34,11 +33,11 @@ pub async fn optimized_insert(
 
     let max_batch_size: usize = 4000;
     let mut batch: Vec<String> = Vec::with_capacity(max_batch_size);
-    let mut map_max_length: HashMap<&str, usize> =
-        snake_case_headers.iter().map(|h| (h.as_str(), 0)).collect();
-    let columns: String = snake_case_headers.join(", ");
-    let insert_query_base: String =
-        get_insert_into_statement(db_driver, &temporary_table_name, &columns)?;
+
+    let mut columns_size_map: HashMap<&str, usize> = final_columns_name.iter().map(|h| (h.as_str(), 0)).collect();
+    let columns: String = final_columns_name.join(", ");
+
+    let insert_query_base: String = get_insert_into_statement(db_driver, &temporary_table_name, &columns)?;
     let mut line_count: u64 = 0;
 
     for result in reader.records() {
@@ -47,8 +46,8 @@ pub async fn optimized_insert(
 
         for (i, value) in record.iter().enumerate() {
             let value: String = value.trim().replace("'", "''");
-            let max_length: &mut usize = map_max_length
-                .get_mut(snake_case_headers[i].as_str())
+            let max_length: &mut usize = columns_size_map
+                .get_mut(final_columns_name[i].as_str())
                 .unwrap();
             if value.len() > *max_length {
                 *max_length = value.len() + 1;
@@ -80,8 +79,8 @@ pub async fn optimized_insert(
     let create_final_table_query: &str = &get_create_statement_with_fixed_size(
         db_driver,
         final_table_name,
-        &map_max_length,
-        &snake_case_headers,
+        &columns_size_map,
+        &final_columns_name,
     )?;
 
     if let Err(err) = connection.query(&create_final_table_query).await {
@@ -103,11 +102,11 @@ pub async fn optimized_insert(
 }
 
 fn get_copy_temp_to_final_table(
-    driver: &str,
+    db_driver: &str,
     temporary_table_name: &str,
     final_table_name: &str,
 ) -> Result<String, String> {
-    match driver {
+    match db_driver {
         SQLITE => Ok(format!(
             "INSERT INTO \"{}\" SELECT * FROM \"{}\"",
             final_table_name, temporary_table_name
@@ -120,6 +119,6 @@ fn get_copy_temp_to_final_table(
             "INSERT INTO \"{}\" SELECT * FROM \"{}\"",
             final_table_name, temporary_table_name
         )),
-        _ => Err(format!("Unsupported database driver: {}", driver)),
+        _ => Err(format!("Unsupported database driver: {}", db_driver)),
     }
 }

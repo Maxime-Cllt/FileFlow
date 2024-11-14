@@ -8,15 +8,15 @@ import * as dialog from "@tauri-apps/plugin-dialog"
 
 interface FileUploadProps {
     fileName: string;
-    fileSize: string;
-    setFilePath: (filePath: string | null) => void;
+    setFilePath: (filePath: string) => void;
     setFileName: (name: string) => void;
-    setFileSize: (size: string) => void;
     setTableName: (tableName: string) => void;
     addLog: (message: string) => void;
 }
 
 const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) => {
+
+    const [fileSize, setFileSize] = React.useState<string>('');
 
     const openFileDialog = async () => {
         try {
@@ -35,7 +35,7 @@ const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) 
                 props.setTableName(normalizedTableName);
 
                 const response = await invoke('get_size_of_file', {filePath: path});
-                props.setFileSize(typeof response === 'string' ? response : '');
+                setFileSize(typeof response === 'string' ? response : '');
             }
         } catch (error) {
             props.addLog(`Error opening file: ${error}`);
@@ -48,7 +48,7 @@ const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) 
         const fileName = getFileNameFromPath(path).split('.').shift() || '';
         return fileName
             .replace(/[^a-zA-Z0-9_]/g, '')
-            .replace(/^_/, '');
+            .replace(/^_/, '').toLowerCase();
     };
 
     return (
@@ -58,7 +58,7 @@ const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) 
             </Button>
             <Input
                 type="text"
-                value={props.fileName ? `${props.fileName} (${props.fileSize})` : ''}
+                value={props.fileName ? `${props.fileName} (${fileSize})` : ''}
                 placeholder="Select a CSV file"
                 disabled
                 className="w-full"

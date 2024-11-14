@@ -1,9 +1,8 @@
 import React from 'react';
 import {Input} from "@/components/ui/input.tsx";
 import {Button} from "@/components/ui/button.tsx";
-import {} from "@tauri-apps/api";
 import {HardDrive} from "lucide-react";
-import SelectDatabaseComponent from "@/components/fileflowui/SelectDatabaseComponent.tsx";
+import SelectDatabaseComponent from "@/components/fileflowui/home/SelectDatabaseComponent.tsx";
 import FileUploadComponent from "@/components/fileflowui/FileUploadComponent.tsx";
 import * as dialog from "@tauri-apps/plugin-dialog"
 
@@ -14,10 +13,8 @@ interface SqliteFormProps {
     dbDriver: string;
     handledbDriverChange: (value: string) => void;
     fileName: string;
-    fileSize: string;
     setFilePath: (filePath: string | null) => void;
     setFileName: (name: string) => void;
-    setFileSize: (size: string) => void;
     setTableName: (tableName: string) => void;
 }
 
@@ -63,10 +60,8 @@ const SqliteFormComponent: React.FC<SqliteFormProps> = (props: SqliteFormProps) 
                 {/* Upload file */}
                 <FileUploadComponent {...{
                     fileName: props.fileName,
-                    fileSize: props.fileSize,
                     setFilePath: props.setFilePath,
                     setFileName: props.setFileName,
-                    setFileSize: props.setFileSize,
                     setTableName: props.setTableName,
                     addLog: props.addLog
                 }} />

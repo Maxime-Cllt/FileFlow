@@ -8,31 +8,28 @@ use std::fs::File;
 pub(crate) async fn fast_insert(
     connection: &DatabaseConnection,
     reader: &mut Reader<File>,
-    snake_case_headers: &Vec<String>,
+    final_columns_name: &Vec<String>,
     final_table_name: &str,
     db_driver: &str,
 ) -> Result<u64, String> {
     // Drop the table if it exists
-    if let Err(err) = connection
-        .query(&get_drop_statement(db_driver, final_table_name)?)
-        .await
+    if let Err(err) = connection.query(&get_drop_statement(db_driver, final_table_name)?).await
     {
         return Err(format!("Failed to drop final table: {}", err));
     }
 
     // Create the table
-    if let Err(err) = connection
-        .query(&get_create_statement(
+    if let Err(err) = connection.query(&get_create_statement(
             db_driver,
             final_table_name,
-            snake_case_headers,
+            final_columns_name,
         )?)
         .await
     {
         return Err(format!("Failed to create table: {}", err));
     }
 
-    let columns: &str = &snake_case_headers.join(", ");
+    let columns: &str = &final_columns_name.join(", ");
     let mut line_count: u64 = 0;
     let max_batch_size: u16 = 4000;
     let mut batch: Vec<String> = Vec::with_capacity(max_batch_size as usize);

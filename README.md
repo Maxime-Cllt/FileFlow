@@ -1,15 +1,16 @@
 <div align=center>
 <img src="/src-tauri/icons/icon.png" width="100px" height="100px"  alt="FileFlow" align="center" />
 <h1>FileFlow</h1>
+    <div align="center">
+        <img src="https://img.shields.io/badge/Rust-dea584?style=for-the-badge&logo=rust&logoColor=white" alt="Rust" />
+        <img src="https://img.shields.io/badge/Tauri-ffc130?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri" />
+        <img src="https://img.shields.io/badge/Version-1.0.3-7073f6?style=for-the-badge" alt="Version" />
+    </div>
 </div>
 
-<div align="center">
-    <img src="https://img.shields.io/badge/Rust-dea584?style=for-the-badge&logo=rust&logoColor=white" alt="Rust" />
-    <img src="https://img.shields.io/badge/Tauri-ffc130?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri" />
-    <img src="https://img.shields.io/badge/Version-1.0.3-7073f6?style=for-the-badge" alt="Version" />
-    <div align=center style="margin-top: 20px">
-        <img src="/assets/FileFlowDemo.png" alt="FileFlow" width="65%" height="50%" />
-    </div>
+<div align=center style="margin-top: 20px">
+    <img src="/assets/FileFlowDemo.png" alt="FileFlow" width="65%" height="50%" />
+    <img src="/assets/Load_data.png" alt="FileFlow" width="65%" height="50%" />
 </div>
 
 ## Description
@@ -38,6 +39,9 @@ See in the release section for the latest version of the application.
 <label>
 <input type="checkbox" style="margin-right: 10px" checked>
 </label> Don't require <span style="font-weight: bold;">ANY</span> privilege to insert the data <br>
+<label>
+<input type="checkbox" style="margin-right: 10px" checked>
+</label> Generate LOAD DATA sql query to insert faster<br>
 
 ## Supported databases
 
@@ -90,11 +94,24 @@ pnpm tauri dev
 
 ## Usage
 
-1. Select the CSV file you want to insert into the database
-2. Select the database you want to insert the data into
-3. Click on the "Insert" button
-4. Wait for the data to be inserted
-5. Done!
+<ol>
+       <li>Insert Data</li>
+        <ul>
+            <li>Select the CSV file you want to insert into the database</li>
+            <li>Select the database you want to insert the data into</li>
+            <li>Click on the "Insert" button</li>   
+            <li>Wait for the data to be inserted</li>   
+            <li>Done!</li>
+        </ul>
+        <li>Generate Load data</li>
+        <ul>
+            <li>Select the CSV file you want to insert into the database</li>
+            <li>Click on the "Load" button in the menu</li>   
+            <li>Copy the generated SQL query</li>   
+            <li>Run the query if your database support it</li>
+            <li>Done!</li>
+        </ul>
+</ol>
 
 ## Information
 

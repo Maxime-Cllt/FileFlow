@@ -18,7 +18,6 @@ export const initialUiState = {
     histoLog: 'Logs will appear here',
     filePath: null as string | null,
     fileName: '',
-    fileSize: '',
     mode: 'fast',
     showLoader: false,
     sqlite: false

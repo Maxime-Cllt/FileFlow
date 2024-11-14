@@ -1,7 +1,7 @@
 import React from 'react';
 import {Input} from "@/components/ui/input.tsx";
 import FileUploadComponent from "@/components/fileflowui/FileUploadComponent.tsx";
-import SelectDatabaseComponent from "@/components/fileflowui/SelectDatabaseComponent.tsx";
+import SelectDatabaseComponent from "@/components/fileflowui/home/SelectDatabaseComponent.tsx";
 
 interface FormProps {
     dbConfig: {
@@ -16,7 +16,6 @@ interface FormProps {
     };
     uiState: {
         fileName: string;
-        fileSize: string;
     };
     setters: {
         setDbUrl: (value: string) => void;
@@ -27,7 +26,6 @@ interface FormProps {
         setTableName: (value: string) => void;
         setFilePath: (filePath: string | null) => void;
         setFileName: (name: string) => void;
-        setFileSize: (size: string) => void;
         setMode: (mode: string) => void;
     };
     actions: {
@@ -70,12 +68,10 @@ const FormComponent: React.FC<FormProps> = ({dbConfig, uiState, setters, actions
                                          dbDriver={dbConfig.dbDriver}/>
                 <FileUploadComponent
                     setFileName={setters.setFileName}
-                    setFileSize={setters.setFileSize}
                     setTableName={setters.setTableName}
                     addLog={actions.addLog}
                     setFilePath={setters.setFilePath}
                     fileName={uiState.fileName}
-                    fileSize={uiState.fileSize}
                 />
             </div>
 

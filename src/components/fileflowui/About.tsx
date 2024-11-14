@@ -1,5 +1,5 @@
 import React from 'react';
-import Menu from "@/components/fileflowui/Menu.tsx";
+import Menu from "@/components/fileflowui/home/Menu.tsx";
 import {Card} from "@/components/ui/card.tsx";
 
 const AboutComponent: React.FC = () => {

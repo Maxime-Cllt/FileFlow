@@ -185,6 +185,10 @@ const Home: React.FC = () => {
     const handleDeconnection = async (e: React.MouseEvent) => {
         e.preventDefault();
         try {
+            if (!dbConfig.is_connected) {
+                toast.warning('You are not connected to any database');
+                return;
+            }
             await invoke('disconnect_from_database');
             setDbConfig(prev => ({...prev, is_connected: false}));
             toast.success('Disconnected successfully');

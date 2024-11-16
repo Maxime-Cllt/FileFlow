@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/menubar.tsx";
 import React from "react";
 import {Link} from "react-router-dom";
+import {toast} from "sonner";
 
 interface MenuProps {
     saveConfig?: (e: React.MouseEvent) => Promise<void>;
@@ -16,10 +17,13 @@ interface MenuProps {
 
 const Menu: React.FC<MenuProps> = ({
                                        saveConfig = async () => {
+                                             toast.warning("No configuration to save here");
                                        },
                                        loadConfig = async () => {
+                                           toast.warning("No configuration to load here");
                                        },
                                        handleDeconnection = async () => {
+                                           toast.warning("You are not connected to any database");
                                        },
 
                                    }) => {

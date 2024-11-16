@@ -1,6 +1,6 @@
 import React from 'react';
 import {Input} from "@/components/ui/input.tsx";
-import FileUploadComponent from "@/components/fileflowui/FileUploadComponent.tsx";
+import FileUploadComponent from "@/components/fileflowui/style/FileUploadComponent.tsx";
 import SelectDatabaseComponent from "@/components/fileflowui/home/SelectDatabaseComponent.tsx";
 
 interface FormProps {

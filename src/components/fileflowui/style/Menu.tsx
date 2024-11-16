@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/menubar.tsx";
 import React from "react";
 import {Link} from "react-router-dom";
+import {toast} from "sonner";
 
 interface MenuProps {
     saveConfig?: (e: React.MouseEvent) => Promise<void>;
@@ -16,10 +17,13 @@ interface MenuProps {
 
 const Menu: React.FC<MenuProps> = ({
                                        saveConfig = async () => {
+                                             toast.warning("No configuration to save here");
                                        },
                                        loadConfig = async () => {
+                                           toast.warning("No configuration to load here");
                                        },
                                        handleDeconnection = async () => {
+                                           toast.warning("You are not connected to any database");
                                        },
 
                                    }) => {
@@ -43,11 +47,21 @@ const Menu: React.FC<MenuProps> = ({
                 <MenubarMenu>
                     <MenubarTrigger>Other</MenubarTrigger>
                     <MenubarContent>
-                        <MenubarItem><Link to={"/"}>Home</Link></MenubarItem>
-                        <MenubarItem><Link to={"/load"}>Load</Link></MenubarItem>
-                        <MenubarItem><Link to={"/about"}>About</Link></MenubarItem>
+                        <Link to={"/"}>
+                            <MenubarItem className="cursor-pointer">Home</MenubarItem>
+                        </Link>
+                        <Link to={"/load"}>
+                            <MenubarItem className="cursor-pointer">Load</MenubarItem>
+                        </Link>
+                        <Link to={"/help"}>
+                            <MenubarItem className="cursor-pointer">Help</MenubarItem>
+                        </Link>
+                        <Link to={"/about"}>
+                            <MenubarItem className="cursor-pointer">About</MenubarItem>
+                        </Link>
                     </MenubarContent>
                 </MenubarMenu>
+
             </Menubar>
         </div>
     );

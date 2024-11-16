@@ -3,7 +3,7 @@ import {Input} from "@/components/ui/input.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {HardDrive} from "lucide-react";
 import SelectDatabaseComponent from "@/components/fileflowui/home/SelectDatabaseComponent.tsx";
-import FileUploadComponent from "@/components/fileflowui/FileUploadComponent.tsx";
+import FileUploadComponent from "@/components/fileflowui/style/FileUploadComponent.tsx";
 import * as dialog from "@tauri-apps/plugin-dialog"
 
 interface SqliteFormProps {

@@ -43,11 +43,21 @@ const Menu: React.FC<MenuProps> = ({
                 <MenubarMenu>
                     <MenubarTrigger>Other</MenubarTrigger>
                     <MenubarContent>
-                        <MenubarItem><Link to={"/"}>Home</Link></MenubarItem>
-                        <MenubarItem><Link to={"/load"}>Load</Link></MenubarItem>
-                        <MenubarItem><Link to={"/about"}>About</Link></MenubarItem>
+                        <Link to={"/"}>
+                            <MenubarItem className="cursor-pointer">Home</MenubarItem>
+                        </Link>
+                        <Link to={"/load"}>
+                            <MenubarItem className="cursor-pointer">Load</MenubarItem>
+                        </Link>
+                        <Link to={"/help"}>
+                            <MenubarItem className="cursor-pointer">Help</MenubarItem>
+                        </Link>
+                        <Link to={"/about"}>
+                            <MenubarItem className="cursor-pointer">About</MenubarItem>
+                        </Link>
                     </MenubarContent>
                 </MenubarMenu>
+
             </Menubar>
         </div>
     );

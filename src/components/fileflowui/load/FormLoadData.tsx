@@ -1,6 +1,6 @@
 import React from 'react';
 import {Input} from "@/components/ui/input";
-import FileUploadComponent from "@/components/fileflowui/FileUploadComponent";
+import FileUploadComponent from "@/components/fileflowui/style/FileUploadComponent.tsx";
 import SelectDatabaseComponent from "@/components/fileflowui/home/SelectDatabaseComponent";
 import {toast} from "sonner";
 import {invoke} from "@tauri-apps/api/core";

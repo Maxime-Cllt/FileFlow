@@ -1,6 +1,5 @@
 import React from 'react';
 import FormLoadData from "@/components/fileflowui/load/FormLoadData.tsx";
-import Menu from "@/components/fileflowui/style/Menu.tsx";
 import {generateSqlConfig} from "@/components/object/generateSqlConfig.tsx";
 
 const LoadDataSql: React.FC = () => {
@@ -15,12 +14,7 @@ const LoadDataSql: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-100">
-
-            {/* Fixed Navigation Bar */}
-            <div className="fixed top-0 w-full z-50 bg-white shadow-md">
-                <Menu/>
-            </div>
+        <div className="h-[calc(100%-2.25rem)] bg-gray-100">
 
             {/* Load Data Form */}
             <div className="pt-16 px-4 md:px-8 lg:px-16">

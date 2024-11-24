@@ -1,15 +1,9 @@
 import React from 'react';
 import {Card} from "@/components/ui/card.tsx";
-import Menu from "@/components/fileflowui/style/Menu.tsx";
 
 const HelpComponent: React.FC = () => {
     return (
         <div className="bg-gray-100">
-            {/* Menu */}
-            <div className="fixed top-0 w-full bg-white shadow-md z-10">
-                <Menu/>
-            </div>
-
 
             {/* Hero Section */}
             <div

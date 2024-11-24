@@ -2,7 +2,6 @@ import React, {useCallback, useState} from 'react';
 import {invoke} from '@tauri-apps/api/core';
 import '../../../Loader.css';
 import {Card, CardContent, CardHeader} from "@/components/ui/card.tsx";
-import Menu from "@/components/fileflowui/style/Menu.tsx";
 import Loader from "@/components/fileflowui/style/Loader.tsx";
 import FormComponent from "@/components/fileflowui/home/FormComponent.tsx";
 import ModeSelectionComponent from "@/components/fileflowui/home/ModeSelectionComponent.tsx";
@@ -245,13 +244,8 @@ const Home: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-100">
 
-            {/* Fixed Navigation Bar */}
-            <div className="fixed top-0 w-full z-50 bg-white shadow-md">
-                <Menu handleDeconnection={handleDeconnection} saveConfig={saveConfig} loadConfig={loadConfig}/>
-            </div>
-
             {/* Main Content */}
-            <div className="pt-16 px-4 md:px-8">
+            <div className="pt-8 px-4 md:px-8">
                 <Card className="bg-white shadow-lg rounded-lg mb-8 p-6">
 
                     {/* Card Header with Form */}

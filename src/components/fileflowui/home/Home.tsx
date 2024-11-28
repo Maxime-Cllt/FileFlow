@@ -1,5 +1,4 @@
 import React, {useCallback, useState} from 'react';
-import {invoke} from '@tauri-apps/api/core';
 import '../../../Loader.css';
 import {Card, CardContent, CardHeader} from "@/components/ui/card.tsx";
 import Loader from "@/components/fileflowui/style/Loader.tsx";
@@ -9,7 +8,7 @@ import ButtonGroupComponent from "@/components/fileflowui/home/ButtonGroupCompon
 import LogComponent from "@/components/fileflowui/home/LogComponent.tsx";
 import SqliteFormComponent from "@/components/fileflowui/home/SqliteFormComponent.tsx";
 import {initialDbConfig, initialUiState} from "@/components/object/initialState.tsx";
-import {toast} from "sonner";
+import ButtonConfigComponent from "@/components/fileflowui/home/ButtonConfig.tsx";
 
 const Home: React.FC = () => {
     const [dbConfig, setDbConfig] = useState(initialDbConfig);
@@ -27,74 +26,6 @@ const Home: React.FC = () => {
         updateUiStateField('histoLog', `${uiState.histoLog}\n${message}`);
     };
 
-    const handleConnection = async (e: React.FormEvent) => {
-        e.preventDefault();
-        const newConfig = {...dbConfig};
-
-        if (!dbConfig.dbUrl || !dbConfig.port || !dbConfig.username) {
-            toast.warning('Please fill all the fields');
-            return;
-        }
-
-        try {
-            const response = await invoke('connect_to_database', {
-                config: {
-                    db_driver: dbConfig.dbDriver.toLowerCase(),
-                    db_host: dbConfig.dbUrl,
-                    port: dbConfig.port,
-                    username: dbConfig.username,
-                    password: dbConfig.password,
-                    db_name: dbConfig.dbName,
-                    table_name: dbConfig.tableName,
-                    sqlite_file_path: dbConfig.sqliteFilePath,
-                },
-            });
-            addLog(response as string);
-            newConfig.is_connected = true;
-            toast.success('Connected successfully');
-        } catch (error) {
-            addLog(`Connection error: ${error}`);
-            newConfig.is_connected = false;
-            toast.error('Connection failed');
-        }
-        setDbConfig(newConfig);
-    };
-
-    const handleInsert = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (!uiState.filePath) {
-            toast.warning('Please select a file');
-            return;
-        }
-
-        if (!dbConfig.is_connected) {
-            toast.warning('Please connect to the database');
-            return;
-        }
-
-        addLog('Inserting data...');
-        updateUiStateField('showLoader', true);
-
-        try {
-            const response = await invoke('insert_csv_data', {
-                csv: {
-                    table_name: dbConfig.tableName,
-                    file_path: uiState.filePath,
-                    db_driver: dbConfig.dbDriver.toLowerCase(),
-                    mode: uiState.mode,
-                },
-            });
-
-            updateUiStateField('showLoader', false);
-            addLog(response as string);
-            toast.success('Data inserted successfully');
-        } catch (error) {
-            addLog(`Insert error: ${error}`);
-            updateUiStateField('showLoader', false);
-            toast.error('Error inserting data');
-        }
-    };
 
     const handledbDriverChange = (value: string) => {
         const portMap: Record<string, string> = {mysql: '3306', mariadb: '3306', postgres: '5432'};
@@ -106,96 +37,6 @@ const Home: React.FC = () => {
         updateUiStateField('sqlite', value === 'sqlite');
     };
 
-    const handleReset = () => {
-        setDbConfig(prev => ({
-            ...prev,
-            dbDriver: '',
-            dbUrl: '',
-            port: '',
-            username: '',
-            password: '',
-            dbName: '',
-            tableName: '',
-            sqliteFilePath: '',
-            is_connected: false,
-        }));
-
-        setUiState(prev => ({
-            ...prev,
-            fileName: '',
-            filePath: null,
-            histoLog: '',
-            showLoader: false,
-        }));
-    };
-
-    const saveConfig = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await invoke('save_database_config', {
-                save: {
-                    db_driver: dbConfig.dbDriver.toLowerCase(),
-                    db_host: dbConfig.dbUrl,
-                    port: dbConfig.port,
-                    username: dbConfig.username,
-                    password: dbConfig.password,
-                    db_name: dbConfig.dbName,
-                    table_name: dbConfig.tableName,
-                    sqlite_file_path: dbConfig.sqliteFilePath,
-                },
-            });
-            toast.success('Config saved successfully');
-        } catch (error) {
-            addLog(`Error saving config: ${error}`);
-            toast.error('Error saving config');
-        }
-    };
-
-    const loadConfig = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            const response = await invoke('load_database_config');
-            if (typeof response === "string") {
-                const loadDbConfig = JSON.parse(response);
-
-                setDbConfig({
-                    dbDriver: loadDbConfig.db_driver || "",
-                    dbUrl: loadDbConfig.db_host || "",
-                    port: loadDbConfig.port || "",
-                    username: loadDbConfig.username || "",
-                    password: loadDbConfig.password || "",
-                    dbName: loadDbConfig.db_name || "",
-                    tableName: loadDbConfig.table_name || "",
-                    sqliteFilePath: loadDbConfig.sqlite_file_path || "",
-                    is_connected: false,
-                });
-                updateUiStateField('sqlite', !!loadDbConfig.sqlite_file_path);
-                toast.success('Config loaded successfully');
-            } else {
-                addLog('Error loading config');
-                toast.error('Error loading config');
-            }
-        } catch (error) {
-            addLog(`Error loading config: ${error}`);
-            toast.error('Error loading config');
-        }
-    };
-
-    const handleDeconnection = async (e: React.MouseEvent) => {
-        e.preventDefault();
-        try {
-            if (!dbConfig.is_connected) {
-                toast.warning('You are not connected to any database');
-                return;
-            }
-            await invoke('disconnect_from_database');
-            setDbConfig(prev => ({...prev, is_connected: false}));
-            toast.success('Disconnected successfully');
-        } catch (error) {
-            addLog(error as string);
-            toast.error('Error disconnecting');
-        }
-    };
 
     const renderForm = () => {
         if (uiState.sqlite) {
@@ -248,6 +89,17 @@ const Home: React.FC = () => {
             <div className="pt-8 px-4 md:px-8">
                 <Card className="bg-white shadow-lg rounded-lg mb-8 p-6">
 
+                    {/* Save and Load Buttons */}
+                    <div className="flex justify-end space-x-4 mb-4">
+
+                        <ButtonConfigComponent
+                            dbConfig={dbConfig}
+                            setDbConfig={setDbConfig}
+                            addLog={addLog}
+                            updateUiStateField={updateUiStateField}
+                        />
+                    </div>
+
                     {/* Card Header with Form */}
                     <CardHeader className="border-b-2 border-gray-200 pb-4">
                         <CardContent>
@@ -271,10 +123,11 @@ const Home: React.FC = () => {
                     {/* Button Group */}
                     <div className="flex justify-center mt-6">
                         <ButtonGroupComponent
-                            handleInsert={handleInsert}
-                            handleSubmit={handleConnection}
-                            handleReset={handleReset}
-                            is_connected={dbConfig.is_connected}
+                            dbConfig={dbConfig}
+                            uiState={uiState}
+                            addLog={addLog}
+                            updateUiStateField={updateUiStateField}
+                            updateDbConfigField={updateDbConfigField}
                         />
                     </div>
                 </Card>
@@ -285,7 +138,8 @@ const Home: React.FC = () => {
                 </div>
             </div>
         </div>
-    )
+    );
+
 };
 
 export default Home;

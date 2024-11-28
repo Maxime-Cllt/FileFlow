@@ -2,8 +2,6 @@ import React from 'react';
 import {Input} from "@/components/ui/input";
 import FileUploadComponent from "@/components/fileflowui/style/FileUploadComponent.tsx";
 import SelectDatabaseComponent from "@/components/fileflowui/home/SelectDatabaseComponent";
-import {toast} from "sonner";
-import {invoke} from "@tauri-apps/api/core";
 import LoadButtonGroupComponent from "@/components/fileflowui/load/LoadButtonGroupComponent.tsx";
 
 interface FormLoadDataProps {
@@ -24,52 +22,6 @@ interface FormLoadDataProps {
 }
 
 const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, setters}) => {
-
-    const handleGenerate = async () => {
-        try {
-            if (generateSQL.tableName === "" || generateSQL.dbDriver === "" || generateSQL.filePath === "") {
-                toast.error("Please fill in all the fields");
-                return;
-            }
-
-            const response = await invoke('generate_load_data_sql', {
-                load: {
-                    file_path: generateSQL.filePath,
-                    table_name: generateSQL.tableName,
-                    db_driver: generateSQL.dbDriver,
-                },
-            });
-
-            if (response && response !== "" && typeof response === "string") {
-                setters.setSql(response);
-                toast.success("SQL generated successfully");
-            } else {
-                toast.error("SQL generation failed");
-            }
-        } catch (e) {
-            toast.error(e as string);
-        }
-
-    };
-
-    const handleCopy = () => {
-        if (generateSQL.sql) {
-            navigator.clipboard.writeText(generateSQL.sql).then(() => {
-                toast.success("SQL copied to clipboard");
-            });
-        } else {
-            toast.warning("No SQL to copy");
-        }
-    };
-
-    const handleReset = () => {
-        setters.setTableName("");
-        setters.setFilePath("");
-        setters.setDbDriver("");
-        setters.setFileName("");
-        setters.setSql("");
-    };
-
     return (
         <form className="space-y-6 p-6 rounded-lg shadow-lg bg-white  mx-auto">
 
@@ -112,9 +64,8 @@ const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, setters}) => {
 
             {/* Action Buttons */}
             <LoadButtonGroupComponent
-                handleGenerate={handleGenerate}
-                handleCopy={handleCopy}
-                handleReset={handleReset}
+                setters={setters}
+                generateSQL={generateSQL}
             />
 
             {/* Textarea for Generated SQL */}

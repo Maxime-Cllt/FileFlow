@@ -13,7 +13,7 @@ const databaseOptions = {
     sqlite: "SQLite",
 };
 
-const SelectDatabaseComponent: React.FC<SelectDatabaseProps> = (props: SelectDatabaseProps) => {
+const SelectDatabase: React.FC<SelectDatabaseProps> = (props: SelectDatabaseProps) => {
     return (
         <div className="space-y-4">
             <Select onValueChange={props.handledbDriverChange} value={props.dbDriver}>
@@ -32,4 +32,4 @@ const SelectDatabaseComponent: React.FC<SelectDatabaseProps> = (props: SelectDat
     );
 };
 
-export default SelectDatabaseComponent;
+export default SelectDatabase;

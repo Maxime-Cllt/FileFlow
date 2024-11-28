@@ -20,7 +20,7 @@ interface LoadButtonGroupProps {
     };
 }
 
-const LoadButtonGroupComponent: React.FC<LoadButtonGroupProps> = (props: LoadButtonGroupProps) => {
+const LoadButtonGroupAction: React.FC<LoadButtonGroupProps> = (props: LoadButtonGroupProps) => {
 
     const handleReset = () => {
         props.setters.setTableName("");
@@ -103,4 +103,4 @@ const LoadButtonGroupComponent: React.FC<LoadButtonGroupProps> = (props: LoadBut
     );
 };
 
-export default LoadButtonGroupComponent;
+export default LoadButtonGroupAction;

@@ -1,13 +1,13 @@
 import React, {useCallback, useState} from 'react';
 import '../../../Loader.css';
 import {Card, CardContent, CardHeader} from "@/components/ui/card.tsx";
-import Loader from "@/components/fileflowui/style/Loader.tsx";
-import FormComponent from "@/components/fileflowui/home/FormComponent.tsx";
-import ModeSelectionComponent from "@/components/fileflowui/home/ModeSelectionComponent.tsx";
-import ButtonGroupComponent from "@/components/fileflowui/home/ButtonGroupComponent.tsx";
-import LogComponent from "@/components/fileflowui/home/LogComponent.tsx";
-import SqliteFormComponent from "@/components/fileflowui/home/SqliteFormComponent.tsx";
-import {initialDbConfig, initialUiState} from "@/components/object/initialState.tsx";
+import Loader from "@/components/hooks/Loader.tsx";
+import HomeForm from "@/components/fileflowui/home/HomeForm.tsx";
+import ModeSelection from "@/components/fileflowui/home/ModeSelection.tsx";
+import ButtonGroupAction from "@/components/fileflowui/home/ButtonGroupAction.tsx";
+import Log from "@/components/fileflowui/home/Log.tsx";
+import SqliteForm from "@/components/fileflowui/home/SqliteForm.tsx";
+import {initialDbConfig, initialUiState} from "@/components/states/initialState.tsx";
 import ButtonConfigComponent from "@/components/fileflowui/home/ButtonConfig.tsx";
 
 const Home: React.FC = () => {
@@ -41,7 +41,7 @@ const Home: React.FC = () => {
     const renderForm = () => {
         if (uiState.sqlite) {
             return (
-                <SqliteFormComponent
+                <SqliteForm
                     {...{
                         addLog,
                         sqliteFilePath: dbConfig.sqliteFilePath,
@@ -58,7 +58,7 @@ const Home: React.FC = () => {
         }
 
         return (
-            <FormComponent
+            <HomeForm
                 {...{
                     dbConfig,
                     uiState,
@@ -110,7 +110,7 @@ const Home: React.FC = () => {
 
                     {/* Mode Selection Component */}
                     <div className="mt-6">
-                        <ModeSelectionComponent setMode={(value: string) => updateUiStateField('mode', value)}/>
+                        <ModeSelection setMode={(value: string) => updateUiStateField('mode', value)}/>
                     </div>
 
                     {/* Loader */}
@@ -122,7 +122,7 @@ const Home: React.FC = () => {
 
                     {/* Button Group */}
                     <div className="flex justify-center mt-6">
-                        <ButtonGroupComponent
+                        <ButtonGroupAction
                             dbConfig={dbConfig}
                             uiState={uiState}
                             addLog={addLog}
@@ -134,7 +134,7 @@ const Home: React.FC = () => {
 
                 {/* Logs Section */}
                 <div className="bg-gray-50 p-4 rounded-lg shadow-inner">
-                    <LogComponent histoLog={uiState.histoLog}/>
+                    <Log histoLog={uiState.histoLog}/>
                 </div>
             </div>
         </div>

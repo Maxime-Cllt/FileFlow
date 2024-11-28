@@ -1,8 +1,8 @@
 import React from 'react';
 import {Input} from "@/components/ui/input";
-import FileUploadComponent from "@/components/fileflowui/style/FileUploadComponent.tsx";
-import SelectDatabaseComponent from "@/components/fileflowui/home/SelectDatabaseComponent";
-import LoadButtonGroupComponent from "@/components/fileflowui/load/LoadButtonGroupComponent.tsx";
+import FileUpload from "@/components/hooks/file/FileUpload.tsx";
+import SelectDatabase from "@/components/hooks/database/SelectDatabase.tsx";
+import LoadButtonGroupAction from "@/components/fileflowui/load/LoadButtonGroupAction.tsx";
 
 interface FormLoadDataProps {
     generateSQL: {
@@ -43,7 +43,7 @@ const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, setters}) => {
             {/* Database Selection */}
             <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Database Type</label>
-                <SelectDatabaseComponent
+                <SelectDatabase
                     handledbDriverChange={setters.setDbDriver}
                     dbDriver={generateSQL.dbDriver}
                 />
@@ -52,7 +52,7 @@ const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, setters}) => {
             {/* File Upload Section */}
             <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Upload File</label>
-                <FileUploadComponent
+                <FileUpload
                     fileName={generateSQL.fileName}
                     setFilePath={setters.setFilePath}
                     setFileName={setters.setFileName}
@@ -63,7 +63,7 @@ const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, setters}) => {
             </div>
 
             {/* Action Buttons */}
-            <LoadButtonGroupComponent
+            <LoadButtonGroupAction
                 setters={setters}
                 generateSQL={generateSQL}
             />

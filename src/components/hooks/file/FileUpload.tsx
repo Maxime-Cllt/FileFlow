@@ -13,7 +13,7 @@ interface FileUploadProps {
     addLog: (message: string) => void;
 }
 
-const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) => {
+const FileUpload: React.FC<FileUploadProps> = (props: FileUploadProps) => {
 
     const [fileSize, setFileSize] = React.useState<string>('');
 
@@ -66,4 +66,4 @@ const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) 
     );
 };
 
-export default FileUploadComponent;
+export default FileUpload;

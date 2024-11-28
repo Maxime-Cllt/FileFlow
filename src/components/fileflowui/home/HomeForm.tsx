@@ -1,7 +1,7 @@
 import React from 'react';
 import {Input} from "@/components/ui/input.tsx";
-import FileUploadComponent from "@/components/fileflowui/style/FileUploadComponent.tsx";
-import SelectDatabaseComponent from "@/components/fileflowui/home/SelectDatabaseComponent.tsx";
+import FileUpload from "@/components/hooks/file/FileUpload.tsx";
+import SelectDatabase from "@/components/hooks/database/SelectDatabase.tsx";
 
 interface FormProps {
     dbConfig: {
@@ -35,7 +35,7 @@ interface FormProps {
 }
 
 
-const FormComponent: React.FC<FormProps> = ({dbConfig, uiState, setters, actions}: FormProps) => {
+const HomeForm: React.FC<FormProps> = ({dbConfig, uiState, setters, actions}: FormProps) => {
     return (
         <form className="grid grid-cols-2 gap-4">
 
@@ -64,9 +64,9 @@ const FormComponent: React.FC<FormProps> = ({dbConfig, uiState, setters, actions
 
             {/* Database Type Selection and File Upload */}
             <div className="col-span-2 grid grid-cols-2 gap-4 items-center justify-center">
-                <SelectDatabaseComponent handledbDriverChange={actions.handledbDriverChange}
-                                         dbDriver={dbConfig.dbDriver}/>
-                <FileUploadComponent
+                <SelectDatabase handledbDriverChange={actions.handledbDriverChange}
+                                dbDriver={dbConfig.dbDriver}/>
+                <FileUpload
                     setFileName={setters.setFileName}
                     setTableName={setters.setTableName}
                     addLog={actions.addLog}
@@ -111,4 +111,4 @@ const FormInput: React.FC<FormInputProps> = ({
     </div>
 );
 
-export default FormComponent;
+export default HomeForm;

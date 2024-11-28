@@ -28,7 +28,7 @@ interface ButtonGroupProps {
     addLog: (message: string) => void;
 }
 
-const ButtonGroupComponent: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) => {
+const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) => {
 
     const handleInsert = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -176,4 +176,4 @@ const ButtonGroupComponent: React.FC<ButtonGroupProps> = (props: ButtonGroupProp
     );
 };
 
-export default ButtonGroupComponent;
+export default ButtonGroupAction;

@@ -26,29 +26,19 @@ const Home: React.FC = () => {
         updateUiStateField('histoLog', `${uiState.histoLog}\n${message}`);
     };
 
-
-    const handledbDriverChange = (value: string) => {
-        const portMap: Record<string, string> = {mysql: '3306', mariadb: '3306', postgres: '5432'};
-        updateDbConfigField('dbDriver', value);
-        updateDbConfigField('port', portMap[value] || '');
-        updateUiStateField('sqlite', value === 'sqlite');
-    };
-
-
     const renderForm = () => {
         if (uiState.sqlite) {
             return (
                 <SqliteForm
-                    {...{
-                        addLog,
+                    dbConfig={{
                         sqliteFilePath: dbConfig.sqliteFilePath,
-                        setSqliteFilePath: (value: string) => updateDbConfigField('sqliteFilePath', value),
                         dbDriver: dbConfig.dbDriver,
-                        handledbDriverChange,
+                    }}
+                    addLog={addLog}
+                    updateDbConfigField={updateDbConfigField}
+                    updateUiStateField={updateUiStateField}
+                    uiState={{
                         fileName: uiState.fileName,
-                        setFilePath: (value: string | null) => updateUiStateField('filePath', value),
-                        setFileName: (value: string) => updateUiStateField('fileName', value),
-                        setTableName: (value: string) => updateDbConfigField('tableName', value),
                     }}
                 />
             );
@@ -56,25 +46,15 @@ const Home: React.FC = () => {
 
         return (
             <HomeForm
-                {...{
-                    dbConfig,
-                    uiState,
-                    setters: {
-                        setDbUrl: (value: string) => updateDbConfigField('dbUrl', value),
-                        setPort: (value: string) => updateDbConfigField('port', value),
-                        setUsername: (value: string) => updateDbConfigField('username', value),
-                        setPassword: (value: string) => updateDbConfigField('password', value),
-                        setDbName: (value: string) => updateDbConfigField('dbName', value),
-                        setTableName: (value: string) => updateDbConfigField('tableName', value),
-                        setFilePath: (filePath: string | null) => updateUiStateField('filePath', filePath),
-                        setFileName: (name: string) => updateUiStateField('fileName', name),
-                        setMode: (mode: string) => updateUiStateField('mode', mode),
-                    },
-                    actions: {
-                        addLog,
-                        handledbDriverChange,
-                    },
+                dbConfig={dbConfig}
+                uiState={{
+                    fileName: uiState.fileName,
                 }}
+                actions={{
+                    addLog
+                }}
+                updateDbConfigField={updateDbConfigField}
+                updateUiStateField={updateUiStateField}
             />
         );
     };

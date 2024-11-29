@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {useState} from 'react';
 import '../../../Loader.css';
 import {Card, CardContent, CardHeader} from "@/components/ui/card.tsx";
 import Loader from "@/components/hooks/Loader.tsx";
@@ -14,9 +14,9 @@ const Home: React.FC = () => {
     const [dbConfig, setDbConfig] = useState(initialDbConfig);
     const [uiState, setUiState] = useState(initialUiState);
 
-    const updateDbConfigField = useCallback((field: keyof typeof dbConfig, value: string) => {
+    const updateDbConfigField = (field: keyof typeof dbConfig, value: any) => {
         setDbConfig(prev => ({...prev, [field]: value}));
-    }, []);
+    }
 
     const updateUiStateField = (field: keyof typeof uiState, value: any) => {
         setUiState(prev => ({...prev, [field]: value}));
@@ -29,11 +29,8 @@ const Home: React.FC = () => {
 
     const handledbDriverChange = (value: string) => {
         const portMap: Record<string, string> = {mysql: '3306', mariadb: '3306', postgres: '5432'};
-        setDbConfig(prev => ({
-            ...prev,
-            dbDriver: value,
-            port: portMap[value] || '',
-        }));
+        updateDbConfigField('dbDriver', value);
+        updateDbConfigField('port', portMap[value] || '');
         updateUiStateField('sqlite', value === 'sqlite');
     };
 
@@ -94,9 +91,8 @@ const Home: React.FC = () => {
 
                         <ButtonConfigComponent
                             dbConfig={dbConfig}
-                            setDbConfig={setDbConfig}
+                            updateDbConfigField={updateDbConfigField}
                             addLog={addLog}
-                            updateUiStateField={updateUiStateField}
                         />
                     </div>
 

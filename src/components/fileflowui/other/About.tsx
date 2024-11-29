@@ -30,6 +30,7 @@ const AboutPage = () => {
             className="h-[calc(100%-2.25rem)] flex flex-col items-center justify-center bg-gray-100 text-gray-800 px-4">
 
             <div className="w-full max-w-2xl text-center">
+
                 {/* App Title */}
                 <h1 className="text-4xl font-bold mb-4">About {appName}</h1>
                 <p className="text-lg mb-2">Version: {appVersion}</p>

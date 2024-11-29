@@ -9,6 +9,9 @@ use crate::fileflow::fileflow::{
     get_insert_into_statement,
 };
 
+/**
+ * This function is used to insert data into the database in an optimized way with the max size of each column.
+ */
 pub async fn optimized_insert(
     connection: &DatabaseConnection,
     reader: &mut Reader<File>,
@@ -25,7 +28,8 @@ pub async fn optimized_insert(
         }
     }
 
-    let create_table_query: &str = &get_create_statement(db_driver, &temporary_table_name, &final_columns_name)?;
+    let create_table_query: &str =
+        &get_create_statement(db_driver, &temporary_table_name, &final_columns_name)?;
 
     if let Err(err) = connection.query(&create_table_query).await {
         return Err(format!("Failed to create temporary table: {}", err));
@@ -34,10 +38,12 @@ pub async fn optimized_insert(
     let max_batch_size: usize = 4000;
     let mut batch: Vec<String> = Vec::with_capacity(max_batch_size);
 
-    let mut columns_size_map: HashMap<&str, usize> = final_columns_name.iter().map(|h| (h.as_str(), 0)).collect();
+    let mut columns_size_map: HashMap<&str, usize> =
+        final_columns_name.iter().map(|h| (h.as_str(), 0)).collect();
     let columns: String = final_columns_name.join(", ");
 
-    let insert_query_base: String = get_insert_into_statement(db_driver, &temporary_table_name, &columns)?;
+    let insert_query_base: String =
+        get_insert_into_statement(db_driver, &temporary_table_name, &columns)?;
     let mut line_count: u64 = 0;
 
     for result in reader.records() {
@@ -101,22 +107,21 @@ pub async fn optimized_insert(
     Ok(line_count)
 }
 
+/**
+ * This function is used to generate the INSERT INTO statement with fixed size for each column for different database drivers.
+ */
 fn get_copy_temp_to_final_table(
     db_driver: &str,
     temporary_table_name: &str,
     final_table_name: &str,
 ) -> Result<String, String> {
     match db_driver {
-        SQLITE => Ok(format!(
+        SQLITE | POSTGRES => Ok(format!(
             "INSERT INTO \"{}\" SELECT * FROM \"{}\"",
             final_table_name, temporary_table_name
         )),
         MYSQL | MARIADB => Ok(format!(
             "INSERT INTO `{}` SELECT * FROM `{}`",
-            final_table_name, temporary_table_name
-        )),
-        POSTGRES => Ok(format!(
-            "INSERT INTO \"{}\" SELECT * FROM \"{}\"",
             final_table_name, temporary_table_name
         )),
         _ => Err(format!("Unsupported database driver: {}", db_driver)),

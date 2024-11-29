@@ -14,16 +14,14 @@ interface ButtonConfigComponent {
         tableName: string;
         sqliteFilePath: string;
     };
-    setDbConfig: (dbConfig: any) => void;
+    updateDbConfigField: (field: any, value: any) => void;
     addLog: (message: string) => void;
-    updateUiStateField: (field: any, value: any) => void;
 }
 
 const ButtonConfigComponent: React.FC<ButtonConfigComponent> = ({
                                                                     dbConfig,
-                                                                    setDbConfig,
-                                                                    addLog,
-                                                                    updateUiStateField
+                                                                    updateDbConfigField,
+                                                                    addLog
                                                                 }) => {
 
 
@@ -56,18 +54,16 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponent> = ({
             if (typeof response === "string") {
                 const loadDbConfig = JSON.parse(response);
 
-                setDbConfig({
-                    dbDriver: loadDbConfig.db_driver || "",
-                    dbUrl: loadDbConfig.db_host || "",
-                    port: loadDbConfig.port || "",
-                    username: loadDbConfig.username || "",
-                    password: loadDbConfig.password || "",
-                    dbName: loadDbConfig.db_name || "",
-                    tableName: loadDbConfig.table_name || "",
-                    sqliteFilePath: loadDbConfig.sqlite_file_path || "",
-                    is_connected: false,
-                });
-                updateUiStateField('sqlite', !!loadDbConfig.sqlite_file_path);
+                updateDbConfigField('dbDriver', loadDbConfig.db_driver || "");
+                updateDbConfigField('dbUrl', loadDbConfig.db_host || "");
+                updateDbConfigField('port', loadDbConfig.port || "");
+                updateDbConfigField('username', loadDbConfig.username || "");
+                updateDbConfigField('password', loadDbConfig.password || "");
+                updateDbConfigField('dbName', loadDbConfig.db_name || "");
+                updateDbConfigField('tableName', loadDbConfig.table_name || "");
+                updateDbConfigField('sqliteFilePath', loadDbConfig.sqlite_file_path || "");
+                updateDbConfigField('is_connected', false);
+
                 toast.success('Config loaded successfully');
             } else {
                 addLog('Error loading config');

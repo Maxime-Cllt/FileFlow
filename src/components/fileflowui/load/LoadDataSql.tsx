@@ -14,10 +14,10 @@ const LoadDataSql: React.FC = () => {
     }
 
     return (
-        <div className="h-[calc(100%-2.25rem)] bg-gray-100">
+        <div className="bg-gray-100">
 
             {/* Load Data Form */}
-            <div className="pt-16 px-4 md:px-8 lg:px-16">
+            <div className="p-4 md:p-8 mt-6">
                 <FormLoadData
                     generateSQL={generateSQL}
                     setters={{

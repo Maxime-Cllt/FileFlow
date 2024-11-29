@@ -124,4 +124,10 @@ There are two mode to insert the data into the database:
 The optimised mode might take longer to insert the data but it will create a table with the type of the columns
 optimised.
 
+You can also generate a LOAD DATA SQL query to insert the data faster if your database support it. It is way faster than
+inserting the data row by row but not all databases support it.
 
+
+## Contributing
+
+If you want to contribute to the project, you can open an issue or a pull request.

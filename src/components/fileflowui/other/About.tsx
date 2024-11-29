@@ -26,9 +26,7 @@ const AboutPage = () => {
     }, []);
 
     return (
-        <div
-            className="h-[calc(100%-2.25rem)] flex flex-col items-center justify-center bg-gray-100 text-gray-800 px-4">
-
+        <div className="flex flex-col items-center justify-center w-full h-full space-y-8 bg-gray-100">
             <div className="w-full max-w-2xl text-center">
 
                 {/* App Title */}

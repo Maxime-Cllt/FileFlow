@@ -83,12 +83,11 @@ const Home: React.FC = () => {
         <div className="min-h-screen bg-gray-100">
 
             {/* Main Content */}
-            <div className="pt-8 px-4 md:px-8">
+            <div className="pt-8 px-4 md:px-8 mt-6">
                 <Card className="bg-white shadow-lg rounded-lg mb-8 p-6">
 
                     {/* Save and Load Buttons */}
-                    <div className="flex justify-end space-x-4 mb-4">
-
+                    <div className="flex justify-end space-x-4">
                         <ButtonConfigComponent
                             dbConfig={dbConfig}
                             updateDbConfigField={updateDbConfigField}

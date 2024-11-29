@@ -11,13 +11,14 @@ const HelpComponent: React.FC = () => {
                 <h1 className="text-6xl font-bold">FileFlow</h1>
             </div>
 
-            {/* About Section */}
+            {/* HELP  INSERT DATA SECTION */}
             <div className="flex justify-center align-middle mt-12 px-4">
 
                 <div className="w-full max-w-6xl space-y-8">
                     {/* Description Card */}
                     <Card className="p-8 shadow-lg bg-white">
-                        <h2 className="text-3xl font-bold text-center mb-4">About FileFlow</h2>
+                        <h2 className="text-3xl font-bold text-center mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">About
+                            Insert Data</h2>
                         <p className="text-lg text-gray-700 text-center">
                             FileFlow is a simple tool that allows you to insert data from a CSV file into a database
                             table,
@@ -71,6 +72,50 @@ const HelpComponent: React.FC = () => {
 
                     </Card>
 
+
+                    <div className={"h-8"}></div>
+
+                </div>
+            </div>
+
+            {/* HELP LOAD DATA SECTION */}
+            <div className="flex justify-center align-middle mt-12 px-4">
+
+                <div className="w-full max-w-6xl space-y-8">
+                    {/* Description Card */}
+                    <Card className="p-8 shadow-lg bg-white">
+                        <h2 className="text-3xl font-bold text-center mb-4 bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">About
+                            Load Data</h2>
+                        <p className="text-lg text-gray-700 text-center">
+                            Load Data is a feature that allows you to load data from a database table.
+                        </p>
+                    </Card>
+
+                    {/* Features and Usage in Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        {/* Features Card */}
+                        <Card className="p-6 shadow-md bg-white">
+                            <h2 className="text-2xl font-semibold mb-4">Features</h2>
+                            <ul className="list-disc list-inside text-gray-700 space-y-2">
+                                <li>Create a table with optimized column lengths from a CSV file</li>
+                                <li>Generate the load data from the CSV file</li>
+                                <li>The fastest way to load data from a database table</li>
+                                <li>Require the LOAD DATA privilege</li>
+                            </ul>
+                        </Card>
+
+                        {/* Usage Card */}
+                        <Card className="p-6 shadow-md bg-white">
+                            <h2 className="text-2xl font-semibold mb-4">Usage</h2>
+                            <ol className="list-decimal list-inside text-gray-700 space-y-2">
+                                <li>Select the CSV file you want to load data from</li>
+                                <li>Select the target database</li>
+                                <li>Click on the "Load Data" button</li>
+                                <li>Wait for the data to be loaded</li>
+                                <li>Done!</li>
+                            </ol>
+                        </Card>
+                    </div>
 
                     <div className={"h-8"}></div>
 

@@ -8,7 +8,7 @@ import {initialDbConfig} from "@/components/states/initialState.tsx";
 interface LoadButtonGroupProps {
     generateSQL: {
         tableName: string;
-        dbDriver: string;
+        db_driver: string;
         filePath: string;
         fileName: string;
         sql: string;
@@ -24,7 +24,6 @@ const LoadButtonGroupAction: React.FC<LoadButtonGroupProps> = (props: LoadButton
         loadConfig().then();
     }, []);
 
-
     const updateDbConfigField = (field: keyof typeof dbConfig, value: any) => {
         setDbConfig(prev => ({...prev, [field]: value}));
     }
@@ -34,33 +33,27 @@ const LoadButtonGroupAction: React.FC<LoadButtonGroupProps> = (props: LoadButton
             const response = await invoke('load_database_config');
             if (typeof response === "string") {
                 const loadDbConfig = JSON.parse(response);
-
-                updateDbConfigField('dbDriver', loadDbConfig.db_driver || "");
-                updateDbConfigField('dbUrl', loadDbConfig.db_host || "");
-                updateDbConfigField('port', loadDbConfig.port || "");
-                updateDbConfigField('username', loadDbConfig.username || "");
-                updateDbConfigField('password', loadDbConfig.password || "");
-                updateDbConfigField('dbName', loadDbConfig.db_name || "");
-                updateDbConfigField('tableName', loadDbConfig.table_name || "");
-                updateDbConfigField('sqliteFilePath', loadDbConfig.sqlite_file_path || "");
+                for (const key in loadDbConfig) {
+                    updateDbConfigField(key as keyof typeof dbConfig, loadDbConfig[key]);
+                }
                 updateDbConfigField('is_connected', false);
+                props.updateGenerateSQL("db_driver", loadDbConfig.db_driver);
             }
         } catch (error) {
             toast.error(error as string);
         }
     };
 
-
     const handleReset = () => {
         props.updateGenerateSQL("tableName", "");
         props.updateGenerateSQL("filePath", "");
-        props.updateGenerateSQL("dbDriver", "");
+        props.updateGenerateSQL("db_driver", "");
         props.updateGenerateSQL("fileName", "");
         props.updateGenerateSQL("sql", "");
-    };
+    }
 
     const handleCopy = () => {
-        if (props.generateSQL.sql) {
+        if (props.generateSQL.sql !== "") {
             navigator.clipboard.writeText(props.generateSQL.sql).then(() => {
                 toast.success("SQL copied to clipboard");
             });
@@ -71,7 +64,7 @@ const LoadButtonGroupAction: React.FC<LoadButtonGroupProps> = (props: LoadButton
 
     const handleGenerate = async () => {
         try {
-            if (props.generateSQL.tableName === "" || props.generateSQL.dbDriver === "" || props.generateSQL.filePath === "") {
+            if (props.generateSQL.tableName === "" || props.generateSQL.db_driver === "" || props.generateSQL.filePath === "") {
                 toast.error("Please fill in all the fields");
                 return;
             }
@@ -80,7 +73,7 @@ const LoadButtonGroupAction: React.FC<LoadButtonGroupProps> = (props: LoadButton
                 load: {
                     file_path: props.generateSQL.filePath,
                     table_name: props.generateSQL.tableName,
-                    db_driver: props.generateSQL.dbDriver,
+                    db_driver: props.generateSQL.db_driver,
                 },
             });
 
@@ -105,12 +98,12 @@ const LoadButtonGroupAction: React.FC<LoadButtonGroupProps> = (props: LoadButton
             if (!dbConfig.is_connected) {
                 const response = await invoke('connect_to_database', {
                         config: {
-                            db_driver: props.generateSQL.dbDriver.toLowerCase(),
-                            db_host: dbConfig.dbUrl,
+                            db_driver: props.generateSQL.db_driver.toLowerCase(),
+                            db_host: dbConfig.db_host,
                             port: dbConfig.port,
                             username: dbConfig.username,
                             password: dbConfig.password,
-                            db_name: dbConfig.dbName,
+                            db_name: dbConfig.db_name,
                             table_name: dbConfig.tableName,
                             sqlite_file_path: dbConfig.sqliteFilePath,
                         },
@@ -192,6 +185,7 @@ const LoadButtonGroupAction: React.FC<LoadButtonGroupProps> = (props: LoadButton
                 <DataBaseDialog
                     dbConfig={dbConfig}
                     updateDbConfigField={updateDbConfigField}
+                    sql={props.generateSQL.sql}
                     executeSQL={checkConnection}/>
             </div>
 

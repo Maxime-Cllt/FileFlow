@@ -3,7 +3,8 @@
 use crate::fileflow::database_connection::DatabaseConnection;
 use crate::fileflow::fast_insert::fast_insert;
 use crate::fileflow::fileflow::{
-    get_create_statement_with_fixed_size, get_drop_statement, get_formated_column_names,
+    detect_separator_in_file, get_create_statement_with_fixed_size, get_drop_statement,
+    get_formated_column_names,
 };
 use crate::fileflow::optimized_insert::optimized_insert;
 use crate::fileflow::stuct::db_config::DbConfig;
@@ -192,6 +193,10 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
         }
     }
 
+    let separator: char = detect_separator_in_file(&load.file_path).unwrap();
+
+
+    // Generate SQL
     let mut sql: String = String::new();
 
     // Delete table if exists
@@ -212,13 +217,15 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
     sql.push_str("\n\n");
 
     // Load data into table from file
-    sql.push_str("LOAD DATA LOCAL INFILE '");
+    sql.push_str("LOAD DATA INFILE '");
     sql.push_str(load.file_path.as_str());
     sql.push_str("'\nINTO TABLE ");
     sql.push_str(load.table_name.as_str());
-    sql.push_str(
-        "\nFIELDS TERMINATED BY ','\nENCLOSED BY '\"'\nLINES TERMINATED BY '\\n'\nIGNORE 1 ROWS (",
-    );
+    sql.push_str("\nCHARACTER SET utf8\n");
+    sql.push_str("FIELDS TERMINATED BY '");
+    sql.push(separator);
+    sql.push_str("'\n");
+    sql.push_str("ENCLOSED BY '\"'\nLINES TERMINATED BY '\\n'\nIGNORE 1 ROWS (");
     sql.push_str(&final_columns_name.join(", "));
     sql.push_str(");");
 

@@ -1,5 +1,9 @@
 use crate::fileflow::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
+use csv::ReaderBuilder;
 use std::collections::HashMap;
+use std::fs::File;
+use std::io;
+use std::io::{BufReader, Read};
 
 /**
  * This function is used to generate the DROP TABLE statement for different database drivers.
@@ -75,7 +79,7 @@ pub fn get_create_statement_with_fixed_size(
 ) -> Result<String, String> {
     // Start building the SQL statement based on the driver
     let mut create_table_sql = match driver {
-        SQLITE|POSTGRES => format!("CREATE TABLE \"{}\" (", final_table_name),
+        SQLITE | POSTGRES => format!("CREATE TABLE \"{}\" (", final_table_name),
         MYSQL | MARIADB => format!("CREATE TABLE `{}` (", final_table_name),
         _ => return Err("Unsupported database driver".to_string()),
     };
@@ -129,4 +133,38 @@ pub fn get_formated_column_names(headers: Vec<String>) -> Vec<String> {
         .iter()
         .map(|h| h.to_lowercase().replace(" ", "_"))
         .collect()
+}
+
+/// This function is used to detect the separator in a CSV file.
+pub fn detect_separator_in_file(file_path: &str) -> io::Result<char> {
+    let file: File = File::open(file_path)?;
+
+    if !file_path.ends_with(".csv") {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "File is not a CSV file",
+        ));
+    }
+
+    const POSSIBLE_SEPARATORS: [char; 5] = [',', ';', '\t', '|', ' '];
+
+    let mut reader: BufReader<File> = BufReader::new(file);
+    let mut buffer: String = String::new();
+    reader.read_to_string(&mut buffer)?;
+
+    for sep in &POSSIBLE_SEPARATORS {
+        let mut csv_reader = ReaderBuilder::new()
+            .delimiter(*sep as u8)
+            .has_headers(false)
+            .from_reader(buffer.as_bytes());
+
+        if csv_reader.records().next().is_some() {
+            return Ok(*sep);
+        }
+    }
+
+    Err(io::Error::new(
+        io::ErrorKind::InvalidData,
+        "Could not detect a valid separator",
+    ))
 }

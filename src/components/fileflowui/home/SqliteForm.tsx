@@ -9,7 +9,7 @@ import * as dialog from "@tauri-apps/plugin-dialog"
 interface SqliteFormProps {
     dbConfig: {
         sqliteFilePath: string;
-        dbDriver: string;
+        db_driver: string;
     };
     uiState: {
         fileName: string;
@@ -42,7 +42,7 @@ const SqliteForm: React.FC<SqliteFormProps> = (props: SqliteFormProps) => {
         <div className="flex items-center gap-6">
 
             <SelectDatabase
-                dbDriver={props.dbConfig.dbDriver}
+                db_driver={props.dbConfig.db_driver}
                 updateDbConfigField={props.updateDbConfigField}
                 updateUiStateField={props.updateUiStateField}
             />

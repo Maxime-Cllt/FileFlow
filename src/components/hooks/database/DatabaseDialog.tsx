@@ -15,16 +15,17 @@ import {Input} from "@/components/ui/input";
 
 interface DataBaseDialogProps {
     dbConfig: {
-        dbDriver: string;
-        dbUrl: string;
+        db_driver: string;
+        db_host: string;
         port: string;
         username: string;
         password: string;
-        dbName: string;
+        db_name: string;
         tableName: string;
         sqliteFilePath: string;
         is_connected: boolean;
     };
+    sql: string;
     updateDbConfigField: (field: any, value: string) => void;
     executeSQL: () => void;
 }
@@ -32,6 +33,7 @@ interface DataBaseDialogProps {
 const DataBaseDialog: React.FC<DataBaseDialogProps> = ({
                                                            dbConfig,
                                                            updateDbConfigField,
+                                                           sql,
                                                            executeSQL,
                                                        }) => {
 
@@ -44,14 +46,16 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = ({
             <Dialog>
                 {/* Trigger Button */}
                 <DialogTrigger asChild>
-                    <button
-                        aria-label="Open Database Configuration"
-                        type="button"
-                        title="Configure Database"
-                        className="p-3 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white transition duration-300 focus:ring-4 focus:ring-green-300"
-                    >
-                        <Play className="w-5 h-5"/>
-                    </button>
+                    {sql !== "" && (
+                        <button
+                            aria-label="Open Database Configuration"
+                            type="button"
+                            title="Configure Database"
+                            className="p-3 rounded-full shadow-lg bg-green-500 hover:bg-green-600 text-white transition duration-300 focus:ring-4 focus:ring-green-300"
+                        >
+                            <Play className="w-5 h-5"/>
+                        </button>
+                    )}
                 </DialogTrigger>
 
                 {/* Dialog Content */}
@@ -96,14 +100,14 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = ({
                         {/* Second Row: URL and Port */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <Label htmlFor="dbUrl" className="block text-sm font-medium text-gray-700">
+                                <Label htmlFor="db_host" className="block text-sm font-medium text-gray-700">
                                     URL
                                 </Label>
                                 <Input
-                                    id="dbUrl"
+                                    id="db_host"
                                     type="text"
-                                    value={dbConfig.dbUrl}
-                                    onChange={(e) => handleInputChange("dbUrl", e.target.value)}
+                                    value={dbConfig.db_host}
+                                    onChange={(e) => handleInputChange("db_host", e.target.value)}
                                     className="w-full border rounded-md p-2 shadow-sm focus:ring-purple-300 focus:border-purple-500"
                                 />
                             </div>
@@ -123,14 +127,14 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = ({
 
                         {/* Third Row: Database Name */}
                         <div>
-                            <Label htmlFor="dbName" className="block text-sm font-medium text-gray-700">
+                            <Label htmlFor="db_name" className="block text-sm font-medium text-gray-700">
                                 Database Name
                             </Label>
                             <Input
-                                id="dbName"
+                                id="db_name"
                                 type="text"
-                                value={dbConfig.dbName}
-                                onChange={(e) => handleInputChange("dbName", e.target.value)}
+                                value={dbConfig.db_name}
+                                onChange={(e) => handleInputChange("db_name", e.target.value)}
                                 className="w-full border rounded-md p-2 shadow-sm focus:ring-purple-300 focus:border-purple-500"
                             />
                         </div>

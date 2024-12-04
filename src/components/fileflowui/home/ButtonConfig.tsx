@@ -5,12 +5,12 @@ import {toast} from "sonner";
 
 interface ButtonConfigComponent {
     dbConfig: {
-        dbDriver: string;
-        dbUrl: string;
+        db_driver: string;
+        db_host: string;
         port: string;
         username: string;
         password: string;
-        dbName: string;
+        db_name: string;
         tableName: string;
         sqliteFilePath: string;
     };
@@ -30,12 +30,12 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponent> = ({
         try {
             await invoke('save_database_config', {
                 save: {
-                    db_driver: dbConfig.dbDriver.toLowerCase(),
-                    db_host: dbConfig.dbUrl,
+                    db_driver: dbConfig.db_driver.toLowerCase(),
+                    db_host: dbConfig.db_host,
                     port: dbConfig.port,
                     username: dbConfig.username,
                     password: dbConfig.password,
-                    db_name: dbConfig.dbName,
+                    db_name: dbConfig.db_name,
                     table_name: dbConfig.tableName,
                     sqlite_file_path: dbConfig.sqliteFilePath,
                 },
@@ -54,14 +54,11 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponent> = ({
             if (typeof response === "string") {
                 const loadDbConfig = JSON.parse(response);
 
-                updateDbConfigField('dbDriver', loadDbConfig.db_driver || "");
-                updateDbConfigField('dbUrl', loadDbConfig.db_host || "");
-                updateDbConfigField('port', loadDbConfig.port || "");
-                updateDbConfigField('username', loadDbConfig.username || "");
-                updateDbConfigField('password', loadDbConfig.password || "");
-                updateDbConfigField('dbName', loadDbConfig.db_name || "");
-                updateDbConfigField('tableName', loadDbConfig.table_name || "");
-                updateDbConfigField('sqliteFilePath', loadDbConfig.sqlite_file_path || "");
+
+                // loop through the keys and update the dbConfig
+                Object.keys(loadDbConfig).forEach((key) => {
+                    updateDbConfigField(key, loadDbConfig[key]);
+                });
                 updateDbConfigField('is_connected', false);
 
                 toast.success('Config loaded successfully');

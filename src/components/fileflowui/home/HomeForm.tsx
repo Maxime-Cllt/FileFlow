@@ -5,13 +5,13 @@ import SelectDatabase from "@/components/hooks/database/SelectDatabase.tsx";
 
 interface FormProps {
     dbConfig: {
-        dbUrl: string;
+        db_host: string;
         port: string;
         username: string;
         password: string;
-        dbName: string;
+        db_name: string;
         tableName: string;
-        dbDriver: string;
+        db_driver: string;
         is_connected: boolean;
     };
     uiState: {
@@ -37,16 +37,16 @@ const HomeForm: React.FC<FormProps> = ({
 
             {/* Left Column */}
             <div className="space-y-4">
-                <FormInput label="URL of the database" value={dbConfig.dbUrl}
-                           onChange={(value) => updateDbConfigField('dbUrl', value)}
+                <FormInput label="URL of the database" value={dbConfig.db_host}
+                           onChange={(value) => updateDbConfigField('db_host', value)}
                            placeholder="localhost" required/>
 
                 <FormInput label="Username" value={dbConfig.username}
                            onChange={(value) => updateDbConfigField('username', value)}
                            placeholder="Username" required/>
 
-                <FormInput label="Name of the database" value={dbConfig.dbName}
-                           onChange={(value) => updateDbConfigField('dbName', value)}
+                <FormInput label="Name of the database" value={dbConfig.db_name}
+                           onChange={(value) => updateDbConfigField('db_name', value)}
                            placeholder="Database Name" required/>
             </div>
 
@@ -69,7 +69,7 @@ const HomeForm: React.FC<FormProps> = ({
                 <SelectDatabase
                     updateUiStateField={updateUiStateField}
                     updateDbConfigField={updateDbConfigField}
-                    dbDriver={dbConfig.dbDriver}
+                    db_driver={dbConfig.db_driver}
                 />
                 <FileUpload
                     setFileName={(name: string) => updateUiStateField('fileName', name)}

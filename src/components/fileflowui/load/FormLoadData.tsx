@@ -7,7 +7,7 @@ import LoadButtonGroupAction from "@/components/fileflowui/load/LoadButtonGroupA
 interface FormLoadDataProps {
     generateSQL: {
         tableName: string;
-        dbDriver: string;
+        db_driver: string;
         filePath: string;
         fileName: string;
         sql: string;
@@ -38,7 +38,7 @@ const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, updateGenerateS
             <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Database Type</label>
                 <SelectDatabase
-                    dbDriver={generateSQL.dbDriver}
+                    db_driver={generateSQL.db_driver}
                     updateDbConfigField={
                         (field, value) => {
                             updateGenerateSQL(field, value);

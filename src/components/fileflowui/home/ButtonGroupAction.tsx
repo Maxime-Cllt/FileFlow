@@ -5,12 +5,12 @@ import {invoke} from "@tauri-apps/api/core";
 
 interface ButtonGroupProps {
     dbConfig: {
-        dbDriver: string;
-        dbUrl: string;
+        db_driver: string;
+        db_host: string;
         port: string;
         username: string;
         password: string;
-        dbName: string;
+        db_name: string;
         tableName: string;
         sqliteFilePath: string;
         is_connected: boolean;
@@ -51,7 +51,7 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
                 csv: {
                     table_name: props.dbConfig.tableName,
                     file_path: props.uiState.filePath,
-                    db_driver: props.dbConfig.dbDriver.toLowerCase(),
+                    db_driver: props.dbConfig.db_driver.toLowerCase(),
                     mode: props.uiState.mode,
                 },
             });
@@ -68,12 +68,12 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
 
     const handleReset = () => {
 
-        props.updateDbConfigField('dbDriver', '');
-        props.updateDbConfigField('dbUrl', '');
+        props.updateDbConfigField('db_driver', '');
+        props.updateDbConfigField('db_host', '');
         props.updateDbConfigField('port', '');
         props.updateDbConfigField('username', '');
         props.updateDbConfigField('password', '');
-        props.updateDbConfigField('dbName', '');
+        props.updateDbConfigField('db_name', '');
         props.updateDbConfigField('tableName', '');
         props.updateDbConfigField('sqliteFilePath', '');
 
@@ -111,12 +111,12 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
             return;
         }
 
-        if (!props.dbConfig.dbDriver && props.dbConfig.dbDriver !== 'sqlite') {
-            if (!props.dbConfig.dbUrl || !props.dbConfig.port || !props.dbConfig.username) {
+        if (!props.dbConfig.db_driver && props.dbConfig.db_driver !== 'sqlite') {
+            if (!props.dbConfig.db_host || !props.dbConfig.port || !props.dbConfig.username) {
                 toast.warning('Please fill in all the required fields');
                 return;
             }
-        } else if (props.dbConfig.dbDriver === 'sqlite') {
+        } else if (props.dbConfig.db_driver === 'sqlite') {
             if (!props.dbConfig.sqliteFilePath) {
                 toast.warning('Please select a SQLite file');
                 return;
@@ -127,12 +127,12 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
         try {
             const response = await invoke('connect_to_database', {
                 config: {
-                    db_driver: props.dbConfig.dbDriver.toLowerCase(),
-                    db_host: props.dbConfig.dbUrl,
+                    db_driver: props.dbConfig.db_driver.toLowerCase(),
+                    db_host: props.dbConfig.db_host,
                     port: props.dbConfig.port,
                     username: props.dbConfig.username,
                     password: props.dbConfig.password,
-                    db_name: props.dbConfig.dbName,
+                    db_name: props.dbConfig.db_name,
                     table_name: props.dbConfig.tableName,
                     sqlite_file_path: props.dbConfig.sqliteFilePath,
                 },

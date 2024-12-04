@@ -4,7 +4,7 @@
 
 export const generateSqlConfig = {
     tableName: '',
-    dbDriver: '',
+    db_driver: '',
     filePath: '',
     fileName: '',
     sql: ''

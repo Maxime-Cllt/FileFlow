@@ -2,7 +2,7 @@ import React from 'react';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.tsx";
 
 interface SelectDatabaseProps {
-    dbDriver: string;
+    db_driver: string;
     updateDbConfigField: (field: any, value: any) => void;
     updateUiStateField: (field: any, value: any) => void;
 }
@@ -19,13 +19,13 @@ const SelectDatabase: React.FC<SelectDatabaseProps> = (props: SelectDatabaseProp
     const handledbDriverChange = (value: string) => {
         const portMap: Record<string, string> = {mysql: '3306', mariadb: '3306', postgres: '5432'};
         props.updateDbConfigField('port', portMap[value] || '');
-        props.updateDbConfigField('dbDriver', value);
+        props.updateDbConfigField('db_driver', value);
         props.updateUiStateField('sqlite', value === 'sqlite');
     };
 
     return (
         <div className="space-y-4">
-            <Select onValueChange={handledbDriverChange} value={props.dbDriver}>
+            <Select onValueChange={handledbDriverChange} value={props.db_driver}>
                 <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a database driver"/>
                 </SelectTrigger>

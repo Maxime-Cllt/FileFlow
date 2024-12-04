@@ -32,7 +32,7 @@ const Home: React.FC = () => {
                 <SqliteForm
                     dbConfig={{
                         sqliteFilePath: dbConfig.sqliteFilePath,
-                        dbDriver: dbConfig.dbDriver,
+                        db_driver: dbConfig.db_driver,
                     }}
                     addLog={addLog}
                     updateDbConfigField={updateDbConfigField}

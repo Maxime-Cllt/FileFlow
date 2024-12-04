@@ -3,12 +3,12 @@
  */
 
 export const initialDbConfig = {
-    dbDriver: '',
-    dbUrl: '',
+    db_driver: '',
+    db_host: '',
     port: '',
     username: '',
     password: '',
-    dbName: '',
+    db_name: '',
     tableName: '',
     sqliteFilePath: '',
     is_connected: false

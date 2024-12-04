@@ -2,24 +2,25 @@ import React from 'react';
 import {Input} from "@/components/ui/input.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {HardDrive} from "lucide-react";
-import SelectDatabaseComponent from "@/components/fileflowui/home/SelectDatabaseComponent.tsx";
-import FileUploadComponent from "@/components/fileflowui/style/FileUploadComponent.tsx";
+import SelectDatabase from "@/components/hooks/database/SelectDatabase.tsx";
+import FileUpload from "@/components/hooks/file/FileUpload.tsx";
 import * as dialog from "@tauri-apps/plugin-dialog"
 
 interface SqliteFormProps {
+    dbConfig: {
+        sqliteFilePath: string;
+        db_driver: string;
+    };
+    uiState: {
+        fileName: string;
+    }
     addLog: (message: string) => void;
-    sqliteFilePath: string;
-    setSqliteFilePath: (value: string) => void;
-    dbDriver: string;
-    handledbDriverChange: (value: string) => void;
-    fileName: string;
-    setFilePath: (filePath: string | null) => void;
-    setFileName: (name: string) => void;
-    setTableName: (tableName: string) => void;
+    updateUiStateField: (field: any, value: any) => void;
+    updateDbConfigField: (field: any, value: any) => void;
 }
 
 
-const SqliteFormComponent: React.FC<SqliteFormProps> = (props: SqliteFormProps) => {
+const SqliteForm: React.FC<SqliteFormProps> = (props: SqliteFormProps) => {
 
     const openFileDialog = async () => {
         try {
@@ -29,7 +30,7 @@ const SqliteFormComponent: React.FC<SqliteFormProps> = (props: SqliteFormProps) 
             });
 
             if (selectedFilePath) {
-                props.setSqliteFilePath(selectedFilePath.toString());
+                props.updateDbConfigField('sqliteFilePath', selectedFilePath);
             }
         } catch (error) {
             props.addLog(`Error opening file dialog: ${error}`);
@@ -40,7 +41,11 @@ const SqliteFormComponent: React.FC<SqliteFormProps> = (props: SqliteFormProps) 
     return (
         <div className="flex items-center gap-6">
 
-            <SelectDatabaseComponent handledbDriverChange={props.handledbDriverChange} dbDriver={props.dbDriver}/>
+            <SelectDatabase
+                db_driver={props.dbConfig.db_driver}
+                updateDbConfigField={props.updateDbConfigField}
+                updateUiStateField={props.updateUiStateField}
+            />
 
             <div className={"w-full"}>
                 <div className={"flex items-center gap-4 mb-8"}>
@@ -50,7 +55,7 @@ const SqliteFormComponent: React.FC<SqliteFormProps> = (props: SqliteFormProps) 
                     </Button>
                     <Input
                         type="text"
-                        value={props.sqliteFilePath}
+                        value={props.dbConfig.sqliteFilePath}
                         placeholder="Select SQLite file"
                         disabled
                         className="w-full"
@@ -58,11 +63,11 @@ const SqliteFormComponent: React.FC<SqliteFormProps> = (props: SqliteFormProps) 
                 </div>
 
                 {/* Upload file */}
-                <FileUploadComponent {...{
-                    fileName: props.fileName,
-                    setFilePath: props.setFilePath,
-                    setFileName: props.setFileName,
-                    setTableName: props.setTableName,
+                <FileUpload {...{
+                    fileName: props.uiState.fileName,
+                    setFilePath: (value: string | null) => props.updateUiStateField('filePath', value),
+                    setFileName: (value: string) => props.updateUiStateField('fileName', value),
+                    setTableName: (value: string) => props.updateDbConfigField('tableName', value),
                     addLog: props.addLog
                 }} />
             </div>
@@ -71,4 +76,4 @@ const SqliteFormComponent: React.FC<SqliteFormProps> = (props: SqliteFormProps) 
     );
 };
 
-export default SqliteFormComponent;
+export default SqliteForm;

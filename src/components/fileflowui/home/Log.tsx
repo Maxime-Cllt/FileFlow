@@ -4,7 +4,7 @@ interface LogProps {
     histoLog: string;
 }
 
-const LogComponent: React.FC<LogProps> = (props: LogProps) => {
+const Log: React.FC<LogProps> = (props: LogProps) => {
     return (
         <div
             className="flex flex-col items-center justify-center h-auto max-h-full">
@@ -20,4 +20,4 @@ const LogComponent: React.FC<LogProps> = (props: LogProps) => {
     );
 };
 
-export default LogComponent;
+export default Log;

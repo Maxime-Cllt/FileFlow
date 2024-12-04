@@ -2,9 +2,9 @@ import React from 'react';
 import {Input} from "@/components/ui/input.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {FileArchive} from "lucide-react";
-import {} from "@tauri-apps/api";
 import {invoke} from "@tauri-apps/api/core";
 import * as dialog from "@tauri-apps/plugin-dialog"
+import {toast} from "sonner";
 
 interface FileUploadProps {
     fileName: string;
@@ -14,7 +14,7 @@ interface FileUploadProps {
     addLog: (message: string) => void;
 }
 
-const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) => {
+const FileUpload: React.FC<FileUploadProps> = (props: FileUploadProps) => {
 
     const [fileSize, setFileSize] = React.useState<string>('');
 
@@ -38,6 +38,7 @@ const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) 
                 setFileSize(typeof response === 'string' ? response : '');
             }
         } catch (error) {
+            toast.error(`Error opening file`);
             props.addLog(`Error opening file: ${error}`);
         }
     };
@@ -67,4 +68,4 @@ const FileUploadComponent: React.FC<FileUploadProps> = (props: FileUploadProps) 
     );
 };
 
-export default FileUploadComponent;
+export default FileUpload;

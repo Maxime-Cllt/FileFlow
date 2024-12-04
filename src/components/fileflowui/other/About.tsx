@@ -1,6 +1,5 @@
 import {getName, getVersion} from "@tauri-apps/api/app";
 import {invoke} from "@tauri-apps/api/core";
-import Menu from "@/components/fileflowui/style/Menu.tsx";
 import {useEffect, useState} from "react";
 
 const AboutPage = () => {
@@ -27,15 +26,9 @@ const AboutPage = () => {
     }, []);
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 text-gray-800 px-4">
-
-            {/* Menu */}
-            <div className="fixed top-0 w-full bg-white shadow-md z-10">
-                <Menu/>
-            </div>
-
-
+        <div className="flex flex-col items-center justify-center w-full h-full space-y-8 bg-gray-100">
             <div className="w-full max-w-2xl text-center">
+
                 {/* App Title */}
                 <h1 className="text-4xl font-bold mb-4">About {appName}</h1>
                 <p className="text-lg mb-2">Version: {appVersion}</p>

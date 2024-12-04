@@ -4,7 +4,7 @@
     <div align="center">
         <img src="https://img.shields.io/badge/Rust-dea584?style=for-the-badge&logo=rust&logoColor=white" alt="Rust" />
         <img src="https://img.shields.io/badge/Tauri-ffc130?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri" />
-        <img src="https://img.shields.io/badge/Version-1.0.4-7073f6?style=for-the-badge" alt="Version" />
+        <img src="https://img.shields.io/badge/Version-1.0.5-7073f6?style=for-the-badge" alt="Version" />
     </div>
 </div>
 
@@ -124,4 +124,10 @@ There are two mode to insert the data into the database:
 The optimised mode might take longer to insert the data but it will create a table with the type of the columns
 optimised.
 
+You can also generate a LOAD DATA SQL query to insert the data faster if your database support it. It is way faster than
+inserting the data row by row but not all databases support it.
 
+
+## Contributing
+
+If you want to contribute to the project, you can open an issue or a pull request.

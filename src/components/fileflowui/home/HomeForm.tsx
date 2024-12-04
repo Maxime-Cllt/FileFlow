@@ -1,76 +1,81 @@
 import React from 'react';
 import {Input} from "@/components/ui/input.tsx";
-import FileUploadComponent from "@/components/fileflowui/style/FileUploadComponent.tsx";
-import SelectDatabaseComponent from "@/components/fileflowui/home/SelectDatabaseComponent.tsx";
+import FileUpload from "@/components/hooks/file/FileUpload.tsx";
+import SelectDatabase from "@/components/hooks/database/SelectDatabase.tsx";
 
 interface FormProps {
     dbConfig: {
-        dbUrl: string;
+        db_host: string;
         port: string;
         username: string;
         password: string;
-        dbName: string;
+        db_name: string;
         tableName: string;
-        dbDriver: string;
+        db_driver: string;
         is_connected: boolean;
     };
     uiState: {
         fileName: string;
     };
-    setters: {
-        setDbUrl: (value: string) => void;
-        setPort: (value: string) => void;
-        setUsername: (value: string) => void;
-        setPassword: (value: string) => void;
-        setDbName: (value: string) => void;
-        setTableName: (value: string) => void;
-        setFilePath: (filePath: string | null) => void;
-        setFileName: (name: string) => void;
-        setMode: (mode: string) => void;
-    };
+    updateUiStateField: (field: any, value: any) => void;
+    updateDbConfigField: (field: any, value: any) => void;
     actions: {
         addLog: (message: string) => void;
-        handledbDriverChange: (value: string) => void;
     };
 }
 
 
-const FormComponent: React.FC<FormProps> = ({dbConfig, uiState, setters, actions}: FormProps) => {
+const HomeForm: React.FC<FormProps> = ({
+                                           dbConfig,
+                                           uiState,
+                                           updateDbConfigField,
+                                           updateUiStateField,
+                                           actions
+                                       }: FormProps) => {
     return (
         <form className="grid grid-cols-2 gap-4">
 
             {/* Left Column */}
             <div className="space-y-4">
-                <FormInput label="URL of the database" value={dbConfig.dbUrl} onChange={setters.setDbUrl}
+                <FormInput label="URL of the database" value={dbConfig.db_host}
+                           onChange={(value) => updateDbConfigField('db_host', value)}
                            placeholder="localhost" required/>
 
-                <FormInput label="Username" value={dbConfig.username} onChange={setters.setUsername}
+                <FormInput label="Username" value={dbConfig.username}
+                           onChange={(value) => updateDbConfigField('username', value)}
                            placeholder="Username" required/>
 
-                <FormInput label="Name of the database" value={dbConfig.dbName} onChange={setters.setDbName}
+                <FormInput label="Name of the database" value={dbConfig.db_name}
+                           onChange={(value) => updateDbConfigField('db_name', value)}
                            placeholder="Database Name" required/>
             </div>
 
             {/* Right Column */}
             <div className="space-y-4">
-                <FormInput label="Port" type="number" value={dbConfig.port} onChange={setters.setPort}
+                <FormInput label="Port" type="number" value={dbConfig.port}
+                           onChange={(value) => updateDbConfigField('port', value)}
                            placeholder="Port" required/>
-                <FormInput label="Password" type="password" value={dbConfig.password} onChange={setters.setPassword}
+                <FormInput label="Password" type="password" value={dbConfig.password}
+                           onChange={(value) => updateDbConfigField('password', value)}
                            placeholder="Password" required/>
 
-                <FormInput label="Name of the table" value={dbConfig.tableName} onChange={setters.setTableName}
+                <FormInput label="Name of the table" value={dbConfig.tableName}
+                           onChange={(value) => updateDbConfigField('tableName', value)}
                            placeholder="Table Name" required/>
             </div>
 
             {/* Database Type Selection and File Upload */}
             <div className="col-span-2 grid grid-cols-2 gap-4 items-center justify-center">
-                <SelectDatabaseComponent handledbDriverChange={actions.handledbDriverChange}
-                                         dbDriver={dbConfig.dbDriver}/>
-                <FileUploadComponent
-                    setFileName={setters.setFileName}
-                    setTableName={setters.setTableName}
+                <SelectDatabase
+                    updateUiStateField={updateUiStateField}
+                    updateDbConfigField={updateDbConfigField}
+                    db_driver={dbConfig.db_driver}
+                />
+                <FileUpload
+                    setFileName={(name: string) => updateUiStateField('fileName', name)}
+                    setTableName={(value: string) => updateDbConfigField('tableName', value)}
                     addLog={actions.addLog}
-                    setFilePath={setters.setFilePath}
+                    setFilePath={(filePath: string | null) => updateUiStateField('filePath', filePath)}
                     fileName={uiState.fileName}
                 />
             </div>
@@ -111,4 +116,4 @@ const FormInput: React.FC<FormInputProps> = ({
     </div>
 );
 
-export default FormComponent;
+export default HomeForm;

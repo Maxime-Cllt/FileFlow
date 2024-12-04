@@ -1,7 +1,6 @@
 import React from 'react';
 import FormLoadData from "@/components/fileflowui/load/FormLoadData.tsx";
-import Menu from "@/components/fileflowui/style/Menu.tsx";
-import {generateSqlConfig} from "@/components/object/generateSqlConfig.tsx";
+import {generateSqlConfig} from "@/components/states/generateSqlConfig.tsx";
 
 const LoadDataSql: React.FC = () => {
 
@@ -17,22 +16,11 @@ const LoadDataSql: React.FC = () => {
     return (
         <div className="min-h-screen bg-gray-100">
 
-            {/* Fixed Navigation Bar */}
-            <div className="fixed top-0 w-full z-50 bg-white shadow-md">
-                <Menu/>
-            </div>
-
             {/* Load Data Form */}
-            <div className="pt-16 px-4 md:px-8 lg:px-16">
+            <div className="p-4 md:p-8 mt-6">
                 <FormLoadData
                     generateSQL={generateSQL}
-                    setters={{
-                        setTableName: (name: string) => updateGenerateSQL('tableName', name),
-                        setDbDriver: (value: string) => updateGenerateSQL('dbDriver', value),
-                        setFileName: (name: string) => updateGenerateSQL('fileName', name),
-                        setFilePath: (filePath: string) => updateGenerateSQL('filePath', filePath),
-                        setSql: (sql: string) => updateGenerateSQL('sql', sql),
-                    }}
+                    updateGenerateSQL={updateGenerateSQL}
                 />
             </div>
 

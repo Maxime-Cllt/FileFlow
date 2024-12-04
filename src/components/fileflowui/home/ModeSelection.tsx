@@ -6,7 +6,7 @@ interface ModeSelectionProps {
     setMode: (mode: string) => void;
 }
 
-const ModeSelectionComponent: React.FC<ModeSelectionProps> = (props: ModeSelectionProps) => {
+const ModeSelection: React.FC<ModeSelectionProps> = (props: ModeSelectionProps) => {
     return (
         <div className="flex justify-center mt-10">
             <RadioGroup defaultValue="fast" className="flex justify-center gap-10"
@@ -29,4 +29,4 @@ const ModeSelectionComponent: React.FC<ModeSelectionProps> = (props: ModeSelecti
     );
 };
 
-export default ModeSelectionComponent;
+export default ModeSelection;

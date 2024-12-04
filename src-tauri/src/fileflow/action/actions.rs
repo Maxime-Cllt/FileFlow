@@ -2,7 +2,10 @@
 
 use crate::fileflow::database_connection::DatabaseConnection;
 use crate::fileflow::fast_insert::fast_insert;
-use crate::fileflow::fileflow::{get_create_statement_with_fixed_size, get_formated_column_names};
+use crate::fileflow::fileflow::{
+    detect_separator_in_file, get_create_statement_with_fixed_size, get_drop_statement,
+    get_formated_column_names,
+};
 use crate::fileflow::optimized_insert::optimized_insert;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::insert_config::InsertConfig;
@@ -56,8 +59,13 @@ pub async fn insert_csv_data(
     let connection: &DatabaseConnection = conn_guard.as_ref().unwrap();
     let start: Instant = Instant::now();
 
-    let file: File = File::open(csv.file_path).unwrap();
-    let mut reader: Reader<File> = ReaderBuilder::new().has_headers(true).from_reader(file);
+    let file: File = File::open(&csv.file_path).unwrap();
+    let separator: char = detect_separator_in_file(&csv.file_path).unwrap();
+
+    let mut reader: Reader<File> = ReaderBuilder::new()
+        .delimiter(separator as u8)
+        .has_headers(true)
+        .from_reader(file);
 
     let final_columns_name: Vec<String> = get_formated_column_names(
         reader
@@ -77,7 +85,7 @@ pub async fn insert_csv_data(
             &csv.table_name,
             &csv.db_driver,
         )
-            .await?;
+        .await?;
     } else {
         line_count = optimized_insert(
             &connection,
@@ -86,7 +94,7 @@ pub async fn insert_csv_data(
             &csv.table_name,
             &csv.db_driver,
         )
-            .await?;
+        .await?;
     }
 
     Ok(format!(
@@ -158,8 +166,8 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
         return Err("File path is empty".to_string());
     }
 
-    let file: File = File::open(&load.file_path)
-        .map_err(|e| format!("Failed to open file: {}", e))?;
+    let file: File =
+        File::open(&load.file_path).map_err(|e| format!("Failed to open file: {}", e))?;
     let mut reader: Reader<File> = ReaderBuilder::new().has_headers(true).from_reader(file);
 
     let final_columns_name: Vec<String> = get_formated_column_names(
@@ -181,14 +189,26 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
 
         for i in 0..record.len() {
             let value: String = record.get(i).unwrap().trim().to_string();
-            let max_length: &mut usize = columns_size_map.get_mut(final_columns_name[i].as_str()).unwrap();
+            let max_length: &mut usize = columns_size_map
+                .get_mut(final_columns_name[i].as_str())
+                .unwrap();
             if value.len() > *max_length {
                 *max_length = value.len() + 1;
             }
         }
     }
 
+    let separator: char = detect_separator_in_file(&load.file_path).unwrap();
+
+    // Generate SQL
     let mut sql: String = String::new();
+
+    // Delete table if exists
+    sql.push_str(get_drop_statement(&load.db_driver, &load.table_name)?.as_str());
+    sql.push_str(";");
+    sql.push_str("\n\n");
+
+    // Create table with fixed size
     sql.push_str(
         get_create_statement_with_fixed_size(
             &load.db_driver,
@@ -196,19 +216,63 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
             &columns_size_map,
             &final_columns_name,
         )?
-            .as_str(),
+        .as_str(),
     );
     sql.push_str("\n\n");
 
-    sql.push_str("LOAD DATA LOCAL INFILE '");
+    // Load data into table from file
+    sql.push_str("LOAD DATA INFILE '");
     sql.push_str(load.file_path.as_str());
     sql.push_str("'\nINTO TABLE ");
     sql.push_str(load.table_name.as_str());
-    sql.push_str(
-        "\nFIELDS TERMINATED BY ','\nENCLOSED BY '\"'\nLINES TERMINATED BY '\\n'\nIGNORE 1 ROWS (",
-    );
+    sql.push_str("\nCHARACTER SET utf8\n");
+    sql.push_str("FIELDS TERMINATED BY '");
+    sql.push(separator);
+    sql.push_str("'\n");
+    sql.push_str("ENCLOSED BY '\"'\nLINES TERMINATED BY '\\n'\nIGNORE 1 ROWS (");
     sql.push_str(&final_columns_name.join(", "));
     sql.push_str(");");
 
     Ok(sql)
 }
+
+#[command]
+pub async fn execute_sql(
+    state: State<'_, Arc<DatabaseState>>,
+    sql: String,
+) -> Result<String, String> {
+    let conn_guard = state.0.lock().await;
+
+    if conn_guard.is_none() {
+        return Err("No active database connection.".to_string());
+    }
+
+    let connection: &DatabaseConnection = conn_guard.as_ref().unwrap();
+    let start: Instant = Instant::now();
+
+    for query in sql.split(";") {
+        if query.trim().is_empty() {
+            continue;
+        }
+        connection
+            .query(&query)
+            .await
+            .map_err(|e| format!("Failed to execute query: {}", e))?;
+    }
+
+    Ok(format!(
+        "Query executed successfully in {:.2?}",
+        start.elapsed()
+    ))
+}
+
+// #[command]
+// pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String, String> {
+//     let conn_guard = state.0.lock().await;
+//
+//     if conn_guard.is_none() {
+//         return Ok("false".to_string());
+//     }
+//
+//     Ok("true".to_string())
+// }

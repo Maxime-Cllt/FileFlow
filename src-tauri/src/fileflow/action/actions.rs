@@ -59,8 +59,13 @@ pub async fn insert_csv_data(
     let connection: &DatabaseConnection = conn_guard.as_ref().unwrap();
     let start: Instant = Instant::now();
 
-    let file: File = File::open(csv.file_path).unwrap();
-    let mut reader: Reader<File> = ReaderBuilder::new().has_headers(true).from_reader(file);
+    let file: File = File::open(&csv.file_path).unwrap();
+    let separator: char = detect_separator_in_file(&csv.file_path).unwrap();
+
+    let mut reader: Reader<File> = ReaderBuilder::new()
+        .delimiter(separator as u8)
+        .has_headers(true)
+        .from_reader(file);
 
     let final_columns_name: Vec<String> = get_formated_column_names(
         reader
@@ -195,7 +200,6 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
 
     let separator: char = detect_separator_in_file(&load.file_path).unwrap();
 
-
     // Generate SQL
     let mut sql: String = String::new();
 
@@ -261,3 +265,14 @@ pub async fn execute_sql(
         start.elapsed()
     ))
 }
+
+// #[command]
+// pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String, String> {
+//     let conn_guard = state.0.lock().await;
+//
+//     if conn_guard.is_none() {
+//         return Ok("false".to_string());
+//     }
+//
+//     Ok("true".to_string())
+// }

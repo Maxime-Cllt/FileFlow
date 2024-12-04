@@ -46,17 +46,6 @@ impl DatabaseConnection {
         }
     }
 
-    #[warn(dead_code)]
-    pub async fn fetch_one_sqlite(&self, query: &str) -> Result<sqlx::sqlite::SqliteRow, Error> {
-        match self {
-            DatabaseConnection::SQLite(pool) => {
-                let row = sqlx::query(query).fetch_one(pool).await?;
-                Ok(row)
-            }
-            _ => Err(Error::Configuration("Unsupported database driver".into())),
-        }
-    }
-
     pub(crate) fn get_connection_url(config: &DbConfig) -> Result<String, Error> {
         match config.db_driver.as_str() {
             POSTGRES => Ok(format!(

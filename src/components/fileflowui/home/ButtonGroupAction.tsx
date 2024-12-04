@@ -111,10 +111,18 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
             return;
         }
 
-        if (!props.dbConfig.dbUrl || !props.dbConfig.port || !props.dbConfig.username) {
-            toast.warning('Please fill all the fields');
-            return;
+        if (!props.dbConfig.dbDriver && props.dbConfig.dbDriver !== 'sqlite') {
+            if (!props.dbConfig.dbUrl || !props.dbConfig.port || !props.dbConfig.username) {
+                toast.warning('Please fill in all the required fields');
+                return;
+            }
+        } else if (props.dbConfig.dbDriver === 'sqlite') {
+            if (!props.dbConfig.sqliteFilePath) {
+                toast.warning('Please select a SQLite file');
+                return;
+            }
         }
+
 
         try {
             const response = await invoke('connect_to_database', {
@@ -136,7 +144,8 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
             toast.error('Connection failed');
         }
         props.updateDbConfigField('is_connected', true);
-    };
+    }
+
 
     return (
         <div className="flex items-center justify-center gap-6 mb-6 p-4">

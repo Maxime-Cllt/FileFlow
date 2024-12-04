@@ -389,7 +389,6 @@ mod tests {
             "CREATE TABLE \"test_table\" (\"header1\" VARCHAR(10), \"header2\" VARCHAR(10));",
         );
 
-
         for (driver, expected) in db_driver {
             let result: Result<String, String> = get_create_statement_with_fixed_size(
                 driver,
@@ -469,6 +468,16 @@ mod tests {
         }
 
         let mut sql: String = String::new();
+
+
+        sql.push_str(
+            get_drop_statement(MARIADB, final_table_name)
+                .unwrap()
+                .as_str(),
+        );
+        sql.push_str(";");
+        sql.push_str("\n\n");
+
         sql.push_str(
             get_create_statement_with_fixed_size(
                 MARIADB,
@@ -476,8 +485,8 @@ mod tests {
                 &size_map,
                 &snake_case_headers,
             )
-                .unwrap()
-                .as_str(),
+            .unwrap()
+            .as_str(),
         );
         sql.push_str("\n\n");
 
@@ -553,7 +562,7 @@ mod tests {
             final_table_name,
             db_driver,
         )
-            .await;
+        .await;
 
         // Ensure the number of rows inserted is as expected
         let inserted_count: u64 = result.unwrap();

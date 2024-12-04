@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Copy, Eraser, Hammer} from "lucide-react";
 import {toast} from "sonner";
 import {invoke} from "@tauri-apps/api/core";
@@ -6,13 +6,6 @@ import DataBaseDialog from "@/components/hooks/database/DatabaseDialog.tsx";
 import {initialDbConfig} from "@/components/states/initialState.tsx";
 
 interface LoadButtonGroupProps {
-    setters: {
-        setTableName: (value: string) => void;
-        setFilePath: (filePath: string) => void;
-        setDbDriver: (value: string) => void;
-        setFileName: (name: string) => void;
-        setSql: (sql: string) => void;
-    };
     generateSQL: {
         tableName: string;
         dbDriver: string;
@@ -20,22 +13,50 @@ interface LoadButtonGroupProps {
         fileName: string;
         sql: string;
     };
+    updateGenerateSQL: (key: string, value: string) => void;
 }
 
 const LoadButtonGroupAction: React.FC<LoadButtonGroupProps> = (props: LoadButtonGroupProps) => {
 
     const [dbConfig, setDbConfig] = useState(initialDbConfig);
 
+    useEffect(() => {
+        loadConfig().then();
+    }, []);
+
+
     const updateDbConfigField = (field: keyof typeof dbConfig, value: any) => {
         setDbConfig(prev => ({...prev, [field]: value}));
     }
 
+    const loadConfig = async () => {
+        try {
+            const response = await invoke('load_database_config');
+            if (typeof response === "string") {
+                const loadDbConfig = JSON.parse(response);
+
+                updateDbConfigField('dbDriver', loadDbConfig.db_driver || "");
+                updateDbConfigField('dbUrl', loadDbConfig.db_host || "");
+                updateDbConfigField('port', loadDbConfig.port || "");
+                updateDbConfigField('username', loadDbConfig.username || "");
+                updateDbConfigField('password', loadDbConfig.password || "");
+                updateDbConfigField('dbName', loadDbConfig.db_name || "");
+                updateDbConfigField('tableName', loadDbConfig.table_name || "");
+                updateDbConfigField('sqliteFilePath', loadDbConfig.sqlite_file_path || "");
+                updateDbConfigField('is_connected', false);
+            }
+        } catch (error) {
+            toast.error(error as string);
+        }
+    };
+
+
     const handleReset = () => {
-        props.setters.setTableName("");
-        props.setters.setFilePath("");
-        props.setters.setDbDriver("");
-        props.setters.setFileName("");
-        props.setters.setSql("");
+        props.updateGenerateSQL("tableName", "");
+        props.updateGenerateSQL("filePath", "");
+        props.updateGenerateSQL("dbDriver", "");
+        props.updateGenerateSQL("fileName", "");
+        props.updateGenerateSQL("sql", "");
     };
 
     const handleCopy = () => {
@@ -64,7 +85,7 @@ const LoadButtonGroupAction: React.FC<LoadButtonGroupProps> = (props: LoadButton
             });
 
             if (response && response !== "" && typeof response === "string") {
-                props.setters.setSql(response);
+                props.updateGenerateSQL("sql", response);
                 toast.success("SQL generated successfully");
             } else {
                 toast.error("SQL generation failed");
@@ -74,25 +95,61 @@ const LoadButtonGroupAction: React.FC<LoadButtonGroupProps> = (props: LoadButton
         }
     };
 
-    const executeSQL = async () => {
+    const checkConnection = async () => {
         try {
-            // if (props.generateSQL.sql === "") {
-            //     toast.error("No SQL to execute");
-            //     return;
-            // }
+            if (props.generateSQL.sql === "") {
+                toast.error("No SQL to execute");
+                return;
+            }
 
-            // const response = await invoke('execute_sql', {
-            //     sql: props.generateSQL.sql,
-            // });
-            //
-            // if (response && response !== "" && typeof response === "string") {
-            //     toast.success("SQL executed successfully");
-            // } else {
-            //     toast.error("SQL execution failed");
-            // }
-            toast.success("SQL executed successfully");
+            if (!dbConfig.is_connected) {
+                const response = await invoke('connect_to_database', {
+                        config: {
+                            db_driver: props.generateSQL.dbDriver.toLowerCase(),
+                            db_host: dbConfig.dbUrl,
+                            port: dbConfig.port,
+                            username: dbConfig.username,
+                            password: dbConfig.password,
+                            db_name: dbConfig.dbName,
+                            table_name: dbConfig.tableName,
+                            sqlite_file_path: dbConfig.sqliteFilePath,
+                        },
+                    }
+                );
+
+                if (response && response !== "" && typeof response === "string") {
+                    updateDbConfigField('is_connected', true);
+                    executeSQL().then(() => {
+                        toast.success("SQL executed successfully");
+                    }).catch((e) => {
+                            toast.error(e as string);
+                        }
+                    );
+                } else {
+                    toast.error("SQL execution failed");
+                }
+            } else {
+                executeSQL().then(() => {
+                    toast.success("SQL executed successfully");
+                }).catch((e) => {
+                        toast.error(e as string);
+                    }
+                );
+            }
         } catch (e) {
             toast.error(e as string);
+        }
+    }
+
+    const executeSQL = async () => {
+        const response = await invoke('execute_sql', {
+            sql: props.generateSQL.sql.trim(),
+        });
+
+        if (response && response !== "" && typeof response === "string") {
+            toast.success("SQL executed successfully");
+        } else {
+            toast.error("SQL execution failed");
         }
     }
 
@@ -135,7 +192,7 @@ const LoadButtonGroupAction: React.FC<LoadButtonGroupProps> = (props: LoadButton
                 <DataBaseDialog
                     dbConfig={dbConfig}
                     updateDbConfigField={updateDbConfigField}
-                    executeSQL={executeSQL}/>
+                    executeSQL={checkConnection}/>
             </div>
 
         </div>

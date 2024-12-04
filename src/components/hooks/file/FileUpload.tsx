@@ -4,6 +4,7 @@ import {Button} from "@/components/ui/button.tsx";
 import {FileArchive} from "lucide-react";
 import {invoke} from "@tauri-apps/api/core";
 import * as dialog from "@tauri-apps/plugin-dialog"
+import {toast} from "sonner";
 
 interface FileUploadProps {
     fileName: string;
@@ -37,6 +38,7 @@ const FileUpload: React.FC<FileUploadProps> = (props: FileUploadProps) => {
                 setFileSize(typeof response === 'string' ? response : '');
             }
         } catch (error) {
+            toast.error(`Error opening file`);
             props.addLog(`Error opening file: ${error}`);
         }
     };

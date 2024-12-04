@@ -20,13 +20,7 @@ const LoadDataSql: React.FC = () => {
             <div className="p-4 md:p-8 mt-6">
                 <FormLoadData
                     generateSQL={generateSQL}
-                    setters={{
-                        setTableName: (name: string) => updateGenerateSQL('tableName', name),
-                        setDbDriver: (value: string) => updateGenerateSQL('dbDriver', value),
-                        setFileName: (name: string) => updateGenerateSQL('fileName', name),
-                        setFilePath: (filePath: string) => updateGenerateSQL('filePath', filePath),
-                        setSql: (sql: string) => updateGenerateSQL('sql', sql),
-                    }}
+                    updateGenerateSQL={updateGenerateSQL}
                 />
             </div>
 

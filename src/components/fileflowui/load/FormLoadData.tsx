@@ -12,16 +12,10 @@ interface FormLoadDataProps {
         fileName: string;
         sql: string;
     };
-    setters: {
-        setTableName: (value: string) => void;
-        setFilePath: (filePath: string) => void;
-        setDbDriver: (value: string) => void;
-        setFileName: (name: string) => void;
-        setSql: (sql: string) => void;
-    };
+    updateGenerateSQL: (key: string, value: string) => void;
 }
 
-const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, setters}) => {
+const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, updateGenerateSQL}) => {
     return (
         <form className="space-y-6 p-6 rounded-lg shadow-lg bg-white  mx-auto">
 
@@ -35,7 +29,7 @@ const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, setters}) => {
                     value={generateSQL.tableName}
                     placeholder="Enter table name"
                     required
-                    onChange={(e) => setters.setTableName(e.target.value)}
+                    onChange={(e) => updateGenerateSQL('tableName', e.target.value)}
                     className="w-full rounded-lg border border-gray-300 p-2 focus:ring-2 focus:ring-green-500"
                 />
             </div>
@@ -44,8 +38,14 @@ const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, setters}) => {
             <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Database Type</label>
                 <SelectDatabase
-                    handledbDriverChange={setters.setDbDriver}
                     dbDriver={generateSQL.dbDriver}
+                    updateDbConfigField={
+                        (field, value) => {
+                            updateGenerateSQL(field, value);
+                        }
+                    }
+                    updateUiStateField={() => {
+                    }}
                 />
             </div>
 
@@ -54,9 +54,9 @@ const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, setters}) => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">Upload File</label>
                 <FileUpload
                     fileName={generateSQL.fileName}
-                    setFilePath={setters.setFilePath}
-                    setFileName={setters.setFileName}
-                    setTableName={setters.setTableName}
+                    setFilePath={(value) => updateGenerateSQL('filePath', value)}
+                    setFileName={(value) => updateGenerateSQL('fileName', value)}
+                    setTableName={(value) => updateGenerateSQL('tableName', value)}
                     addLog={() => {
                     }}
                 />
@@ -64,8 +64,8 @@ const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, setters}) => {
 
             {/* Action Buttons */}
             <LoadButtonGroupAction
-                setters={setters}
                 generateSQL={generateSQL}
+                updateGenerateSQL={updateGenerateSQL}
             />
 
             {/* Textarea for Generated SQL */}

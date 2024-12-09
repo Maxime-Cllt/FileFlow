@@ -4,7 +4,7 @@ use csv::{Reader, StringRecord};
 use std::collections::HashMap;
 use std::fs::File;
 
-use crate::fileflow::fileflow::{
+use crate::fileflow::fileflowlib::{
     get_create_statement, get_create_statement_with_fixed_size, get_drop_statement,
     get_insert_into_statement,
 };
@@ -15,13 +15,13 @@ use crate::fileflow::fileflow::{
 pub async fn optimized_insert(
     connection: &DatabaseConnection,
     reader: &mut Reader<File>,
-    final_columns_name: &Vec<String>,
+    final_columns_name: &[String],
     final_table_name: &str,
     db_driver: &str,
 ) -> Result<u64, String> {
     let temporary_table_name: &str = &format!("{}_temporary", final_table_name);
 
-    for table_name in &[&temporary_table_name, final_table_name] {
+    for table_name in &[temporary_table_name, final_table_name] {
         let drop_table_query: String = get_drop_statement(db_driver, table_name)?;
         if let Err(err) = connection.query(&drop_table_query).await {
             return Err(format!("Failed to drop table '{}': {}", table_name, err));
@@ -29,9 +29,9 @@ pub async fn optimized_insert(
     }
 
     let create_table_query: &str =
-        &get_create_statement(db_driver, &temporary_table_name, &final_columns_name)?;
+        &get_create_statement(db_driver, temporary_table_name, final_columns_name)?;
 
-    if let Err(err) = connection.query(&create_table_query).await {
+    if let Err(err) = connection.query(create_table_query).await {
         return Err(format!("Failed to create temporary table: {}", err));
     }
 
@@ -43,7 +43,7 @@ pub async fn optimized_insert(
     let columns: String = final_columns_name.join(", ");
 
     let insert_query_base: String =
-        get_insert_into_statement(db_driver, &temporary_table_name, &columns)?;
+        get_insert_into_statement(db_driver, temporary_table_name, &columns)?;
     let mut line_count: u64 = 0;
 
     for result in reader.records() {
@@ -86,21 +86,21 @@ pub async fn optimized_insert(
         db_driver,
         final_table_name,
         &columns_size_map,
-        &final_columns_name,
+        final_columns_name,
     )?;
 
-    if let Err(err) = connection.query(&create_final_table_query).await {
+    if let Err(err) = connection.query(create_final_table_query).await {
         return Err(format!("Failed to create final table: {}", err));
     }
 
     let insert_final_query: &str =
-        &get_copy_temp_to_final_table(db_driver, &temporary_table_name, final_table_name)?;
-    if let Err(err) = connection.query(&insert_final_query).await {
+        &get_copy_temp_to_final_table(db_driver, temporary_table_name, final_table_name)?;
+    if let Err(err) = connection.query(insert_final_query).await {
         return Err(format!("Failed to insert data into final table: {}", err));
     }
 
-    let drop_temp_table_query: &str = &get_drop_statement(db_driver, &temporary_table_name)?;
-    if let Err(err) = connection.query(&drop_temp_table_query).await {
+    let drop_temp_table_query: &str = &get_drop_statement(db_driver, temporary_table_name)?;
+    if let Err(err) = connection.query(drop_temp_table_query).await {
         return Err(format!("Failed to drop temporary table: {}", err));
     }
 

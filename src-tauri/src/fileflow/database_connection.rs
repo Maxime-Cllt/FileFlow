@@ -73,9 +73,10 @@ impl DatabaseConnection {
                 config.db_name
             )),
             SQLITE => Ok(config.sqlite_file_path.clone()),
-            _ => Err(Error::Protocol(
-                format!("Unsupported database driver: {}", config.db_driver).into(),
-            )),
+            _ => Err(Error::Protocol(format!(
+                "Unsupported database driver: {}",
+                config.db_driver
+            ))),
         }
     }
 
@@ -83,13 +84,13 @@ impl DatabaseConnection {
     pub fn disconnect(&self) {
         match self {
             DatabaseConnection::Postgres(pool) => {
-                let _ = pool.close();
+                drop(pool.close());
             }
             DatabaseConnection::MySQL(pool) => {
-                let _ = pool.close();
+                drop(pool.close());
             }
             DatabaseConnection::SQLite(pool) => {
-                let _ = pool.close();
+                drop(pool.close());
             }
         }
     }

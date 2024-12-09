@@ -2,7 +2,7 @@
 
 use crate::fileflow::database_connection::DatabaseConnection;
 use crate::fileflow::fast_insert::fast_insert;
-use crate::fileflow::fileflow::{
+use crate::fileflow::fileflowlib::{
     detect_separator_in_file, get_create_statement_with_fixed_size, get_drop_statement,
     get_formated_column_names,
 };
@@ -76,26 +76,25 @@ pub async fn insert_csv_data(
             .collect(),
     );
 
-    let line_count: u64;
-    if csv.mode == "fast" {
-        line_count = fast_insert(
-            &connection,
+    let line_count: u64 = if csv.mode == "fast" {
+        fast_insert(
+            connection,
             &mut reader,
             &final_columns_name,
             &csv.table_name,
             &csv.db_driver,
         )
-        .await?;
+        .await?
     } else {
-        line_count = optimized_insert(
-            &connection,
+        optimized_insert(
+            connection,
             &mut reader,
             &final_columns_name,
             &csv.table_name,
             &csv.db_driver,
         )
-        .await?;
-    }
+        .await?
+    };
 
     Ok(format!(
         "Data inserted successfully in {:.2?}, {} rows inserted in table {}",
@@ -187,8 +186,8 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
     for record in reader.records() {
         let record: StringRecord = record.unwrap();
 
-        for i in 0..record.len() {
-            let value: String = record.get(i).unwrap().trim().to_string();
+        for (i, value) in record.iter().enumerate() {
+            let value: String = value.trim().to_string();
             let max_length: &mut usize = columns_size_map
                 .get_mut(final_columns_name[i].as_str())
                 .unwrap();
@@ -198,6 +197,7 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
         }
     }
 
+
     let separator: char = detect_separator_in_file(&load.file_path).unwrap();
 
     // Generate SQL
@@ -205,7 +205,7 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
 
     // Delete table if exists
     sql.push_str(get_drop_statement(&load.db_driver, &load.table_name)?.as_str());
-    sql.push_str(";");
+    sql.push(';');
     sql.push_str("\n\n");
 
     // Create table with fixed size
@@ -255,7 +255,7 @@ pub async fn execute_sql(
             continue;
         }
         connection
-            .query(&query)
+            .query(query)
             .await
             .map_err(|e| format!("Failed to execute query: {}", e))?;
     }

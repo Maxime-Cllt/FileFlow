@@ -1,5 +1,5 @@
 use crate::fileflow::database_connection::DatabaseConnection;
-use crate::fileflow::fileflow::{
+use crate::fileflow::fileflowlib::{
     get_create_statement, get_drop_statement, get_insert_into_statement,
 };
 use csv::{Reader, StringRecord};
@@ -8,7 +8,7 @@ use std::fs::File;
 pub(crate) async fn fast_insert(
     connection: &DatabaseConnection,
     reader: &mut Reader<File>,
-    final_columns_name: &Vec<String>,
+    final_columns_name: &[String],
     final_table_name: &str,
     db_driver: &str,
 ) -> Result<u64, String> {
@@ -35,7 +35,7 @@ pub(crate) async fn fast_insert(
     let mut batch: Vec<String> = Vec::with_capacity(max_batch_size as usize);
 
     let insert_query_base: &str =
-        &get_insert_into_statement(db_driver, final_table_name, &columns)?;
+        &get_insert_into_statement(db_driver, final_table_name, columns)?;
 
     for result in reader.records() {
         let record: StringRecord = result.unwrap();
@@ -61,7 +61,7 @@ pub(crate) async fn fast_insert(
     // Insert the remaining records if any
     if !batch.is_empty() {
         let insert_query: &str = &format!("{}{}", &insert_query_base, batch.join(", "));
-        if let Err(err) = connection.query(&insert_query).await {
+        if let Err(err) = connection.query(insert_query).await {
             return Err(format!("Failed to insert data: {}", err));
         }
         line_count += batch.len() as u64;

@@ -57,7 +57,7 @@ pub fn get_test_maridb_config() -> DbConfig {
     }
 }
 
-pub fn create_test_db() -> String {
+pub fn create_test_db(db_name: String) -> String {
     let absolute_path: PathBuf =
         std::env::current_exe().expect("Failed to get current executable path");
     let path: &str = absolute_path
@@ -65,7 +65,7 @@ pub fn create_test_db() -> String {
         .expect("Failed to get parent directory")
         .to_str()
         .expect("Failed to convert path to string");
-    let file_path: String = format!("{}/test.db", path);
+    let file_path: String = format!("{}/{}.db", path, db_name);
 
     if !std::path::Path::new(&file_path).exists() {
         File::create(&file_path).expect("Failed to create SQLite file");
@@ -74,7 +74,7 @@ pub fn create_test_db() -> String {
     file_path
 }
 
-pub fn remove_test_db() -> Result<(), Box<dyn Error>> {
+pub fn remove_test_db(db_name: String) -> Result<(), Box<dyn Error>> {
     let absolute_path: PathBuf =
         std::env::current_exe().expect("Failed to get current executable path");
     let path: &str = absolute_path
@@ -82,7 +82,7 @@ pub fn remove_test_db() -> Result<(), Box<dyn Error>> {
         .expect("Failed to get parent directory")
         .to_str()
         .expect("Failed to convert path to string");
-    let file_path: String = format!("{}/test.db", path);
+    let file_path: String = format!("{}/{}.db", path, db_name);
 
     if !std::path::Path::new(&file_path).exists() {
         println!("File does not exist");
@@ -92,7 +92,7 @@ pub fn remove_test_db() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn generate_csv_file() -> Result<String, Box<dyn Error>> {
+pub fn generate_csv_file(file_name: String) -> Result<String, Box<dyn Error>> {
     let absolute_path: PathBuf =
         std::env::current_exe().expect("Failed to get current executable path");
     let path: &str = absolute_path
@@ -101,7 +101,7 @@ pub fn generate_csv_file() -> Result<String, Box<dyn Error>> {
         .to_str()
         .expect("Failed to convert path to string");
 
-    let csv_file_path: String = format!("{}/test.csv", path);
+    let csv_file_path: String = format!("{}/{}.csv", path, file_name);
     let file: File = File::create(&csv_file_path).expect("Failed to create CSV file");
     let mut wtr: Writer<File> = Writer::from_writer(file);
     wtr.write_record(&["header1", "header2"])
@@ -121,7 +121,7 @@ pub fn generate_csv_file() -> Result<String, Box<dyn Error>> {
     Ok(csv_file_path)
 }
 
-pub fn remove_csv_file() -> Result<(), Box<dyn Error>> {
+pub fn remove_csv_file(file_name: String) -> Result<(), Box<dyn Error>> {
     let absolute_path: PathBuf =
         std::env::current_exe().expect("Failed to get current executable path");
     let path: &str = absolute_path
@@ -129,7 +129,7 @@ pub fn remove_csv_file() -> Result<(), Box<dyn Error>> {
         .expect("Failed to get parent directory")
         .to_str()
         .expect("Failed to convert path to string");
-    let csv_file_path: String = format!("{}/test.csv", path);
+    let csv_file_path: String = format!("{}/{}.csv", path, file_name);
 
     if std::path::Path::new(&csv_file_path).exists() {
         std::fs::remove_file(&csv_file_path).expect("Failed to remove CSV file");

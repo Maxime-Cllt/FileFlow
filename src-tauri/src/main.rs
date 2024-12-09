@@ -2,9 +2,11 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod fileflow;
+
+#[cfg(test)]
 mod tests;
 
-use crate::fileflow::action::actions::{
+use fileflow::action::actions::{
     connect_to_database, disconnect_from_database, execute_sql, generate_load_data_sql,
     get_size_of_file, insert_csv_data, load_database_config, save_database_config, DatabaseState,
 };

@@ -5,7 +5,7 @@ mod tests {
     use crate::fileflow::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
     use crate::fileflow::database_connection::DatabaseConnection;
     use crate::fileflow::fast_insert::fast_insert;
-    use crate::fileflow::fileflow::{
+    use crate::fileflow::fileflowlib::{
         detect_separator_in_file, get_create_statement, get_create_statement_with_fixed_size,
         get_drop_statement, get_formated_column_names, get_insert_into_statement,
     };
@@ -60,13 +60,13 @@ mod tests {
 
     #[tokio::test]
     async fn test_sqlite_connection() {
-        let file_path: String = create_test_db();
+        let file_path: String = create_test_db("sqlite_connection".to_string());
         let config: DbConfig = get_test_sqlite_config(file_path);
         let conn = DatabaseConnection::connect(&config).await;
         assert!(conn.is_success(), "Failed to connect to the database");
         assert_eq!(conn.is_ok(), true);
         assert_eq!(conn.is_err(), false);
-        let _ = remove_test_db().unwrap();
+        let _ = remove_test_db("sqlite_connection".to_string());
     }
 
     #[tokio::test]
@@ -337,7 +337,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_generate_load_data_sql() {
-        let csv_file_path: String = generate_csv_file().unwrap();
+        let csv_file_path: String =
+            generate_csv_file("test_generate_load_data_sql".to_string()).unwrap();
 
         let snake_case_headers: Vec<String> = vec!["header1".to_string(), "header2".to_string()];
         let final_table_name: &str = "test_table";
@@ -390,28 +391,24 @@ mod tests {
         sql.push_str(");");
 
         let result: Result<String, String> = generate_load_data_sql(config).await;
-        assert!(result.is_ok(), "Failed to generate load data SQL");
         let result: String = result.unwrap();
 
         assert_eq!(result, sql);
-        let _ = remove_csv_file();
+        let _ = remove_csv_file("test_generate_load_data_sql".to_string());
     }
 
     #[tokio::test]
     async fn test_fast_insert() {
-        let sqlite_file_path: String = create_test_db();
-
-        tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+        let sqlite_file_path: String = create_test_db("fast_insert".to_string());
 
         let config: DbConfig = get_test_sqlite_config(sqlite_file_path.to_string());
-
         let conn = DatabaseConnection::connect(&config).await;
 
         assert!(conn.is_ok(), "Failed to connect to the database");
 
         let conn: DatabaseConnection = conn.unwrap();
 
-        let csv_file_path: String = generate_csv_file().unwrap();
+        let csv_file_path: String = generate_csv_file("test_fast_insert".to_string()).unwrap();
 
         let snake_case_headers: Vec<String> = vec!["header1".to_string(), "header2".to_string()];
         let final_table_name: &str = "test_table";
@@ -464,15 +461,16 @@ mod tests {
         assert_ne!(value1, "value3");
         assert_ne!(value2, "value4");
 
-        let _ = remove_test_db();
-        let _ = remove_csv_file();
+        let _ = remove_test_db("fast_insert".to_string());
+        let _ = remove_csv_file("test_fast_insert".to_string());
     }
 
     #[tokio::test]
     async fn test_detect_separator_in_file() {
-        let csv_file_path: String = generate_csv_file().unwrap();
+        let csv_file_path: String =
+            generate_csv_file("test_detect_separator_in_file".to_string()).unwrap();
         let separator: char = detect_separator_in_file(&csv_file_path).unwrap();
         assert_eq!(separator, ',');
-        let _ = remove_csv_file();
+        let _ = remove_csv_file("test_detect_separator_in_file".to_string());
     }
 }

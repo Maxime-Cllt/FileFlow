@@ -5,6 +5,7 @@ use std::fs::File;
 use std::io;
 use std::io::{BufReader, Read};
 
+
 /**
  * This function is used to generate the DROP TABLE statement for different database drivers.
  */
@@ -43,7 +44,7 @@ pub fn get_insert_into_statement(
 pub fn get_create_statement(
     driver: &str,
     final_table_name: &str,
-    snake_case_headers: &Vec<String>,
+    snake_case_headers: &[String],
 ) -> Result<String, String> {
     match &driver.to_lowercase()[..] {
         SQLITE | POSTGRES => Ok(format!(
@@ -75,7 +76,7 @@ pub fn get_create_statement_with_fixed_size(
     driver: &str,
     final_table_name: &str,
     map_column_max_length: &HashMap<&str, usize>,
-    snake_case_headers: &Vec<String>,
+    snake_case_headers: &[String],
 ) -> Result<String, String> {
     // Start building the SQL statement based on the driver
     let mut create_table_sql = match driver {
@@ -124,9 +125,9 @@ pub fn get_create_statement_with_fixed_size(
 */
 pub fn get_formated_column_names(headers: Vec<String>) -> Vec<String> {
     let mut headers: Vec<String> = headers;
-    for i in 0..headers.len() {
-        if headers[i].trim().len() == 0 {
-            headers[i] = format!("column_{}", i + 1);
+    for (i, item) in headers.iter_mut().enumerate() {
+        if item.trim().is_empty() {
+            *item = format!("column_{}", i + 1);
         }
     }
     headers

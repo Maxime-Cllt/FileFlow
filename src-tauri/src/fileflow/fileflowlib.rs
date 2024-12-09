@@ -5,7 +5,6 @@ use std::fs::File;
 use std::io;
 use std::io::{BufReader, Read};
 
-
 /**
  * This function is used to generate the DROP TABLE statement for different database drivers.
  */
@@ -85,18 +84,20 @@ pub fn get_create_statement_with_fixed_size(
         _ => return Err("Unsupported database driver".to_string()),
     };
 
-    // Iterate over snake_case_headers to maintain the order of columns
+    const MAX_VARCHAR_LENGTH: usize = 255;
+    const TEXT_TYPE: &str = "TEXT";
+    const VARCHAR_TYPE: &str = "VARCHAR";
+
     for header in snake_case_headers.iter() {
-        // Get the max length from map_column_max_length and determine column type
         let max_length = match map_column_max_length.get(header.as_str()) {
             Some(&length) => length,
             None => return Err(format!("Column {} not found in max length map", header)),
         };
 
-        let column_type = if max_length < 256 {
-            format!("VARCHAR({})", max_length)
+        let column_type = if max_length <= MAX_VARCHAR_LENGTH {
+            format!("{}({})", VARCHAR_TYPE, max_length)
         } else {
-            "TEXT".to_string()
+            TEXT_TYPE.to_string()
         };
 
         // Quote column names as required by each driver
@@ -125,9 +126,10 @@ pub fn get_create_statement_with_fixed_size(
 */
 pub fn get_formated_column_names(headers: Vec<String>) -> Vec<String> {
     let mut headers: Vec<String> = headers;
+    const COLUMN_PREFIX: &str = "column_";
     for (i, item) in headers.iter_mut().enumerate() {
         if item.trim().is_empty() {
-            *item = format!("column_{}", i + 1);
+            *item = format!("{}{}",COLUMN_PREFIX, i + 1);
         }
     }
     headers

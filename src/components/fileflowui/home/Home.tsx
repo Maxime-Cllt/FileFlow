@@ -9,6 +9,7 @@ import Log from "@/components/fileflowui/home/Log.tsx";
 import SqliteForm from "@/components/fileflowui/home/SqliteForm.tsx";
 import {initialDbConfig, initialUiState} from "@/components/states/initialState.tsx";
 import ButtonConfigComponent from "@/components/fileflowui/home/ButtonConfig.tsx";
+import {invoke} from "@tauri-apps/api/core";
 
 const Home: React.FC = () => {
     const [dbConfig, setDbConfig] = useState(initialDbConfig);
@@ -26,12 +27,38 @@ const Home: React.FC = () => {
         updateUiStateField('histoLog', `${uiState.histoLog}\n${message}`);
     };
 
+    const checkConnection = async () => {
+        try {
+            const response = await invoke('is_connected');
+            if (typeof response === "string") {
+
+                if (response === 'false') {
+                    updateDbConfigField('is_connected', false);
+                    return;
+                }
+
+                const loadDbConfig = JSON.parse(response);
+                Object.keys(loadDbConfig).forEach((key) => {
+                    updateDbConfigField(key as keyof typeof dbConfig, loadDbConfig[key]);
+                });
+                updateDbConfigField('is_connected', true);
+            }
+        } catch (error) {
+            addLog('Failed to check connection');
+        }
+    }
+
+    React.useEffect(() => {
+            checkConnection().then();
+        },
+        []);
+
     const renderForm = () => {
         if (uiState.sqlite) {
             return (
                 <SqliteForm
                     dbConfig={{
-                        sqliteFilePath: dbConfig.sqliteFilePath,
+                        sqlite_file_path: dbConfig.sqlite_file_path,
                         db_driver: dbConfig.db_driver,
                     }}
                     addLog={addLog}

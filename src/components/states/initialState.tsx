@@ -10,7 +10,7 @@ export const initialDbConfig = {
     password: '',
     db_name: '',
     tableName: '',
-    sqliteFilePath: '',
+    sqlite_file_path: '',
     is_connected: false
 };
 

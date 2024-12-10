@@ -1,5 +1,5 @@
 use crate::fileflow::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
-use crate::fileflow::database_connection::DatabaseConnection;
+use crate::fileflow::database::database_connection::DatabaseConnection;
 use csv::{Reader, StringRecord};
 use std::collections::HashMap;
 use std::fs::File;

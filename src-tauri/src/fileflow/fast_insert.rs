@@ -1,4 +1,4 @@
-use crate::fileflow::database_connection::DatabaseConnection;
+use crate::fileflow::database::database_connection::DatabaseConnection;
 use crate::fileflow::fileflowlib::{
     get_create_statement, get_drop_statement, get_insert_into_statement,
 };

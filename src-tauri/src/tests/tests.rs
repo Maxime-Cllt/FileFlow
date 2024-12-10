@@ -3,7 +3,7 @@
 mod tests {
     use crate::fileflow::action::actions::{generate_load_data_sql, load_database_config};
     use crate::fileflow::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
-    use crate::fileflow::database_connection::DatabaseConnection;
+    use crate::fileflow::database::database_connection::DatabaseConnection;
     use crate::fileflow::fast_insert::fast_insert;
     use crate::fileflow::fileflowlib::{
         detect_separator_in_file, get_create_statement, get_create_statement_with_fixed_size,

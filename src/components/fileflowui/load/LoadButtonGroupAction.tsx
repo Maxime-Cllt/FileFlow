@@ -105,7 +105,7 @@ const LoadButtonGroupAction: React.FC<LoadButtonGroupProps> = (props: LoadButton
                             password: dbConfig.password,
                             db_name: dbConfig.db_name,
                             table_name: dbConfig.tableName,
-                            sqlite_file_path: dbConfig.sqliteFilePath,
+                            sqlite_file_path: dbConfig.sqlite_file_path,
                         },
                     }
                 );

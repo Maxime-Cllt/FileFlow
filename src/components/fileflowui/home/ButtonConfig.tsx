@@ -12,7 +12,7 @@ interface ButtonConfigComponent {
         password: string;
         db_name: string;
         tableName: string;
-        sqliteFilePath: string;
+        sqlite_file_path: string;
     };
     updateDbConfigField: (field: any, value: any) => void;
     addLog: (message: string) => void;
@@ -37,7 +37,7 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponent> = ({
                     password: dbConfig.password,
                     db_name: dbConfig.db_name,
                     table_name: dbConfig.tableName,
-                    sqlite_file_path: dbConfig.sqliteFilePath,
+                    sqlite_file_path: dbConfig.sqlite_file_path,
                 },
             });
             toast.success('Config saved successfully');

@@ -6,6 +6,7 @@ mod fileflow;
 #[cfg(test)]
 mod tests;
 
+use crate::fileflow::action::actions::is_connected;
 use fileflow::action::actions::{
     connect_to_database, disconnect_from_database, execute_sql, generate_load_data_sql,
     get_size_of_file, insert_csv_data, load_database_config, save_database_config, DatabaseState,
@@ -35,7 +36,8 @@ fn main() {
             load_database_config,
             get_size_of_file,
             generate_load_data_sql,
-            execute_sql
+            execute_sql,
+            is_connected
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

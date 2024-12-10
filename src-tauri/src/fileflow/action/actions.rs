@@ -1,6 +1,6 @@
 // src/fileflow/action/actions.rs
 
-use crate::fileflow::database_connection::DatabaseConnection;
+use crate::fileflow::database::database_connection::DatabaseConnection;
 use crate::fileflow::fast_insert::fast_insert;
 use crate::fileflow::fileflowlib::{
     detect_separator_in_file, get_create_statement_with_fixed_size, get_drop_statement,
@@ -197,7 +197,6 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
         }
     }
 
-
     let separator: char = detect_separator_in_file(&load.file_path).unwrap();
 
     // Generate SQL
@@ -266,13 +265,14 @@ pub async fn execute_sql(
     ))
 }
 
-// #[command]
-// pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String, String> {
-//     let conn_guard = state.0.lock().await;
-//
-//     if conn_guard.is_none() {
-//         return Ok("false".to_string());
-//     }
-//
-//     Ok("true".to_string())
-// }
+#[command]
+pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String, String> {
+    let conn_guard = state.0.lock().await;
+
+    if conn_guard.is_none() {
+        return Ok("false".to_string());
+    }
+
+    let db_config: &DbConfig = conn_guard.as_ref().unwrap().get_db_config();
+    Ok(serde_json::to_string(&db_config).unwrap())
+}

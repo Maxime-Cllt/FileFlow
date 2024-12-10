@@ -75,7 +75,6 @@ const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, updateGenerateS
                     className="w-full p-2 rounded-lg border border-gray-300 shadow-md focus:ring-2 focus:ring-blue-500"
                     rows={10}
                     value={generateSQL.sql}
-                    readOnly
                     placeholder="Your generated SQL will appear here..."
                 />
             </div>

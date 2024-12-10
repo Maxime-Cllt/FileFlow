@@ -15,7 +15,7 @@ pub struct DatabaseConnection {
 
 impl DatabaseConnection {
     pub async fn connect(config: &DbConfig) -> Result<DatabaseConnection, Error> {
-        let connection_str = Self::get_connection_url(config)?;
+        let connection_str: String = Self::get_connection_url(config)?;
 
         let connection_enum = match config.db_driver.as_str() {
             POSTGRES => {

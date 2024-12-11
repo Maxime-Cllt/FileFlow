@@ -1,6 +1,6 @@
 // src/fileflow/action/actions.rs
 
-use crate::fileflow::database::database_connection::DatabaseConnection;
+use crate::fileflow::database::connection::DatabaseConnection;
 use crate::fileflow::fast_insert::fast_insert;
 use crate::fileflow::fileflowlib::{
     detect_separator_in_file, get_create_statement_with_fixed_size, get_drop_statement,
@@ -41,7 +41,7 @@ pub async fn connect_to_database(
                 config.db_driver, config.db_host, config.username
             ))
         }
-        Err(err) => Err(format!("Failed to connect to the database: {}", err)),
+        Err(err) => Err(format!("Failed to connect to the database: {err}")),
     }
 }
 
@@ -124,10 +124,10 @@ pub async fn disconnect_from_database(
 pub async fn save_database_config(save: SaveConfig) -> Result<String, String> {
     let path: PathBuf = PathBuf::from("database_config.json");
     let _config =
-        serde_json::to_string(&save).map_err(|e| format!("Failed to serialize config: {}", e))?;
-    let file: File = File::create(&path).map_err(|e| format!("Failed to create file: {}", e))?;
+        serde_json::to_string(&save).map_err(|e| format!("Failed to serialize config: {e}"))?;
+    let file: File = File::create(&path).map_err(|e| format!("Failed to create file: {e}"))?;
     serde_json::to_writer_pretty(file, &save)
-        .map_err(|e| format!("Failed to write to file: {}", e))?;
+        .map_err(|e| format!("Failed to write to file: {e}"))?;
     Ok(format!(
         "Database configuration saved to file located at {}",
         path.display()
@@ -137,18 +137,18 @@ pub async fn save_database_config(save: SaveConfig) -> Result<String, String> {
 #[command]
 pub async fn load_database_config() -> Result<String, String> {
     let path: PathBuf = PathBuf::from("database_config.json");
-    let file: File = File::open(&path).map_err(|e| format!("Failed to open file: {}", e))?;
+    let file: File = File::open(&path).map_err(|e| format!("Failed to open file: {e}"))?;
     let config: SaveConfig =
-        serde_json::from_reader(file).map_err(|e| format!("Failed to read file: {}", e))?;
+        serde_json::from_reader(file).map_err(|e| format!("Failed to read file: {e}"))?;
     let config_json: String =
-        serde_json::to_string(&config).map_err(|e| format!("Failed to serialize config: {}", e))?;
+        serde_json::to_string(&config).map_err(|e| format!("Failed to serialize config: {e}"))?;
     Ok(config_json)
 }
 
 #[command]
 pub async fn get_size_of_file(file_path: String) -> Result<String, String> {
     let metadata: Metadata =
-        std::fs::metadata(&file_path).map_err(|e| format!("Failed to get metadata: {}", e))?;
+        std::fs::metadata(&file_path).map_err(|e| format!("Failed to get metadata: {e}"))?;
     if !metadata.is_file() {
         return Err("Path is not a file".to_string());
     }
@@ -156,7 +156,7 @@ pub async fn get_size_of_file(file_path: String) -> Result<String, String> {
         return Err("File is empty".to_string());
     }
     let size: f64 = metadata.len() as f64 / 1024.0 / 1024.0;
-    Ok(format!("{:.2} MB", size))
+    Ok(format!("{size:.2} MB"))
 }
 
 #[command]
@@ -166,7 +166,7 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
     }
 
     let file: File =
-        File::open(&load.file_path).map_err(|e| format!("Failed to open file: {}", e))?;
+        File::open(&load.file_path).map_err(|e| format!("Failed to open file: {e}"))?;
     let mut reader: Reader<File> = ReaderBuilder::new().has_headers(true).from_reader(file);
 
     let final_columns_name: Vec<String> = get_formated_column_names(
@@ -249,14 +249,14 @@ pub async fn execute_sql(
     let connection: &DatabaseConnection = conn_guard.as_ref().unwrap();
     let start: Instant = Instant::now();
 
-    for query in sql.split(";") {
+    for query in sql.split(';') {
         if query.trim().is_empty() {
             continue;
         }
         connection
             .query(query)
             .await
-            .map_err(|e| format!("Failed to execute query: {}", e))?;
+            .map_err(|e| format!("Failed to execute query: {e}"))?;
     }
 
     Ok(format!(
@@ -273,6 +273,7 @@ pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String
         return Ok("false".to_string());
     }
 
-    let db_config: &DbConfig = conn_guard.as_ref().unwrap().get_db_config();
+    let connection: &DatabaseConnection = conn_guard.as_ref().unwrap();
+    let db_config: &DbConfig = connection.get_db_config();
     Ok(serde_json::to_string(&db_config).unwrap())
 }

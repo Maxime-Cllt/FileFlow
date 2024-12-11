@@ -1,5 +1,5 @@
 use crate::fileflow::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
-use crate::fileflow::database::database_connection::DatabaseConnection;
+use crate::fileflow::database::connection::DatabaseConnection;
 use csv::{Reader, StringRecord};
 use std::collections::HashMap;
 use std::fs::File;
@@ -19,12 +19,12 @@ pub async fn optimized_insert(
     final_table_name: &str,
     db_driver: &str,
 ) -> Result<u64, String> {
-    let temporary_table_name: &str = &format!("{}_temporary", final_table_name);
+    let temporary_table_name: &str = &format!("{final_table_name}_temporary");
 
     for table_name in &[temporary_table_name, final_table_name] {
         let drop_table_query: String = get_drop_statement(db_driver, table_name)?;
         if let Err(err) = connection.query(&drop_table_query).await {
-            return Err(format!("Failed to drop table '{}': {}", table_name, err));
+            return Err(format!("Failed to drop table '{table_name}': {err}"));
         }
     }
 
@@ -32,7 +32,7 @@ pub async fn optimized_insert(
         &get_create_statement(db_driver, temporary_table_name, final_columns_name)?;
 
     if let Err(err) = connection.query(create_table_query).await {
-        return Err(format!("Failed to create temporary table: {}", err));
+        return Err(format!("Failed to create temporary table: {err}"));
     }
 
     let max_batch_size: usize = 4000;
@@ -51,23 +51,23 @@ pub async fn optimized_insert(
         let mut values: Vec<String> = Vec::with_capacity(record.len());
 
         for (i, value) in record.iter().enumerate() {
-            let value: String = value.trim().replace("'", "''");
+            let value: String = value.trim().replace("'\''", "''");
             let max_length: &mut usize = columns_size_map
                 .get_mut(final_columns_name[i].as_str())
                 .unwrap();
             if value.len() > *max_length {
                 *max_length = value.len() + 1;
             }
-            values.push(format!("'{}'", value));
+            values.push(format!("'{value}'"));
         }
 
-        let values: Vec<String> = values.iter().map(|v| v.replace("\\", "\\\\")).collect();
+        let values: Vec<String> = values.iter().map(|v| v.replace("'\\'", "\\\\")).collect();
         batch.push(format!("({})", values.join(", ")));
 
         if batch.len() >= max_batch_size {
             let insert_query: String = format!("{}{}", insert_query_base, batch.join(", "));
             if let Err(err) = connection.query(&insert_query).await {
-                return Err(format!("Failed to insert batch data: {}", err));
+                return Err(format!("Failed to insert batch data: {err}"));
             }
             line_count += batch.len() as u64;
             batch.clear();
@@ -77,7 +77,7 @@ pub async fn optimized_insert(
     if !batch.is_empty() {
         let insert_query: String = format!("{}{}", insert_query_base, batch.join(", "));
         if let Err(err) = connection.query(&insert_query).await {
-            return Err(format!("Failed to insert remaining batch: {}", err));
+            return Err(format!("Failed to insert remaining batch: {err}"));
         }
         line_count += batch.len() as u64;
     }
@@ -90,18 +90,18 @@ pub async fn optimized_insert(
     )?;
 
     if let Err(err) = connection.query(create_final_table_query).await {
-        return Err(format!("Failed to create final table: {}", err));
+        return Err(format!("Failed to create final table: {err}"));
     }
 
     let insert_final_query: &str =
         &get_copy_temp_to_final_table(db_driver, temporary_table_name, final_table_name)?;
     if let Err(err) = connection.query(insert_final_query).await {
-        return Err(format!("Failed to insert data into final table: {}", err));
+        return Err(format!("Failed to insert data into final table: {err}"));
     }
 
     let drop_temp_table_query: &str = &get_drop_statement(db_driver, temporary_table_name)?;
     if let Err(err) = connection.query(drop_temp_table_query).await {
-        return Err(format!("Failed to drop temporary table: {}", err));
+        return Err(format!("Failed to drop temporary table: {err}"));
     }
 
     Ok(line_count)
@@ -117,13 +117,11 @@ fn get_copy_temp_to_final_table(
 ) -> Result<String, String> {
     match db_driver {
         SQLITE | POSTGRES => Ok(format!(
-            "INSERT INTO \"{}\" SELECT * FROM \"{}\"",
-            final_table_name, temporary_table_name
+            "INSERT INTO \"{final_table_name}\" SELECT * FROM \"{temporary_table_name}\""
         )),
         MYSQL | MARIADB => Ok(format!(
-            "INSERT INTO `{}` SELECT * FROM `{}`",
-            final_table_name, temporary_table_name
+            "INSERT INTO `{final_table_name}` SELECT * FROM `{temporary_table_name}`"
         )),
-        _ => Err(format!("Unsupported database driver: {}", db_driver)),
+        _ => Err(format!("Unsupported database driver: {db_driver}")),
     }
 }

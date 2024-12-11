@@ -2,7 +2,7 @@ use crate::fileflow::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
 use crate::fileflow::stuct::db_config::DbConfig;
 use sqlx::{Error, MySql, MySqlPool, PgPool, Pool, Postgres, Sqlite, SqlitePool};
 
-pub enum DatabaseConnectionEnum {
+pub enum ConnectionEnum {
     Postgres(PgPool),
     MySQL(MySqlPool),
     SQLite(SqlitePool),
@@ -10,48 +10,48 @@ pub enum DatabaseConnectionEnum {
 
 pub struct DatabaseConnection {
     pub db_config: DbConfig,
-    pub connection: DatabaseConnectionEnum,
+    pub connection: ConnectionEnum,
 }
 
 impl DatabaseConnection {
-    pub async fn connect(config: &DbConfig) -> Result<DatabaseConnection, Error> {
+    pub async fn connect(config: &DbConfig) -> Result<Self, Error> {
         let connection_str: String = Self::get_connection_url(config)?;
 
         let connection_enum = match config.db_driver.as_str() {
             POSTGRES => {
                 let pool: Pool<Postgres> = PgPool::connect(&connection_str).await?;
-                DatabaseConnectionEnum::Postgres(pool)
+                ConnectionEnum::Postgres(pool)
             }
             MYSQL | MARIADB => {
                 let pool: Pool<MySql> = MySqlPool::connect(&connection_str).await?;
-                DatabaseConnectionEnum::MySQL(pool)
+                ConnectionEnum::MySQL(pool)
             }
             SQLITE => {
                 let pool: Pool<Sqlite> = SqlitePool::connect(&connection_str).await?;
-                DatabaseConnectionEnum::SQLite(pool)
+                ConnectionEnum::SQLite(pool)
             }
             _ => return Err(Error::Configuration("Unsupported database driver".into())),
         };
 
-        Ok(DatabaseConnection {
+        Ok(Self {
             db_config: config.clone(),
             connection: connection_enum,
         })
     }
 
-    pub fn get_db_config(&self) -> &DbConfig {
+    pub const fn get_db_config(&self) -> &DbConfig {
         &self.db_config
     }
 
     pub async fn query(&self, query: &str) -> Result<(), Error> {
         match &self.connection {
-            DatabaseConnectionEnum::Postgres(pool) => {
+            ConnectionEnum::Postgres(pool) => {
                 sqlx::query(query).execute(pool).await?;
             }
-            DatabaseConnectionEnum::MySQL(pool) => {
+            ConnectionEnum::MySQL(pool) => {
                 sqlx::query(query).execute(pool).await?;
             }
-            DatabaseConnectionEnum::SQLite(pool) => {
+            ConnectionEnum::SQLite(pool) => {
                 sqlx::query(query).execute(pool).await?;
             }
         }
@@ -64,7 +64,7 @@ impl DatabaseConnection {
                 "postgres://{}{}@{}:{}/{}",
                 config.username,
                 if config.password.is_empty() {
-                    "".to_string()
+                    String::new()
                 } else {
                     format!(":{}", config.password)
                 },
@@ -76,7 +76,7 @@ impl DatabaseConnection {
                 "mysql://{}{}@{}:{}/{}",
                 config.username,
                 if config.password.is_empty() {
-                    "".to_string()
+                    String::new()
                 } else {
                     format!(":{}", config.password)
                 },
@@ -95,13 +95,13 @@ impl DatabaseConnection {
     // Drop the connection
     pub fn disconnect(&self) {
         match &self.connection {
-            DatabaseConnectionEnum::Postgres(pool) => {
+            ConnectionEnum::Postgres(pool) => {
                 drop(pool.close());
             }
-            DatabaseConnectionEnum::MySQL(pool) => {
+            ConnectionEnum::MySQL(pool) => {
                 drop(pool.close());
             }
-            DatabaseConnectionEnum::SQLite(pool) => {
+            ConnectionEnum::SQLite(pool) => {
                 drop(pool.close());
             }
         }

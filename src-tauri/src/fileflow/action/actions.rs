@@ -1,6 +1,6 @@
 // src/fileflow/action/actions.rs
 
-use crate::fileflow::database::connection::DatabaseConnection;
+use crate::fileflow::database::connection::Connection;
 use crate::fileflow::fast_insert::fast_insert;
 use crate::fileflow::fileflowlib::{
     detect_separator_in_file, get_create_statement_with_fixed_size, get_drop_statement,
@@ -20,11 +20,11 @@ use std::time::Instant;
 use tauri::{command, State};
 use tokio::sync::Mutex;
 
-pub struct DatabaseState(pub Mutex<Option<DatabaseConnection>>);
+pub struct DatabaseState(pub Mutex<Option<Connection>>);
 
 #[command]
-pub async fn connect_to_database(
-    state: State<'_, Arc<DatabaseState>>,
+pub async fn connect_to_database<'a>(
+    state: State<'a, Arc<DatabaseState>>,
     config: DbConfig,
 ) -> Result<String, String> {
     let mut conn_guard = state.0.lock().await;
@@ -33,7 +33,7 @@ pub async fn connect_to_database(
         return Err("Already connected to the database.".to_string());
     }
 
-    match DatabaseConnection::connect(&config).await {
+    match Connection::connect(&config).await {
         Ok(connection) => {
             *conn_guard = Some(connection);
             Ok(format!(
@@ -46,8 +46,8 @@ pub async fn connect_to_database(
 }
 
 #[command]
-pub async fn insert_csv_data(
-    state: State<'_, Arc<DatabaseState>>,
+pub async fn insert_csv_data<'a>(
+    state: State<'a, Arc<DatabaseState>>,
     csv: InsertConfig,
 ) -> Result<String, String> {
     let conn_guard = state.0.lock().await;
@@ -56,7 +56,7 @@ pub async fn insert_csv_data(
         return Err("No active database connection.".to_string());
     }
 
-    let connection: &DatabaseConnection = conn_guard.as_ref().unwrap();
+    let connection: &Connection = conn_guard.as_ref().unwrap();
     let start: Instant = Instant::now();
 
     let file: File = File::open(&csv.file_path).unwrap();
@@ -105,8 +105,8 @@ pub async fn insert_csv_data(
 }
 
 #[command]
-pub async fn disconnect_from_database(
-    state: State<'_, Arc<DatabaseState>>,
+pub async fn disconnect_from_database<'a>(
+    state: State<'a, Arc<DatabaseState>>,
 ) -> Result<String, String> {
     let mut conn_guard = state.0.lock().await;
 
@@ -114,7 +114,7 @@ pub async fn disconnect_from_database(
         return Err("No active database connection to disconnect.".to_string());
     }
 
-    let conn: DatabaseConnection = conn_guard.take().unwrap();
+    let conn: Connection = conn_guard.take().unwrap();
     conn.disconnect();
 
     Ok("Disconnected from the database.".to_string())
@@ -236,8 +236,8 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
 }
 
 #[command]
-pub async fn execute_sql(
-    state: State<'_, Arc<DatabaseState>>,
+pub async fn execute_sql<'a>(
+    state: State<'a, Arc<DatabaseState>>,
     sql: String,
 ) -> Result<String, String> {
     let conn_guard = state.0.lock().await;
@@ -246,7 +246,7 @@ pub async fn execute_sql(
         return Err("No active database connection.".to_string());
     }
 
-    let connection: &DatabaseConnection = conn_guard.as_ref().unwrap();
+    let connection: &Connection = conn_guard.as_ref().unwrap();
     let start: Instant = Instant::now();
 
     for query in sql.split(';') {
@@ -266,14 +266,15 @@ pub async fn execute_sql(
 }
 
 #[command]
-pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String, String> {
+pub async fn is_connected<'a>(state: State<'a, Arc<DatabaseState>>) -> Result<String, String> {
     let conn_guard = state.0.lock().await;
 
     if conn_guard.is_none() {
         return Ok("false".to_string());
     }
 
-    let connection: &DatabaseConnection = conn_guard.as_ref().unwrap();
+    let connection: &Connection = conn_guard.as_ref().unwrap();
     let db_config: &DbConfig = connection.get_db_config();
-    Ok(serde_json::to_string(&db_config).unwrap())
+
+    Ok(serde_json::to_string(db_config).unwrap())
 }

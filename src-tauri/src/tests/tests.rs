@@ -3,7 +3,7 @@
 mod tests {
     use crate::fileflow::action::actions::{generate_load_data_sql, load_database_config};
     use crate::fileflow::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
-    use crate::fileflow::database::connection::DatabaseConnection;
+    use crate::fileflow::database::connection::Connection;
     use crate::fileflow::fast_insert::fast_insert;
     use crate::fileflow::fileflowlib::{
         detect_separator_in_file, get_create_statement, get_create_statement_with_fixed_size,
@@ -32,19 +32,19 @@ mod tests {
         let sqlite_config: DbConfig = get_test_sqlite_config("".to_string());
 
         assert_eq!(
-            DatabaseConnection::get_connection_url(&pg_config).unwrap(),
+            Connection::get_connection_url(&pg_config).unwrap(),
             "postgres://postgres:password@localhost:5432/test_db"
         );
         assert_eq!(
-            DatabaseConnection::get_connection_url(&mariadb_config).unwrap(),
+            Connection::get_connection_url(&mariadb_config).unwrap(),
             "mysql://root:password@localhost:3306/test_db"
         );
         assert_eq!(
-            DatabaseConnection::get_connection_url(&mysql_config).unwrap(),
+            Connection::get_connection_url(&mysql_config).unwrap(),
             "mysql://root:password@localhost:3306/test_db"
         );
         assert_eq!(
-            DatabaseConnection::get_connection_url(&sqlite_config).unwrap(),
+            Connection::get_connection_url(&sqlite_config).unwrap(),
             "test_db.db"
         );
     }
@@ -53,7 +53,7 @@ mod tests {
     async fn test_db_connection() {
         let config: String = load_database_config().await.unwrap();
         let config: DbConfig = serde_json::from_str(&config).unwrap();
-        let conn = DatabaseConnection::connect(&config).await;
+        let conn = Connection::connect(&config).await;
         assert_eq!(conn.is_ok(), true);
         assert_eq!(conn.is_err(), false);
     }
@@ -62,7 +62,7 @@ mod tests {
     async fn test_sqlite_connection() {
         let file_path: String = create_test_db("sqlite_connection".to_string());
         let config: DbConfig = get_test_sqlite_config(file_path);
-        let conn = DatabaseConnection::connect(&config).await;
+        let conn = Connection::connect(&config).await;
         assert!(conn.is_success(), "Failed to connect to the database");
         assert_eq!(conn.is_ok(), true);
         assert_eq!(conn.is_err(), false);
@@ -402,11 +402,11 @@ mod tests {
         let sqlite_file_path: String = create_test_db("fast_insert".to_string());
 
         let config: DbConfig = get_test_sqlite_config(sqlite_file_path.to_string());
-        let conn = DatabaseConnection::connect(&config).await;
+        let conn = Connection::connect(&config).await;
 
         assert!(conn.is_ok(), "Failed to connect to the database");
 
-        let conn: DatabaseConnection = conn.unwrap();
+        let conn: Connection = conn.unwrap();
 
         let csv_file_path: String = generate_csv_file("test_fast_insert".to_string()).unwrap();
 

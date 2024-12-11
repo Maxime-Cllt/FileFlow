@@ -8,12 +8,12 @@ pub enum ConnectionEnum {
     SQLite(SqlitePool),
 }
 
-pub struct DatabaseConnection {
+pub struct Connection {
     pub db_config: DbConfig,
     pub connection: ConnectionEnum,
 }
 
-impl DatabaseConnection {
+impl Connection {
     pub async fn connect(config: &DbConfig) -> Result<Self, Error> {
         let connection_str: String = Self::get_connection_url(config)?;
 

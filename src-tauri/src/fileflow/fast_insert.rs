@@ -1,4 +1,4 @@
-use crate::fileflow::database::connection::DatabaseConnection;
+use crate::fileflow::database::connection::Connection;
 use crate::fileflow::fileflowlib::{
     get_create_statement, get_drop_statement, get_insert_into_statement,
 };
@@ -6,7 +6,7 @@ use csv::{Reader, StringRecord};
 use std::fs::File;
 
 pub async fn fast_insert(
-    connection: &DatabaseConnection,
+    connection: &Connection,
     reader: &mut Reader<File>,
     final_columns_name: &[String],
     final_table_name: &str,

@@ -1,5 +1,5 @@
 use crate::fileflow::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
-use crate::fileflow::database::connection::DatabaseConnection;
+use crate::fileflow::database::connection::Connection;
 use csv::{Reader, StringRecord};
 use std::collections::HashMap;
 use std::fs::File;
@@ -13,7 +13,7 @@ use crate::fileflow::fileflowlib::{
  * This function is used to insert data into the database in an optimized way with the max size of each column.
  */
 pub async fn optimized_insert(
-    connection: &DatabaseConnection,
+    connection: &Connection,
     reader: &mut Reader<File>,
     final_columns_name: &[String],
     final_table_name: &str,

@@ -87,9 +87,10 @@ pub fn get_create_statement_with_fixed_size(
     };
 
     for header in snake_case_headers {
-        let max_length = match map_column_max_length.get(header.as_str()) {
-            Some(&length) => length,
-            None => return Err(format!("Column {header} not found in max length map")),
+        let max_length = if let Some(&length) = map_column_max_length.get(header.as_str()) {
+            length
+        } else {
+            MAX_VARCHAR_LENGTH
         };
 
         let column_type = if max_length <= MAX_VARCHAR_LENGTH {

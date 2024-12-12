@@ -23,8 +23,8 @@ use tokio::sync::Mutex;
 pub struct DatabaseState(pub Mutex<Option<Connection>>);
 
 #[command]
-pub async fn connect_to_database<'a>(
-    state: State<'a, Arc<DatabaseState>>,
+pub async fn connect_to_database(
+    state: State<'_, Arc<DatabaseState>>,
     config: DbConfig,
 ) -> Result<String, String> {
     let mut conn_guard = state.0.lock().await;
@@ -46,8 +46,8 @@ pub async fn connect_to_database<'a>(
 }
 
 #[command]
-pub async fn insert_csv_data<'a>(
-    state: State<'a, Arc<DatabaseState>>,
+pub async fn insert_csv_data(
+    state: State<'_, Arc<DatabaseState>>,
     csv: InsertConfig,
 ) -> Result<String, String> {
     let conn_guard = state.0.lock().await;
@@ -105,8 +105,8 @@ pub async fn insert_csv_data<'a>(
 }
 
 #[command]
-pub async fn disconnect_from_database<'a>(
-    state: State<'a, Arc<DatabaseState>>,
+pub async fn disconnect_from_database(
+    state: State<'_, Arc<DatabaseState>>,
 ) -> Result<String, String> {
     let mut conn_guard = state.0.lock().await;
 
@@ -236,8 +236,8 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
 }
 
 #[command]
-pub async fn execute_sql<'a>(
-    state: State<'a, Arc<DatabaseState>>,
+pub async fn execute_sql(
+    state: State<'_, Arc<DatabaseState>>,
     sql: String,
 ) -> Result<String, String> {
     let conn_guard = state.0.lock().await;
@@ -266,7 +266,7 @@ pub async fn execute_sql<'a>(
 }
 
 #[command]
-pub async fn is_connected<'a>(state: State<'a, Arc<DatabaseState>>) -> Result<String, String> {
+pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String, String> {
     let conn_guard = state.0.lock().await;
 
     if conn_guard.is_none() {

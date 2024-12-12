@@ -10,8 +10,8 @@ use std::io::{BufReader, Read};
  */
 pub fn get_drop_statement(db_driver: &str, final_table_name: &str) -> Result<String, String> {
     match &db_driver.to_lowercase()[..] {
-        SQLITE | POSTGRES => Ok(format!("DROP TABLE IF EXISTS \"{}\"", final_table_name)),
-        MYSQL | MARIADB => Ok(format!("DROP TABLE IF EXISTS `{}`", final_table_name)),
+        SQLITE | POSTGRES => Ok(format!("DROP TABLE IF EXISTS \"{final_table_name}\"")),
+        MYSQL | MARIADB => Ok(format!("DROP TABLE IF EXISTS `{final_table_name}`")),
         _ => Err("Unsupported database driver".to_string()),
     }
 }
@@ -26,12 +26,10 @@ pub fn get_insert_into_statement(
 ) -> Result<String, String> {
     match &db_driver.to_lowercase()[..] {
         SQLITE | POSTGRES => Ok(format!(
-            "INSERT INTO \"{}\" ({}) VALUES ",
-            final_table_name, columns
+            "INSERT INTO \"{final_table_name}\" ({columns}) VALUES "
         )),
         MYSQL | MARIADB => Ok(format!(
-            "INSERT INTO `{}` ({}) VALUES ",
-            final_table_name, columns
+            "INSERT INTO `{final_table_name}` ({columns}) VALUES "
         )),
         _ => Err("Unsupported database driver".to_string()),
     }
@@ -43,7 +41,7 @@ pub fn get_insert_into_statement(
 pub fn get_create_statement(
     driver: &str,
     final_table_name: &str,
-    snake_case_headers: &Vec<String>,
+    snake_case_headers: &[String],
 ) -> Result<String, String> {
     match &driver.to_lowercase()[..] {
         SQLITE | POSTGRES => Ok(format!(
@@ -51,7 +49,7 @@ pub fn get_create_statement(
             final_table_name,
             snake_case_headers
                 .iter()
-                .map(|h| format!("{} TEXT", h))
+                .map(|h| format!("{h} TEXT"))
                 .collect::<Vec<String>>()
                 .join(", ")
         )),
@@ -60,7 +58,7 @@ pub fn get_create_statement(
             final_table_name,
             snake_case_headers
                 .iter()
-                .map(|h| format!("{} TEXT", h))
+                .map(|h| format!("{h} TEXT"))
                 .collect::<Vec<String>>()
                 .join(", ")
         )),
@@ -75,38 +73,41 @@ pub fn get_create_statement_with_fixed_size(
     driver: &str,
     final_table_name: &str,
     map_column_max_length: &HashMap<&str, usize>,
-    snake_case_headers: &Vec<String>,
+    snake_case_headers: &[String],
 ) -> Result<String, String> {
+    const MAX_VARCHAR_LENGTH: usize = 255;
+    const TEXT_TYPE: &str = "TEXT";
+    const VARCHAR_TYPE: &str = "VARCHAR";
+
     // Start building the SQL statement based on the driver
     let mut create_table_sql = match driver {
-        SQLITE | POSTGRES => format!("CREATE TABLE \"{}\" (", final_table_name),
-        MYSQL | MARIADB => format!("CREATE TABLE `{}` (", final_table_name),
+        SQLITE | POSTGRES => format!("CREATE TABLE \"{final_table_name}\" ("),
+        MYSQL | MARIADB => format!("CREATE TABLE `{final_table_name}` ("),
         _ => return Err("Unsupported database driver".to_string()),
     };
 
-    // Iterate over snake_case_headers to maintain the order of columns
-    for header in snake_case_headers.iter() {
-        // Get the max length from map_column_max_length and determine column type
-        let max_length = match map_column_max_length.get(header.as_str()) {
-            Some(&length) => length,
-            None => return Err(format!("Column {} not found in max length map", header)),
+    for header in snake_case_headers {
+        let max_length = if let Some(&length) = map_column_max_length.get(header.as_str()) {
+            length
+        } else {
+            MAX_VARCHAR_LENGTH
         };
 
-        let column_type = if max_length < 256 {
-            format!("VARCHAR({})", max_length)
+        let column_type = if max_length <= MAX_VARCHAR_LENGTH {
+            format!("{VARCHAR_TYPE}({max_length})")
         } else {
-            "TEXT".to_string()
+            TEXT_TYPE.to_string()
         };
 
         // Quote column names as required by each driver
         let quoted_column = match driver {
-            SQLITE | POSTGRES => format!("\"{}\"", header),
-            MYSQL | MARIADB => format!("`{}`", header),
+            SQLITE | POSTGRES => format!("\"{header}\""),
+            MYSQL | MARIADB => format!("`{header}`"),
             _ => return Err("Unsupported database driver".to_string()),
         };
 
         // Append the column definition to the SQL statement
-        create_table_sql.push_str(&format!("{} {}, ", quoted_column, column_type));
+        create_table_sql.push_str(&format!("{quoted_column} {column_type}, "));
     }
 
     // Remove the trailing comma and space, then close the SQL statement
@@ -119,34 +120,37 @@ pub fn get_create_statement_with_fixed_size(
     Ok(create_table_sql)
 }
 
-/**
- * This function is used to format the column names to snake_case and replace empty column names with column_1, column_2, etc.
-*/
+/// This function is used to generate the column names for a CSV file.
 pub fn get_formated_column_names(headers: Vec<String>) -> Vec<String> {
+    const COLUMN_PREFIX: &str = "column_";
+
     let mut headers: Vec<String> = headers;
-    for i in 0..headers.len() {
-        if headers[i].trim().len() == 0 {
-            headers[i] = format!("column_{}", i + 1);
+    for (i, item) in headers.iter_mut().enumerate() {
+        if item.trim().is_empty() {
+            *item = format!("{COLUMN_PREFIX}{}", i + 1);
         }
     }
     headers
         .iter()
-        .map(|h| h.to_lowercase().replace(" ", "_"))
+        .map(|h| h.to_lowercase().replace(' ', "_"))
         .collect()
 }
 
 /// This function is used to detect the separator in a CSV file.
 pub fn detect_separator_in_file(file_path: &str) -> io::Result<char> {
+    const POSSIBLE_SEPARATORS: [char; 5] = [',', ';', '\t', '|', ' '];
+
     let file: File = File::open(file_path)?;
 
-    if !file_path.ends_with(".csv") {
+    if !std::path::Path::new(file_path)
+        .extension()
+        .map_or(false, |ext| ext.eq_ignore_ascii_case("csv"))
+    {
         return Err(io::Error::new(
             io::ErrorKind::InvalidData,
-            "File is not a CSV file",
+            "The file is not a CSV file",
         ));
     }
-
-    const POSSIBLE_SEPARATORS: [char; 5] = [',', ';', '\t', '|', ' '];
 
     let mut reader: BufReader<File> = BufReader::new(file);
     let mut buffer: String = String::new();

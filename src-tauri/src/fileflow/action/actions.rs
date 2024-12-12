@@ -1,8 +1,8 @@
 // src/fileflow/action/actions.rs
 
-use crate::fileflow::database_connection::DatabaseConnection;
+use crate::fileflow::database::connection::Connection;
 use crate::fileflow::fast_insert::fast_insert;
-use crate::fileflow::fileflow::{
+use crate::fileflow::fileflowlib::{
     detect_separator_in_file, get_create_statement_with_fixed_size, get_drop_statement,
     get_formated_column_names,
 };
@@ -20,7 +20,7 @@ use std::time::Instant;
 use tauri::{command, State};
 use tokio::sync::Mutex;
 
-pub struct DatabaseState(pub Mutex<Option<DatabaseConnection>>);
+pub struct DatabaseState(pub Mutex<Option<Connection>>);
 
 #[command]
 pub async fn connect_to_database(
@@ -33,7 +33,7 @@ pub async fn connect_to_database(
         return Err("Already connected to the database.".to_string());
     }
 
-    match DatabaseConnection::connect(&config).await {
+    match Connection::connect(&config).await {
         Ok(connection) => {
             *conn_guard = Some(connection);
             Ok(format!(
@@ -41,7 +41,7 @@ pub async fn connect_to_database(
                 config.db_driver, config.db_host, config.username
             ))
         }
-        Err(err) => Err(format!("Failed to connect to the database: {}", err)),
+        Err(err) => Err(format!("Failed to connect to the database: {err}")),
     }
 }
 
@@ -56,7 +56,7 @@ pub async fn insert_csv_data(
         return Err("No active database connection.".to_string());
     }
 
-    let connection: &DatabaseConnection = conn_guard.as_ref().unwrap();
+    let connection: &Connection = conn_guard.as_ref().unwrap();
     let start: Instant = Instant::now();
 
     let file: File = File::open(&csv.file_path).unwrap();
@@ -76,26 +76,25 @@ pub async fn insert_csv_data(
             .collect(),
     );
 
-    let line_count: u64;
-    if csv.mode == "fast" {
-        line_count = fast_insert(
-            &connection,
+    let line_count: u64 = if csv.mode == "fast" {
+        fast_insert(
+            connection,
             &mut reader,
             &final_columns_name,
             &csv.table_name,
             &csv.db_driver,
         )
-        .await?;
+        .await?
     } else {
-        line_count = optimized_insert(
-            &connection,
+        optimized_insert(
+            connection,
             &mut reader,
             &final_columns_name,
             &csv.table_name,
             &csv.db_driver,
         )
-        .await?;
-    }
+        .await?
+    };
 
     Ok(format!(
         "Data inserted successfully in {:.2?}, {} rows inserted in table {}",
@@ -115,7 +114,7 @@ pub async fn disconnect_from_database(
         return Err("No active database connection to disconnect.".to_string());
     }
 
-    let conn: DatabaseConnection = conn_guard.take().unwrap();
+    let conn: Connection = conn_guard.take().unwrap();
     conn.disconnect();
 
     Ok("Disconnected from the database.".to_string())
@@ -125,10 +124,10 @@ pub async fn disconnect_from_database(
 pub async fn save_database_config(save: SaveConfig) -> Result<String, String> {
     let path: PathBuf = PathBuf::from("database_config.json");
     let _config =
-        serde_json::to_string(&save).map_err(|e| format!("Failed to serialize config: {}", e))?;
-    let file: File = File::create(&path).map_err(|e| format!("Failed to create file: {}", e))?;
+        serde_json::to_string(&save).map_err(|e| format!("Failed to serialize config: {e}"))?;
+    let file: File = File::create(&path).map_err(|e| format!("Failed to create file: {e}"))?;
     serde_json::to_writer_pretty(file, &save)
-        .map_err(|e| format!("Failed to write to file: {}", e))?;
+        .map_err(|e| format!("Failed to write to file: {e}"))?;
     Ok(format!(
         "Database configuration saved to file located at {}",
         path.display()
@@ -138,18 +137,18 @@ pub async fn save_database_config(save: SaveConfig) -> Result<String, String> {
 #[command]
 pub async fn load_database_config() -> Result<String, String> {
     let path: PathBuf = PathBuf::from("database_config.json");
-    let file: File = File::open(&path).map_err(|e| format!("Failed to open file: {}", e))?;
+    let file: File = File::open(&path).map_err(|e| format!("Failed to open file: {e}"))?;
     let config: SaveConfig =
-        serde_json::from_reader(file).map_err(|e| format!("Failed to read file: {}", e))?;
+        serde_json::from_reader(file).map_err(|e| format!("Failed to read file: {e}"))?;
     let config_json: String =
-        serde_json::to_string(&config).map_err(|e| format!("Failed to serialize config: {}", e))?;
+        serde_json::to_string(&config).map_err(|e| format!("Failed to serialize config: {e}"))?;
     Ok(config_json)
 }
 
 #[command]
 pub async fn get_size_of_file(file_path: String) -> Result<String, String> {
     let metadata: Metadata =
-        std::fs::metadata(&file_path).map_err(|e| format!("Failed to get metadata: {}", e))?;
+        std::fs::metadata(&file_path).map_err(|e| format!("Failed to get metadata: {e}"))?;
     if !metadata.is_file() {
         return Err("Path is not a file".to_string());
     }
@@ -157,7 +156,7 @@ pub async fn get_size_of_file(file_path: String) -> Result<String, String> {
         return Err("File is empty".to_string());
     }
     let size: f64 = metadata.len() as f64 / 1024.0 / 1024.0;
-    Ok(format!("{:.2} MB", size))
+    Ok(format!("{size:.2} MB"))
 }
 
 #[command]
@@ -167,7 +166,7 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
     }
 
     let file: File =
-        File::open(&load.file_path).map_err(|e| format!("Failed to open file: {}", e))?;
+        File::open(&load.file_path).map_err(|e| format!("Failed to open file: {e}"))?;
     let mut reader: Reader<File> = ReaderBuilder::new().has_headers(true).from_reader(file);
 
     let final_columns_name: Vec<String> = get_formated_column_names(
@@ -187,8 +186,8 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
     for record in reader.records() {
         let record: StringRecord = record.unwrap();
 
-        for i in 0..record.len() {
-            let value: String = record.get(i).unwrap().trim().to_string();
+        for (i, value) in record.iter().enumerate() {
+            let value: String = value.trim().to_string();
             let max_length: &mut usize = columns_size_map
                 .get_mut(final_columns_name[i].as_str())
                 .unwrap();
@@ -205,7 +204,7 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
 
     // Delete table if exists
     sql.push_str(get_drop_statement(&load.db_driver, &load.table_name)?.as_str());
-    sql.push_str(";");
+    sql.push(';');
     sql.push_str("\n\n");
 
     // Create table with fixed size
@@ -247,17 +246,17 @@ pub async fn execute_sql(
         return Err("No active database connection.".to_string());
     }
 
-    let connection: &DatabaseConnection = conn_guard.as_ref().unwrap();
+    let connection: &Connection = conn_guard.as_ref().unwrap();
     let start: Instant = Instant::now();
 
-    for query in sql.split(";") {
+    for query in sql.split(';') {
         if query.trim().is_empty() {
             continue;
         }
         connection
-            .query(&query)
+            .query(query)
             .await
-            .map_err(|e| format!("Failed to execute query: {}", e))?;
+            .map_err(|e| format!("Failed to execute query: {e}"))?;
     }
 
     Ok(format!(
@@ -266,13 +265,16 @@ pub async fn execute_sql(
     ))
 }
 
-// #[command]
-// pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String, String> {
-//     let conn_guard = state.0.lock().await;
-//
-//     if conn_guard.is_none() {
-//         return Ok("false".to_string());
-//     }
-//
-//     Ok("true".to_string())
-// }
+#[command]
+pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String, String> {
+    let conn_guard = state.0.lock().await;
+
+    if conn_guard.is_none() {
+        return Ok("false".to_string());
+    }
+
+    let connection: &Connection = conn_guard.as_ref().unwrap();
+    let db_config: &DbConfig = connection.get_db_config();
+
+    Ok(serde_json::to_string(db_config).unwrap())
+}

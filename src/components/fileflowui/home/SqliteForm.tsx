@@ -8,7 +8,7 @@ import * as dialog from "@tauri-apps/plugin-dialog"
 
 interface SqliteFormProps {
     dbConfig: {
-        sqliteFilePath: string;
+        sqlite_file_path: string;
         db_driver: string;
     };
     uiState: {
@@ -30,7 +30,7 @@ const SqliteForm: React.FC<SqliteFormProps> = (props: SqliteFormProps) => {
             });
 
             if (selectedFilePath) {
-                props.updateDbConfigField('sqliteFilePath', selectedFilePath);
+                props.updateDbConfigField('sqlite_file_path', selectedFilePath);
             }
         } catch (error) {
             props.addLog(`Error opening file dialog: ${error}`);
@@ -55,7 +55,7 @@ const SqliteForm: React.FC<SqliteFormProps> = (props: SqliteFormProps) => {
                     </Button>
                     <Input
                         type="text"
-                        value={props.dbConfig.sqliteFilePath}
+                        value={props.dbConfig.sqlite_file_path}
                         placeholder="Select SQLite file"
                         disabled
                         className="w-full"

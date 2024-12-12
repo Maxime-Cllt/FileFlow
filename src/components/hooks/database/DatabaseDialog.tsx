@@ -22,7 +22,7 @@ interface DataBaseDialogProps {
         password: string;
         db_name: string;
         tableName: string;
-        sqliteFilePath: string;
+        sqlite_file_path: string;
         is_connected: boolean;
     };
     sql: string;

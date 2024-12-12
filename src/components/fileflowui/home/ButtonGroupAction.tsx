@@ -12,7 +12,7 @@ interface ButtonGroupProps {
         password: string;
         db_name: string;
         tableName: string;
-        sqliteFilePath: string;
+        sqlite_file_path: string;
         is_connected: boolean;
     };
     uiState: {
@@ -75,7 +75,7 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
         props.updateDbConfigField('password', '');
         props.updateDbConfigField('db_name', '');
         props.updateDbConfigField('tableName', '');
-        props.updateDbConfigField('sqliteFilePath', '');
+        props.updateDbConfigField('sqlite_file_path', '');
 
 
         props.updateUiStateField('fileName', '');
@@ -117,7 +117,7 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
                 return;
             }
         } else if (props.dbConfig.db_driver === 'sqlite') {
-            if (!props.dbConfig.sqliteFilePath) {
+            if (!props.dbConfig.sqlite_file_path) {
                 toast.warning('Please select a SQLite file');
                 return;
             }
@@ -134,7 +134,7 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
                     password: props.dbConfig.password,
                     db_name: props.dbConfig.db_name,
                     table_name: props.dbConfig.tableName,
-                    sqlite_file_path: props.dbConfig.sqliteFilePath,
+                    sqlite_file_path: props.dbConfig.sqlite_file_path,
                 },
             });
             props.addLog(response as string);

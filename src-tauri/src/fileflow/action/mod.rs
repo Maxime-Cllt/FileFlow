@@ -1,1 +1,1 @@
-pub(crate) mod actions;
+pub mod actions;

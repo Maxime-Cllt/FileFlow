@@ -106,7 +106,6 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
         if (props.dbConfig.is_connected) {
             handleDeconnection(e as React.MouseEvent).then(() => {
                 props.updateDbConfigField('is_connected', false);
-                toast.success('Disconnected successfully');
             });
             return;
         }

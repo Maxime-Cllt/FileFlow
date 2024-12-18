@@ -54,8 +54,6 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponent> = ({
             if (typeof response === "string") {
                 const loadDbConfig = JSON.parse(response);
 
-
-                // loop through the keys and update the dbConfig
                 Object.keys(loadDbConfig).forEach((key) => {
                     updateDbConfigField(key, loadDbConfig[key]);
                 });
@@ -75,16 +73,6 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponent> = ({
     return (
         <div className="flex space-x-4">
 
-            {/* Save config button */}
-            <button
-                onClick={saveConfig}
-                className="flex items-center justify-center p-3 rounded-full shadow-lg transition duration-300 bg-green-500 hover:bg-green-600 text-white"
-                aria-label="Save Config"
-                title="Save Config"
-            >
-                <SaveAll className="w-5 h-5"/>
-            </button>
-
             {/* Load config button */}
             <button
                 onClick={loadConfig}
@@ -93,6 +81,16 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponent> = ({
                 className="flex items-center justify-center p-3 rounded-full shadow-lg transition duration-300 bg-blue-500 hover:bg-blue-600 text-white"
             >
                 <ArrowDownFromLine className="w-5 h-5"/>
+            </button>
+
+            {/* Save config button */}
+            <button
+                onClick={saveConfig}
+                className="flex items-center justify-center p-3 rounded-full shadow-lg transition duration-300 bg-green-500 hover:bg-green-600 text-white"
+                aria-label="Save Config"
+                title="Save Config"
+            >
+                <SaveAll className="w-5 h-5"/>
             </button>
         </div>
 

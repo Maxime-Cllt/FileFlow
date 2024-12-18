@@ -1,10 +1,11 @@
-use crate::fileflow::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
 use crate::fileflow::stuct::db_config::DbConfig;
+use crate::fileflow::utils::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
 use csv::Writer;
 use std::error::Error;
 use std::fs::File;
 use std::path::PathBuf;
 
+/// Get a test PostgreSQL configuration
 pub fn get_test_pg_config() -> DbConfig {
     DbConfig {
         db_driver: POSTGRES.to_string(),
@@ -17,6 +18,7 @@ pub fn get_test_pg_config() -> DbConfig {
     }
 }
 
+/// Get a test SQLite configuration
 pub fn get_test_sqlite_config(str: String) -> DbConfig {
     let mut str: String = str;
     if str.is_empty() {
@@ -33,6 +35,7 @@ pub fn get_test_sqlite_config(str: String) -> DbConfig {
     }
 }
 
+/// Get a test MySQL configuration
 pub fn get_test_mysql_config() -> DbConfig {
     DbConfig {
         db_driver: MYSQL.to_string(),
@@ -45,6 +48,7 @@ pub fn get_test_mysql_config() -> DbConfig {
     }
 }
 
+/// Get a test MariaDB configuration
 pub fn get_test_maridb_config() -> DbConfig {
     DbConfig {
         db_driver: MARIADB.to_string(),
@@ -57,6 +61,7 @@ pub fn get_test_maridb_config() -> DbConfig {
     }
 }
 
+/// Create a test SQLite database file if it does not exist and return the file path
 pub fn create_test_db(db_name: String) -> String {
     let absolute_path: PathBuf =
         std::env::current_exe().expect("Failed to get current executable path");
@@ -74,6 +79,7 @@ pub fn create_test_db(db_name: String) -> String {
     file_path
 }
 
+/// Remove the test SQLite database file if it exists from its path
 pub fn remove_test_db(db_name: String) -> Result<(), Box<dyn Error>> {
     let absolute_path: PathBuf =
         std::env::current_exe().expect("Failed to get current executable path");
@@ -92,6 +98,7 @@ pub fn remove_test_db(db_name: String) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+/// Generate a CSV file with the given file name and return the file path
 pub fn generate_csv_file(file_name: String) -> Result<String, Box<dyn Error>> {
     let absolute_path: PathBuf =
         std::env::current_exe().expect("Failed to get current executable path");
@@ -104,11 +111,11 @@ pub fn generate_csv_file(file_name: String) -> Result<String, Box<dyn Error>> {
     let csv_file_path: String = format!("{}/{}.csv", path, file_name);
     let file: File = File::create(&csv_file_path).expect("Failed to create CSV file");
     let mut wtr: Writer<File> = Writer::from_writer(file);
-    wtr.write_record(&["header1", "header2"])
+    wtr.write_record(["header1", "header2"])
         .expect("Failed to write record");
-    wtr.write_record(&["value1", "value2"])
+    wtr.write_record(["value1", "value2"])
         .expect("Failed to write record");
-    wtr.write_record(&["value3", "value4"])
+    wtr.write_record(["value3", "value4"])
         .expect("Failed to write record");
     wtr.flush().expect("Failed to flush CSV writer");
 
@@ -121,6 +128,7 @@ pub fn generate_csv_file(file_name: String) -> Result<String, Box<dyn Error>> {
     Ok(csv_file_path)
 }
 
+/// Remove the CSV file with the given file name if it exists
 pub fn remove_csv_file(file_name: String) -> Result<(), Box<dyn Error>> {
     let absolute_path: PathBuf =
         std::env::current_exe().expect("Failed to get current executable path");

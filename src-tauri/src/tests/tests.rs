@@ -1,23 +1,26 @@
-// unit tests
+// unit unit_tests
 #[cfg(test)]
-mod tests {
+mod unit_tests {
     use crate::fileflow::action::actions::{generate_load_data_sql, load_database_config};
-    use crate::fileflow::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
     use crate::fileflow::database::connection::Connection;
     use crate::fileflow::fast_insert::fast_insert;
-    use crate::fileflow::fileflowlib::{
-        detect_separator_in_file, get_create_statement, get_create_statement_with_fixed_size,
-        get_drop_statement, get_formated_column_names, get_insert_into_statement,
-    };
     use crate::fileflow::stuct::db_config::DbConfig;
     use crate::fileflow::stuct::insert_config::InsertConfig;
     use crate::fileflow::stuct::load_data_struct::GenerateLoadData;
     use crate::fileflow::stuct::save_config::SaveConfig;
+    use crate::fileflow::utils::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
+    use crate::fileflow::utils::fileflowlib::{
+        detect_separator_in_file, get_formated_column_names,
+    };
+    use crate::fileflow::utils::sql::{
+        escaped_values, get_create_statement, get_create_statement_with_fixed_size,
+        get_drop_statement, get_insert_into_statement,
+    };
     use crate::tests::utils::{
         create_test_db, generate_csv_file, get_test_maridb_config, get_test_mysql_config,
         get_test_pg_config, get_test_sqlite_config, remove_csv_file, remove_test_db,
     };
-    use csv::{Reader, ReaderBuilder};
+    use csv::{Reader, ReaderBuilder, StringRecord};
     use sqlx::sqlite::SqliteRow;
     use sqlx::testing::TestTermination;
     use sqlx::{Error, Pool, Row, Sqlite};
@@ -54,8 +57,9 @@ mod tests {
         let config: String = load_database_config().await.unwrap();
         let config: DbConfig = serde_json::from_str(&config).unwrap();
         let conn = Connection::connect(&config).await;
-        assert_eq!(conn.is_ok(), true);
-        assert_eq!(conn.is_err(), false);
+        assert!(conn.is_ok());
+        let conn: Connection = conn.unwrap();
+        let _ = conn.disconnect();
     }
 
     #[tokio::test]
@@ -64,8 +68,7 @@ mod tests {
         let config: DbConfig = get_test_sqlite_config(file_path);
         let conn = Connection::connect(&config).await;
         assert!(conn.is_success(), "Failed to connect to the database");
-        assert_eq!(conn.is_ok(), true);
-        assert_eq!(conn.is_err(), false);
+        assert!(conn.is_ok());
         let _ = remove_test_db("sqlite_connection".to_string());
     }
 
@@ -363,7 +366,7 @@ mod tests {
                 .unwrap()
                 .as_str(),
         );
-        sql.push_str(";");
+        sql.push(';');
         sql.push_str("\n\n");
 
         sql.push_str(
@@ -472,5 +475,21 @@ mod tests {
         let separator: char = detect_separator_in_file(&csv_file_path).unwrap();
         assert_eq!(separator, ',');
         let _ = remove_csv_file("test_detect_separator_in_file".to_string());
+    }
+
+    #[tokio::test]
+    async fn test_escape_values() {
+        let record: StringRecord = StringRecord::from(vec!["value1", "value2"]);
+        let values: String = escaped_values(record);
+        assert_eq!(values, "'value1', 'value2'");
+
+        let record: StringRecord = StringRecord::from(vec![
+            "INSERT INTO test_table VALUES (1,2);",
+            "UPDATE test_table SET column1 = 1;",
+            "DELETE FROM test_table WHERE column1 = 1;",
+            "SELECT * FROM test_table;",
+        ]);
+        let values: String = escaped_values(record);
+        assert_eq!(values, "'INSERT INTO test_table VALUES (1,2);', 'UPDATE test_table SET column1 = 1;', 'DELETE FROM test_table WHERE column1 = 1;', 'SELECT * FROM test_table;'");
     }
 }

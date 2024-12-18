@@ -2,15 +2,13 @@
 
 use crate::fileflow::database::connection::Connection;
 use crate::fileflow::fast_insert::fast_insert;
-use crate::fileflow::fileflowlib::{
-    detect_separator_in_file, get_create_statement_with_fixed_size, get_drop_statement,
-    get_formated_column_names,
-};
 use crate::fileflow::optimized_insert::optimized_insert;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::insert_config::InsertConfig;
 use crate::fileflow::stuct::load_data_struct::GenerateLoadData;
 use crate::fileflow::stuct::save_config::SaveConfig;
+use crate::fileflow::utils::fileflowlib::{detect_separator_in_file, get_formated_column_names};
+use crate::fileflow::utils::sql::{get_create_statement_with_fixed_size, get_drop_statement};
 use csv::{Reader, ReaderBuilder, StringRecord};
 use std::collections::HashMap;
 use std::fs::{File, Metadata};

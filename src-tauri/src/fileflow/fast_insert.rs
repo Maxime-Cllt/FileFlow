@@ -1,6 +1,7 @@
 use crate::fileflow::database::connection::Connection;
+use crate::fileflow::utils::fileflowlib::escaped_values;
 use crate::fileflow::utils::sql::{
-    batch_insert, drop_table_if_exists, escaped_values, execute_query, get_create_statement,
+    batch_insert, drop_table_if_exists, execute_query, get_create_statement,
     get_insert_into_statement,
 };
 use csv::{Reader, StringRecord};
@@ -19,6 +20,7 @@ pub async fn fast_insert(
     // Drop the table if it exists
     drop_table_if_exists(connection, db_driver, final_table_name).await?;
 
+    // Create the table
     execute_query(
         connection,
         get_create_statement(db_driver, final_table_name, final_columns_name)?.as_str(),
@@ -30,6 +32,7 @@ pub async fn fast_insert(
     let mut line_count: u64 = 0;
     let mut batch: Vec<String> = Vec::with_capacity(MAX_BATCH_SIZE);
 
+    // Prepare the insert query
     let insert_query_base: &str = &get_insert_into_statement(db_driver, final_table_name, columns)?;
 
     for result in reader.records() {
@@ -40,7 +43,7 @@ pub async fn fast_insert(
         if batch.len() == MAX_BATCH_SIZE {
             batch_insert(
                 connection,
-                &insert_query_base,
+                insert_query_base,
                 &batch,
                 "Failed to insert batch data",
             )
@@ -53,7 +56,7 @@ pub async fn fast_insert(
     // Insert the remaining records if any
     batch_insert(
         connection,
-        &insert_query_base,
+        insert_query_base,
         &batch,
         "Failed to insert batch data",
     )

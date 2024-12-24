@@ -30,7 +30,7 @@ const LoadButtonGroupAction: React.FC<LoadButtonGroupProps> = (props: LoadButton
 
     const loadConfig = async () => {
         try {
-            const response = await invoke('load_database_config');
+            const response = await invoke('load_database_config_by_name');
             if (typeof response === "string") {
                 const loadDbConfig = JSON.parse(response);
                 for (const key in loadDbConfig) {

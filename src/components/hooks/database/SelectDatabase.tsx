@@ -17,6 +17,9 @@ const databaseOptions = {
 const SelectDatabase: React.FC<SelectDatabaseProps> = (props: SelectDatabaseProps) => {
 
     const handledbDriverChange = (value: string) => {
+        if (props.db_driver.length !== 0) {
+            return;
+        }
         const portMap: Record<string, string> = {mysql: '3306', mariadb: '3306', postgres: '5432'};
         props.updateDbConfigField('port', portMap[value] || '');
         props.updateDbConfigField('db_driver', value);

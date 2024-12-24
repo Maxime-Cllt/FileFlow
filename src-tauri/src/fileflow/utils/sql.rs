@@ -1,6 +1,5 @@
 use crate::fileflow::database::connection::Connection;
 use crate::fileflow::utils::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
-use csv::StringRecord;
 use std::collections::HashMap;
 
 /// This function is used to generate the DROP TABLE statement for different database drivers.
@@ -123,16 +122,6 @@ pub fn get_create_statement(
         )),
         _ => Err("Unsupported database driver".to_string()),
     }
-}
-
-/// Escape values for SQL insert statement to avoid SQL injection attacks and other issues with special characters in values.
-pub fn escaped_values(values: StringRecord) -> String {
-    let vec: Vec<String> = values
-        .iter()
-        .map(|v| format!("'{}'", v.trim().replace("'", "''")))
-        .map(|v| v.replace("\\", "\\\\"))
-        .collect();
-    vec.join(", ")
 }
 
 /// Helper function to drop a table if it exists

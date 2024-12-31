@@ -2,7 +2,6 @@ use crate::fileflow::action::actions::DatabaseState;
 use crate::fileflow::database::connection::Connection;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::load_data_struct::GenerateLoadData;
-use crate::fileflow::utils::constants::{MARIADB, MYSQL, POSTGRES};
 use crate::fileflow::utils::fileflowlib::{detect_separator_in_file, get_formated_column_names};
 use crate::fileflow::utils::sql::{get_create_statement_with_fixed_size, get_drop_statement};
 use csv::{Reader, ReaderBuilder, StringRecord};
@@ -26,15 +25,7 @@ pub async fn connect_to_database(
     match Connection::connect(&config).await {
         Ok(connection) => {
             *conn_guard = Some(connection);
-
-            let message: String = match config.db_driver.as_str() {
-                MYSQL | POSTGRES | MARIADB => format!(
-                    "Connected to {} database at {} with user {}",
-                    config.db_driver, config.db_host, config.username
-                ),
-                _ => format!("Connected to {} database", config.db_driver),
-            };
-            Ok(message)
+            Ok("true".to_string())
         }
         Err(err) => Err(format!("Failed to connect to the database: {err}")),
     }

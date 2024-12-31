@@ -17,9 +17,6 @@ const databaseOptions = {
 const SelectDatabase: React.FC<SelectDatabaseProps> = (props: SelectDatabaseProps) => {
 
     const handledbDriverChange = (value: string) => {
-        if (props.db_driver.length !== 0) {
-            return;
-        }
         const portMap: Record<string, string> = {mysql: '3306', mariadb: '3306', postgres: '5432'};
         props.updateDbConfigField('port', portMap[value] || '');
         props.updateDbConfigField('db_driver', value);
@@ -27,7 +24,7 @@ const SelectDatabase: React.FC<SelectDatabaseProps> = (props: SelectDatabaseProp
     };
 
     return (
-        <div className="space-y-4">
+        <div>
             <Select onValueChange={handledbDriverChange} value={props.db_driver}>
                 <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a database driver"/>

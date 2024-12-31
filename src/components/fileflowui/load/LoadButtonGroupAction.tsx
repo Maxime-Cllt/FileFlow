@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {Copy, Eraser, Hammer} from "lucide-react";
 import {toast} from "sonner";
 import {invoke} from "@tauri-apps/api/core";
@@ -20,29 +20,9 @@ const LoadButtonGroupAction: React.FC<LoadButtonGroupProps> = (props: LoadButton
 
     const [dbConfig, setDbConfig] = useState(initialDbConfig);
 
-    useEffect(() => {
-        loadConfig().then();
-    }, []);
-
     const updateDbConfigField = (field: keyof typeof dbConfig, value: any) => {
         setDbConfig(prev => ({...prev, [field]: value}));
     }
-
-    const loadConfig = async () => {
-        try {
-            const response = await invoke('load_database_config_by_name');
-            if (typeof response === "string") {
-                const loadDbConfig = JSON.parse(response);
-                for (const key in loadDbConfig) {
-                    updateDbConfigField(key as keyof typeof dbConfig, loadDbConfig[key]);
-                }
-                updateDbConfigField('is_connected', false);
-                props.updateGenerateSQL("db_driver", loadDbConfig.db_driver);
-            }
-        } catch (error) {
-            toast.error(error as string);
-        }
-    };
 
     const handleReset = () => {
         props.updateGenerateSQL("tableName", "");

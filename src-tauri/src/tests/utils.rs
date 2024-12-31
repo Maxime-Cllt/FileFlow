@@ -1,4 +1,5 @@
 use crate::fileflow::stuct::db_config::DbConfig;
+use crate::fileflow::stuct::save_config::SaveConfig;
 use crate::fileflow::utils::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
 use csv::Writer;
 use std::error::Error;
@@ -60,6 +61,29 @@ pub fn get_test_maridb_config() -> DbConfig {
         sqlite_file_path: "".to_string(),
     }
 }
+/// Get a test save configuration
+pub fn get_test_save_config(config_name: &str) -> SaveConfig {
+    SaveConfig {
+        config_name: config_name.to_string(),
+        db_driver: SQLITE.to_string(),
+        db_host: "".to_string(),
+        port: "".to_string(),
+        username: "".to_string(),
+        password: "".to_string(),
+        db_name: "test_db".to_string(),
+        sqlite_file_path: "".to_string(),
+    }
+}
+
+/// Delete the configuration file with the given file name
+pub fn delete_config_file(config_file_name: &str) -> Result<(), Box<dyn Error>> {
+    if !std::path::Path::new(&config_file_name).exists() {
+        println!("File does not exist");
+        Err("Failed to create SQLite file")?;
+    }
+    std::fs::remove_file(config_file_name).expect("Failed to remove SQLite file");
+    Ok(())
+}
 
 /// Create a test SQLite database file if it does not exist and return the file path
 pub fn create_test_db(db_name: String) -> String {
@@ -70,7 +94,7 @@ pub fn create_test_db(db_name: String) -> String {
         .expect("Failed to get parent directory")
         .to_str()
         .expect("Failed to convert path to string");
-    let file_path: String = format!("{}/{}.db", path, db_name);
+    let file_path: String = format!("{path}/{db_name}.db");
 
     if !std::path::Path::new(&file_path).exists() {
         File::create(&file_path).expect("Failed to create SQLite file");
@@ -88,7 +112,7 @@ pub fn remove_test_db(db_name: String) -> Result<(), Box<dyn Error>> {
         .expect("Failed to get parent directory")
         .to_str()
         .expect("Failed to convert path to string");
-    let file_path: String = format!("{}/{}.db", path, db_name);
+    let file_path: String = format!("{path}/{db_name}.db");
 
     if !std::path::Path::new(&file_path).exists() {
         println!("File does not exist");
@@ -137,7 +161,7 @@ pub fn remove_csv_file(file_name: String) -> Result<(), Box<dyn Error>> {
         .expect("Failed to get parent directory")
         .to_str()
         .expect("Failed to convert path to string");
-    let csv_file_path: String = format!("{}/{}.csv", path, file_name);
+    let csv_file_path: String = format!("{path}/{file_name}.csv");
 
     if std::path::Path::new(&csv_file_path).exists() {
         std::fs::remove_file(&csv_file_path).expect("Failed to remove CSV file");

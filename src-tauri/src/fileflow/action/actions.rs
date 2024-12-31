@@ -5,6 +5,7 @@ use crate::fileflow::fast_insert::fast_insert;
 use crate::fileflow::optimized_insert::optimized_insert;
 use crate::fileflow::stuct::insert_config::InsertConfig;
 use crate::fileflow::stuct::save_config::SaveConfig;
+use crate::fileflow::utils::constants::DATABASE_CONFIG_FILE;
 use crate::fileflow::utils::fileflowlib::{
     detect_separator_in_file, get_all_saved_configs, get_formated_column_names, save_config,
 };
@@ -78,7 +79,7 @@ pub async fn insert_csv_data(
 
 #[command]
 pub async fn save_database_config(save: SaveConfig) -> Result<String, String> {
-    let mut existing_configs: Vec<SaveConfig> = get_all_saved_configs();
+    let mut existing_configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE);
 
     for config in &existing_configs {
         if config.config_name == save.config_name {
@@ -87,7 +88,8 @@ pub async fn save_database_config(save: SaveConfig) -> Result<String, String> {
     }
     let config_names: &str = &save.config_name.clone();
     existing_configs.push(save);
-    save_config(&existing_configs).map_err(|e| format!("Failed to save new configs: {e}"))?;
+    save_config(&existing_configs, DATABASE_CONFIG_FILE)
+        .map_err(|e| format!("Failed to save new configs: {e}"))?;
 
     Ok(format!(
         "Database configuration {config_names} added successfully",
@@ -96,7 +98,7 @@ pub async fn save_database_config(save: SaveConfig) -> Result<String, String> {
 
 #[command]
 pub async fn get_all_database_configs_name() -> Result<String, String> {
-    let configs: Vec<SaveConfig> = get_all_saved_configs();
+    let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE);
     let configs_names: Vec<String> = configs.iter().map(|c| c.config_name.clone()).collect();
     let configs_json: String = serde_json::to_string(&configs_names)
         .map_err(|e| format!("Failed to serialize configs: {e}"))?;
@@ -105,7 +107,7 @@ pub async fn get_all_database_configs_name() -> Result<String, String> {
 
 #[command]
 pub async fn load_database_config_by_name(name: String) -> Result<String, String> {
-    let configs: Vec<SaveConfig> = get_all_saved_configs();
+    let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE);
     for config in &configs {
         if config.config_name == name {
             return serde_json::to_string(&config)
@@ -117,7 +119,7 @@ pub async fn load_database_config_by_name(name: String) -> Result<String, String
 
 #[command]
 pub async fn delete_database_config(name: String) -> Result<String, String> {
-    let configs: Vec<SaveConfig> = get_all_saved_configs();
+    let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE);
 
     let mut new_configs: Vec<SaveConfig> = Vec::new();
     let mut found: bool = false;
@@ -134,7 +136,8 @@ pub async fn delete_database_config(name: String) -> Result<String, String> {
         Err("Database configuration not found".to_string())?;
     }
 
-    save_config(&new_configs).map_err(|e| format!("Failed to save new configs: {e}"))?;
+    save_config(&new_configs, DATABASE_CONFIG_FILE)
+        .map_err(|e| format!("Failed to save new configs: {e}"))?;
 
     Ok(format!("Database configuration {name} deleted"))
 }

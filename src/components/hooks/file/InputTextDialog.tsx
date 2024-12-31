@@ -63,7 +63,7 @@ const InputTextDialog: React.FC<SaveConfigDialogProps> = (props: SaveConfigDialo
                     {/* Dialog Footer */}
                     <DialogFooter className="flex justify-end gap-4 mt-4">
                         <div>
-                            <DialogClose asChild>
+                            <DialogClose>
                                 <Button
                                     className="bg-red-500 hover:bg-red-600 text-white focus:ring-4 focus:ring-red-300"
                                     type={"button"}
@@ -73,29 +73,18 @@ const InputTextDialog: React.FC<SaveConfigDialogProps> = (props: SaveConfigDialo
                             </DialogClose>
                         </div>
 
-                        <div>
-                            <DialogClose asChild>
-                                <Button
-                                    className="bg-blue-500 hover:bg-blue-600 text-white focus:ring-4 focus:ring-blue-300"
-                                    type={"button"}
-                                    onClick={executeFunction}
-                                >
-                                    Save
-                                </Button>
+                        <div onClick={executeFunction}>
+                            <DialogClose>
+                                <div>
+                                    <Button
+                                        className="bg-blue-500 hover:bg-blue-600 text-white focus:ring-4 focus:ring-blue-300"
+                                        type={"button"}
+                                    >
+                                        Save
+                                    </Button>
+                                </div>
                             </DialogClose>
                         </div>
-
-                        {/*<div>*/}
-                        {/*    <DialogClose asChild>*/}
-                        {/*        <Button*/}
-                        {/*            className="bg-blue-500 hover:bg-blue-600 text-white focus:ring-4 focus:ring-blue-300"*/}
-                        {/*            onClick={props.fonction}*/}
-                        {/*            type="button"*/}
-                        {/*        >*/}
-                        {/*            Save*/}
-                        {/*        </Button>*/}
-                        {/*    </DialogClose>*/}
-                        {/*</div>*/}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

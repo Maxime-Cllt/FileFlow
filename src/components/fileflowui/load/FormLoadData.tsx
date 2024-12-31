@@ -15,7 +15,7 @@ interface FormLoadDataProps {
     updateGenerateSQL: (key: string, value: string) => void;
 }
 
-const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, updateGenerateSQL}) => {
+const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, updateGenerateSQL}: FormLoadDataProps) => {
     return (
         <form className="space-y-6 p-6 rounded-lg shadow-lg bg-white  mx-auto">
 
@@ -40,7 +40,7 @@ const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, updateGenerateS
                 <SelectDatabase
                     db_driver={generateSQL.db_driver}
                     updateDbConfigField={
-                        (field, value) => {
+                        (field: string, value: string) => {
                             updateGenerateSQL(field, value);
                         }
                     }
@@ -54,10 +54,13 @@ const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, updateGenerateS
                 <label className="block text-sm font-medium text-gray-700 mb-2">Upload File</label>
                 <FileUpload
                     fileName={generateSQL.fileName}
-                    setFilePath={(value) => updateGenerateSQL('filePath', value)}
-                    setFileName={(value) => updateGenerateSQL('fileName', value)}
-                    setTableName={(value) => updateGenerateSQL('tableName', value)}
-                    addLog={() => {
+                    tableName={generateSQL.tableName}
+                    updateDbConfigField={
+                        (field: string, value: string) => {
+                            updateGenerateSQL(field, value);
+                        }
+                    }
+                    updateUiStateField={() => {
                     }}
                 />
             </div>

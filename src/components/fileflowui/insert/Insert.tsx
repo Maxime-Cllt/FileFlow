@@ -2,16 +2,16 @@ import React, {useState} from 'react';
 import '../../../Loader.css';
 import {Card, CardContent, CardHeader} from "@/components/ui/card.tsx";
 import Loader from "@/components/hooks/Loader.tsx";
-import HomeForm from "@/components/fileflowui/home/HomeForm.tsx";
-import ModeSelection from "@/components/fileflowui/home/ModeSelection.tsx";
-import ButtonGroupAction from "@/components/fileflowui/home/ButtonGroupAction.tsx";
-import Log from "@/components/fileflowui/home/Log.tsx";
-import SqliteForm from "@/components/fileflowui/home/SqliteForm.tsx";
+import ModeSelection from "@/components/fileflowui/insert/ModeSelection.tsx";
+import ButtonGroupAction from "@/components/fileflowui/insert/ButtonGroupAction.tsx";
+import Log from "@/components/fileflowui/insert/Log.tsx";
+import SqliteForm from "@/components/fileflowui/insert/SqliteForm.tsx";
 import {initialDbConfig, initialUiState} from "@/components/states/initialState.tsx";
-import ButtonConfigComponent from "@/components/fileflowui/home/ButtonConfig.tsx";
+import ButtonConfigComponent from "@/components/fileflowui/insert/ButtonConfig.tsx";
 import {invoke} from "@tauri-apps/api/core";
+import InsertForm from "@/components/fileflowui/insert/InsertForm.tsx";
 
-const Home: React.FC = () => {
+const Insert: React.FC = () => {
     const [dbConfig, setDbConfig] = useState(initialDbConfig);
     const [uiState, setUiState] = useState(initialUiState);
 
@@ -57,22 +57,27 @@ const Home: React.FC = () => {
         if (uiState.sqlite) {
             return (
                 <SqliteForm
-                    dbConfig={{
-                        sqlite_file_path: dbConfig.sqlite_file_path,
-                        db_driver: dbConfig.db_driver,
-                    }}
-                    addLog={addLog}
-                    updateDbConfigField={updateDbConfigField}
-                    updateUiStateField={updateUiStateField}
+                    dbConfig={dbConfig}
                     uiState={{
                         fileName: uiState.fileName,
                     }}
+                    addLog={addLog}
+                    updateDbConfigField={
+                        (field: string, value: string) => {
+                            updateDbConfigField(field as keyof typeof dbConfig, value);
+                        }
+                    }
+                    updateUiStateField={
+                        (field: string, value: string) => {
+                            updateUiStateField(field as keyof typeof uiState, value);
+                        }
+                    }
                 />
             );
         }
 
         return (
-            <HomeForm
+            <InsertForm
                 dbConfig={dbConfig}
                 uiState={{
                     fileName: uiState.fileName,
@@ -144,4 +149,4 @@ const Home: React.FC = () => {
 
 };
 
-export default Home;
+export default Insert;

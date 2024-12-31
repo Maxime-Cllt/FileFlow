@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {invoke} from "@tauri-apps/api/core";
 import {toast} from "sonner";
 import InputTextDialog from "@/components/hooks/file/InputTextDialog.tsx";
-import ConfigItemList from "@/components/fileflowui/home/ConfigItemList.tsx";
+import ConfigItemList from "@/components/fileflowui/insert/ConfigItemList.tsx";
 
 interface ButtonConfigComponentProps {
     dbConfig: {
@@ -19,11 +19,7 @@ interface ButtonConfigComponentProps {
     addLog: (message: string) => void;
 }
 
-const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = ({
-                                                                         dbConfig,
-                                                                         updateDbConfigField,
-                                                                         addLog,
-                                                                     }: ButtonConfigComponentProps) => {
+const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: ButtonConfigComponentProps) => {
     const [configName, setConfigName] = useState('');
     const [configNameList, setConfigNameList] = useState<Array<Item>>([]);
 
@@ -43,20 +39,20 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = ({
             await invoke('save_database_config', {
                 save: {
                     config_name: configName,
-                    db_driver: dbConfig.db_driver.toLowerCase(),
-                    db_host: dbConfig.db_host,
-                    port: dbConfig.port,
-                    username: dbConfig.username,
-                    password: dbConfig.password,
-                    db_name: dbConfig.db_name,
-                    table_name: dbConfig.tableName,
-                    sqlite_file_path: dbConfig.sqlite_file_path,
+                    db_driver: props.dbConfig.db_driver.toLowerCase(),
+                    db_host: props.dbConfig.db_host,
+                    port: props.dbConfig.port,
+                    username: props.dbConfig.username,
+                    password: props.dbConfig.password,
+                    db_name: props.dbConfig.db_name,
+                    table_name: props.dbConfig.tableName,
+                    sqlite_file_path: props.dbConfig.sqlite_file_path,
                 },
             });
             toast.success(`Config "${configName}" saved successfully`);
         } catch (error) {
             toast.error('Error saving config');
-            addLog(`Error saving config: ${error}`);
+            props.addLog(`Error saving config: ${error}`);
         }
     };
 
@@ -69,15 +65,15 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = ({
             if (typeof response === 'string') {
                 const loadDbConfig = JSON.parse(response);
 
-                Object.keys(loadDbConfig).forEach((key) => {
-                    updateDbConfigField(key, loadDbConfig[key]);
+                Object.keys(loadDbConfig).forEach((key:string) => {
+                    props.updateDbConfigField(key, loadDbConfig[key]);
                 });
-                updateDbConfigField('is_connected', false);
+                props.updateDbConfigField('is_connected', false);
 
                 toast.success('Config loaded successfully');
             }
         } catch (error) {
-            addLog(`Error loading config: ${error}`);
+            props.addLog(`Error loading config: ${error}`);
             toast.error('Error loading config');
         }
     };
@@ -92,7 +88,7 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = ({
                 toast.success(response);
             }
         } catch (error) {
-            addLog(`Error loading config: ${error}`);
+            props.addLog(`Error loading config: ${error}`);
             toast.error('Error loading config');
         }
     };
@@ -111,7 +107,7 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = ({
                 setConfigNameList(configList);
             }
         } catch (error) {
-            addLog(`Error getting all configs: ${error}`);
+            props.addLog(`Error getting all configs: ${error}`);
             toast.error('Error getting all configs');
         }
     };

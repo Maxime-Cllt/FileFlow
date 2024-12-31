@@ -35,8 +35,7 @@ const ConfigItemList: React.FC<ConfigItemListProps> = (props: ConfigItemListProp
         event.stopPropagation();
         setItems(items.filter((i: Item) => i.id !== item.id));
         props.onItemDelete(item);
-    }
-
+    };
 
     return (
         <div>
@@ -46,7 +45,7 @@ const ConfigItemList: React.FC<ConfigItemListProps> = (props: ConfigItemListProp
                     <button
                         aria-label="Open Item List"
                         title="Open Item List"
-                        type={"button"}
+                        type="button"
                         className="flex items-center justify-center p-3 rounded-full shadow-lg transition duration-300 bg-blue-500 hover:bg-blue-600 text-white"
                     >
                         <ArrowDownFromLine className="w-5 h-5"/>
@@ -62,20 +61,18 @@ const ConfigItemList: React.FC<ConfigItemListProps> = (props: ConfigItemListProp
                         </DialogDescription>
                     </DialogHeader>
 
-                    {/* Item List */}
-                    <div className="flex flex-col gap-4 mt-4">
+                    {/* Scrollable Item List */}
+                    <div className="flex flex-col mt-4 max-h-64 overflow-y-auto border border-gray-300 rounded-md">
                         {items.length > 0 ? (
                             items.map((item) => (
-                                <DialogClose asChild>
-
+                                <DialogClose asChild key={item.id}>
                                     <div
-                                        key={item.id}
-                                        className="flex justify-between items-center p-3 border border-gray-300 rounded-md hover:bg-gray-100"
+                                        className="flex justify-between items-center p-3 border-b last:border-b-0 hover:bg-gray-100"
+                                        onClick={() => props.onItemSelect(item)}
                                     >
-                                        {/* Make the clickable part separate */}
+                                        {/* Clickable item */}
                                         <div
                                             className="flex-1 cursor-pointer"
-                                            onClick={() => props.onItemSelect(item)}
                                         >
                                             <span>{item.id}</span>
                                         </div>
@@ -84,7 +81,7 @@ const ConfigItemList: React.FC<ConfigItemListProps> = (props: ConfigItemListProp
                                         <Button
                                             className="bg-red-500 hover:bg-red-600 text-white focus:ring-4 focus:ring-red-300"
                                             onClick={(e) => deleteItem(e, item)}
-                                            type={"button"}
+                                            type="button"
                                         >
                                             <Trash2 className="w-4 h-4 mr-2"/>
                                             Delete
@@ -93,10 +90,9 @@ const ConfigItemList: React.FC<ConfigItemListProps> = (props: ConfigItemListProp
                                 </DialogClose>
                             ))
                         ) : (
-                            <p className="text-gray-500">No configurations found.</p>
+                            <p className="text-gray-500 text-center py-4">No configurations found.</p>
                         )}
                     </div>
-
 
                     {/* Dialog Footer */}
                     <DialogFooter className="flex justify-end gap-4 mt-4">

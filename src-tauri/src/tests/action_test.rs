@@ -1,9 +1,12 @@
 use crate::fileflow::database::connection::Connection;
 use crate::fileflow::fast_insert::fast_insert;
 use crate::fileflow::stuct::db_config::DbConfig;
+use crate::fileflow::stuct::save_config::SaveConfig;
 use crate::fileflow::utils::constants::SQLITE;
+use crate::fileflow::utils::fileflowlib::{get_all_saved_configs, save_config};
 use crate::tests::utils::{
-    create_test_db, generate_csv_file, get_test_sqlite_config, remove_csv_file, remove_test_db,
+    create_test_db, delete_config_file, generate_csv_file, get_test_save_config,
+    get_test_sqlite_config, remove_csv_file, remove_test_db,
 };
 use csv::{Reader, ReaderBuilder};
 use sqlx::sqlite::SqliteRow;
@@ -15,7 +18,7 @@ async fn test_fast_insert() {
     let sqlite_file_path: String = create_test_db("fast_insert".to_string());
 
     let config: DbConfig = get_test_sqlite_config(sqlite_file_path.to_string());
-    let conn = Connection::connect(&config).await;
+    let conn: Result<Connection, Error> = Connection::connect(&config).await;
 
     assert!(conn.is_ok(), "Failed to connect to the database");
 
@@ -76,4 +79,35 @@ async fn test_fast_insert() {
 
     let _ = remove_test_db("fast_insert".to_string());
     let _ = remove_csv_file("test_fast_insert".to_string());
+}
+
+#[tokio::test]
+async fn test_configs_serealization_deserialization() {
+    const CONFIG_NAME: &str = "test_get_all_configs.json";
+
+    let config1: SaveConfig = get_test_save_config("config1");
+    let config2: SaveConfig = get_test_save_config("config2");
+    let config3: SaveConfig = get_test_save_config("config3");
+    let configs_list: Vec<SaveConfig> = vec![config1, config2, config3];
+
+    save_config(&configs_list, CONFIG_NAME).expect("Failed to save configs");
+
+    let deserialized_configs: Vec<SaveConfig> = get_all_saved_configs("test_get_all_configs.json");
+
+    assert_eq!(3, deserialized_configs.len());
+
+    assert_eq!(
+        configs_list[0].config_name,
+        deserialized_configs[0].config_name
+    );
+    assert_eq!(
+        configs_list[1].config_name,
+        deserialized_configs[1].config_name
+    );
+    assert_eq!(
+        configs_list[2].config_name,
+        deserialized_configs[2].config_name
+    );
+
+    delete_config_file(CONFIG_NAME).expect("Failed to delete config file");
 }

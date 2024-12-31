@@ -1,5 +1,4 @@
 use crate::fileflow::stuct::save_config::SaveConfig;
-use crate::fileflow::utils::constants::DATABASE_CONFIG_FILE;
 use csv::{ReaderBuilder, StringRecord};
 use std::fs::{File, OpenOptions};
 use std::io;
@@ -74,10 +73,10 @@ pub fn escaped_values(values: StringRecord) -> String {
 }
 
 /// This function is used to get the size of a file.
-pub fn get_all_saved_configs() -> Vec<SaveConfig> {
+pub fn get_all_saved_configs(config_file : &str) -> Vec<SaveConfig> {
     let default_configs: Vec<SaveConfig> = Vec::new();
 
-    let path: PathBuf = PathBuf::from(DATABASE_CONFIG_FILE);
+    let path: PathBuf = PathBuf::from(config_file);
     let file: File = match File::open(path) {
         Ok(file) => file,
         Err(_) => return default_configs,
@@ -92,12 +91,12 @@ pub fn get_all_saved_configs() -> Vec<SaveConfig> {
 }
 
 /// This function is used to save a vector of SaveConfig to a json file.
-pub fn save_config(configs: &[SaveConfig]) -> io::Result<()> {
+pub fn save_config(configs: &[SaveConfig], config_file: &str) -> io::Result<()> {
     let file: File = OpenOptions::new()
         .write(true)
         .create(true)
         .truncate(true)
-        .open(DATABASE_CONFIG_FILE)
+        .open(config_file)
         .map_err(|e| format!("Failed to open file for writing: {e}"))
         .unwrap();
     serde_json::to_writer_pretty(file, &configs)

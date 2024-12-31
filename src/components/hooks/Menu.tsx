@@ -11,7 +11,7 @@ const Menu: React.FC = () => {
                 {/* Home Menu */}
                 <MenubarMenu>
                     <Link to={"/"}>
-                        <MenubarTrigger className={"cursor-pointer"}>Home</MenubarTrigger>
+                        <MenubarTrigger className={"cursor-pointer"}>Insert</MenubarTrigger>
                     </Link>
                 </MenubarMenu>
 

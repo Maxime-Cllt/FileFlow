@@ -1,6 +1,7 @@
-import React from "react";
+import React, {useEffect, useState} from "react";
 import {
     Dialog,
+    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
@@ -12,6 +13,9 @@ import {Button} from "@/components/ui/button";
 import {Play} from "lucide-react";
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
+import {invoke} from "@tauri-apps/api/core";
+import {toast} from "sonner";
+import SelectDatabaseConfig from "@/components/hooks/database/SelectDatabaseConfig.tsx";
 
 interface DataBaseDialogProps {
     dbConfig: {
@@ -26,27 +30,69 @@ interface DataBaseDialogProps {
         is_connected: boolean;
     };
     sql: string;
-    updateDbConfigField: (field: any, value: string) => void;
+    updateDbConfigField: (field: any, value: any) => void;
     executeSQL: () => void;
 }
 
-const DataBaseDialog: React.FC<DataBaseDialogProps> = ({
-                                                           dbConfig,
-                                                           updateDbConfigField,
-                                                           sql,
-                                                           executeSQL,
-                                                       }) => {
+const DataBaseDialog: React.FC<DataBaseDialogProps> = (props: DataBaseDialogProps) => {
 
     const handleInputChange = (id: string, value: string) => {
-        updateDbConfigField(id, value);
+        props.updateDbConfigField(id, value);
     };
+
+    const [configName, setConfigName] = useState('');
+    const [configNameList, setConfigNameList] = useState<Array<Item>>([]);
+
+    const loadConfig = async (config_name: string) => {
+        try {
+            const response = await invoke('load_database_config_by_name', {
+                name: config_name,
+            });
+            if (typeof response === "string") {
+                const loadDbConfig = JSON.parse(response);
+                for (const key in loadDbConfig) {
+                    props.updateDbConfigField(key, loadDbConfig[key]);
+                }
+                props.updateDbConfigField('is_connected', false);
+            }
+        } catch (error) {
+            toast.error(error as string);
+        }
+    };
+
+    const updateConfigName = (name: string) => {
+        setConfigName(name);
+        loadConfig(name);
+    };
+
+    const getAllConfigs = async () => {
+        try {
+            const response = await invoke('get_all_database_configs_name');
+            if (typeof response === 'string') {
+                const configs = JSON.parse(response);
+                let configList: Array<Item> = [];
+                for (let i = 0; i < configs.length; i++) {
+                    configList.push({
+                        id: configs[i],
+                    });
+                }
+                setConfigNameList(configList);
+            }
+        } catch (error) {
+            toast.error('Error getting all configs');
+        }
+    };
+
+    useEffect(() => {
+        getAllConfigs();
+    }, []);
 
     return (
         <div>
             <Dialog>
                 {/* Trigger Button */}
                 <DialogTrigger asChild>
-                    {sql !== "" && (
+                    {props.sql !== "" && (
                         <button
                             aria-label="Open Database Configuration"
                             type="button"
@@ -69,6 +115,15 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = ({
 
                     {/* Form Layout */}
                     <div className="flex flex-col gap-6 py-4">
+
+                        <div>
+                            <SelectDatabaseConfig
+                                updateConfigName={updateConfigName}
+                                configNameList={configNameList}
+                                configName={configName}
+                            />
+                        </div>
+
                         {/* First Row: Username and Password */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
@@ -78,7 +133,7 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = ({
                                 <Input
                                     id="username"
                                     type="text"
-                                    value={dbConfig.username}
+                                    value={props.dbConfig.username}
                                     onChange={(e) => handleInputChange("username", e.target.value)}
                                     className="w-full border rounded-md p-2 shadow-sm focus:ring-purple-300 focus:border-purple-500"
                                 />
@@ -90,7 +145,7 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = ({
                                 <Input
                                     id="password"
                                     type="password"
-                                    value={dbConfig.password}
+                                    value={props.dbConfig.password}
                                     onChange={(e) => handleInputChange("password", e.target.value)}
                                     className="w-full border rounded-md p-2 shadow-sm focus:ring-purple-300 focus:border-purple-500"
                                 />
@@ -106,7 +161,7 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = ({
                                 <Input
                                     id="db_host"
                                     type="text"
-                                    value={dbConfig.db_host}
+                                    value={props.dbConfig.db_host}
                                     onChange={(e) => handleInputChange("db_host", e.target.value)}
                                     className="w-full border rounded-md p-2 shadow-sm focus:ring-purple-300 focus:border-purple-500"
                                 />
@@ -118,7 +173,7 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = ({
                                 <Input
                                     id="port"
                                     type="number"
-                                    value={dbConfig.port}
+                                    value={props.dbConfig.port}
                                     onChange={(e) => handleInputChange("port", e.target.value)}
                                     className="w-full border rounded-md p-2 shadow-sm focus:ring-purple-300 focus:border-purple-500"
                                 />
@@ -133,7 +188,7 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = ({
                             <Input
                                 id="db_name"
                                 type="text"
-                                value={dbConfig.db_name}
+                                value={props.dbConfig.db_name}
                                 onChange={(e) => handleInputChange("db_name", e.target.value)}
                                 className="w-full border rounded-md p-2 shadow-sm focus:ring-purple-300 focus:border-purple-500"
                             />
@@ -142,13 +197,19 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = ({
 
                     {/* Dialog Footer */}
                     <DialogFooter className="flex justify-end gap-4">
-                        <Button
-                            className="bg-green-500 hover:bg-green-600 text-white focus:ring-4 focus:ring-green-300"
-                            onClick={executeSQL}
-                            type="button"
+                        <div
+                            onClick={props.executeSQL}
                         >
-                            Execute SQL
-                        </Button>
+                            <DialogClose>
+                                <Button
+                                    className="bg-green-500 hover:bg-green-600 text-white focus:ring-4 focus:ring-green-300"
+                                    type="button"
+                                >
+                                    Execute SQL
+                                </Button>
+                            </DialogClose>
+                        </div>
+
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

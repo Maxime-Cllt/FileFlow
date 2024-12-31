@@ -25,58 +25,51 @@ interface FormProps {
 }
 
 
-const HomeForm: React.FC<FormProps> = ({
-                                           dbConfig,
-                                           uiState,
-                                           updateDbConfigField,
-                                           updateUiStateField,
-                                           actions
-                                       }: FormProps) => {
+const InsertForm: React.FC<FormProps> = (props: FormProps) => {
     return (
         <form className="grid grid-cols-2 gap-4">
 
             {/* Left Column */}
             <div className="space-y-4">
-                <FormInput label="URL of the database" value={dbConfig.db_host}
-                           onChange={(value) => updateDbConfigField('db_host', value)}
+                <FormInput label="URL of the database" value={props.dbConfig.db_host}
+                           onChange={(value: string) => props.updateDbConfigField('db_host', value)}
                            placeholder="localhost" required/>
 
-                <FormInput label="Username" value={dbConfig.username}
-                           onChange={(value) => updateDbConfigField('username', value)}
+                <FormInput label="Username" value={props.dbConfig.username}
+                           onChange={(value: string) => props.updateDbConfigField('username', value)}
                            placeholder="Username" required/>
 
-                <FormInput label="Name of the database" value={dbConfig.db_name}
-                           onChange={(value) => updateDbConfigField('db_name', value)}
+                <FormInput label="Name of the database" value={props.dbConfig.db_name}
+                           onChange={(value: string) => props.updateDbConfigField('db_name', value)}
                            placeholder="Database Name" required/>
             </div>
 
             {/* Right Column */}
             <div className="space-y-4">
-                <FormInput label="Port" type="number" value={dbConfig.port}
-                           onChange={(value) => updateDbConfigField('port', value)}
+                <FormInput label="Port" type="number" value={props.dbConfig.port}
+                           onChange={(value: string) => props.updateDbConfigField('port', value)}
                            placeholder="Port" required/>
-                <FormInput label="Password" type="password" value={dbConfig.password}
-                           onChange={(value) => updateDbConfigField('password', value)}
+                <FormInput label="Password" type="password" value={props.dbConfig.password}
+                           onChange={(value: string) => props.updateDbConfigField('password', value)}
                            placeholder="Password" required/>
 
-                <FormInput label="Name of the table" value={dbConfig.tableName}
-                           onChange={(value) => updateDbConfigField('tableName', value)}
+                <FormInput label="Name of the table" value={props.dbConfig.tableName}
+                           onChange={(value: string) => props.updateDbConfigField('tableName', value)}
                            placeholder="Table Name" required/>
             </div>
 
             {/* Database Type Selection and File Upload */}
             <div className="col-span-2 grid grid-cols-2 gap-4 items-center justify-center">
                 <SelectDatabase
-                    updateUiStateField={updateUiStateField}
-                    updateDbConfigField={updateDbConfigField}
-                    db_driver={dbConfig.db_driver}
+                    updateUiStateField={props.updateUiStateField}
+                    updateDbConfigField={props.updateDbConfigField}
+                    db_driver={props.dbConfig.db_driver}
                 />
                 <FileUpload
-                    setFileName={(name: string) => updateUiStateField('fileName', name)}
-                    setTableName={(value: string) => updateDbConfigField('tableName', value)}
-                    addLog={actions.addLog}
-                    setFilePath={(filePath: string | null) => updateUiStateField('filePath', filePath)}
-                    fileName={uiState.fileName}
+                    tableName={props.dbConfig.tableName}
+                    fileName={props.uiState.fileName}
+                    updateDbConfigField={props.updateDbConfigField}
+                    updateUiStateField={props.updateUiStateField}
                 />
             </div>
 
@@ -116,4 +109,4 @@ const FormInput: React.FC<FormInputProps> = ({
     </div>
 );
 
-export default HomeForm;
+export default InsertForm;

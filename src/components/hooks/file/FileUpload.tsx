@@ -8,10 +8,9 @@ import {toast} from "sonner";
 
 interface FileUploadProps {
     fileName: string;
-    setFilePath: (filePath: string) => void;
-    setFileName: (name: string) => void;
-    setTableName: (tableName: string) => void;
-    addLog: (message: string) => void;
+    tableName: string;
+    updateDbConfigField: (field: any, value: any) => void;
+    updateUiStateField: (field: any, value: any) => void;
 }
 
 const FileUpload: React.FC<FileUploadProps> = (props: FileUploadProps) => {
@@ -30,16 +29,15 @@ const FileUpload: React.FC<FileUploadProps> = (props: FileUploadProps) => {
                 const path: string = selectedFilePath?.toString();
                 const normalizedTableName: string = getNormalizedTableName(path);
 
-                props.setFileName(getFileNameFromPath(path));
-                props.setFilePath(path);
-                props.setTableName(normalizedTableName);
+                props.updateUiStateField('fileName', getFileNameFromPath(path));
+                props.updateUiStateField('filePath', path);
+                props.updateDbConfigField('tableName', normalizedTableName);
 
                 const response = await invoke('get_size_of_file', {filePath: path});
                 setFileSize(typeof response === 'string' ? response : '');
             }
         } catch (error) {
             toast.error(`Error opening file`);
-            props.addLog(`Error opening file: ${error}`);
         }
     };
 

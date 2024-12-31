@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct SaveConfig {
+    pub config_name: String,
     pub db_driver: String,
     pub db_host: String,
     pub port: String,

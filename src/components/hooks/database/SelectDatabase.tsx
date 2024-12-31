@@ -24,7 +24,7 @@ const SelectDatabase: React.FC<SelectDatabaseProps> = (props: SelectDatabaseProp
     };
 
     return (
-        <div className="space-y-4">
+        <div>
             <Select onValueChange={handledbDriverChange} value={props.db_driver}>
                 <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a database driver"/>

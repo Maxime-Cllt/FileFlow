@@ -27,9 +27,9 @@
     },
     "windows": [
       {
-        "title": "File Flow",
+        "title": "FileFlow",
         "width": 800,
-        "height": 600,
+        "height": 700,
         "useHttpsScheme": true
       }
     ]

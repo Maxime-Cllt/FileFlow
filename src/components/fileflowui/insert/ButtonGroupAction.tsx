@@ -106,7 +106,6 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
         if (props.dbConfig.is_connected) {
             handleDeconnection(e as React.MouseEvent).then(() => {
                 props.updateDbConfigField('is_connected', false);
-                toast.success('Disconnected successfully');
             });
             return;
         }
@@ -123,7 +122,6 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
             }
         }
 
-
         try {
             const response = await invoke('connect_to_database', {
                 config: {
@@ -137,13 +135,20 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
                     sqlite_file_path: props.dbConfig.sqlite_file_path,
                 },
             });
-            props.addLog(response as string);
+
+            if (response !== 'true') {
+                props.addLog(response as string);
+                toast.error('Connection failed');
+                return;
+            }
+
             toast.success('Connected successfully');
+            props.addLog("Connected to database " + props.dbConfig.db_name + " with user " + props.dbConfig.username);
+            props.updateDbConfigField('is_connected', true);
         } catch (error) {
             props.addLog(`Connection error: ${error}`);
             toast.error('Connection failed');
         }
-        props.updateDbConfigField('is_connected', true);
     }
 
 

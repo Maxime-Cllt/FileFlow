@@ -24,7 +24,7 @@ const SqliteForm: React.FC<SqliteFormProps> = (props: SqliteFormProps) => {
     const openFileDialog = async () => {
         try {
             const selectedFilePath = await dialog.open({
-                filters: [{name: "SQLite", extensions: ["sqlite", "db"]}],
+                filters: [{name: "SQLite", extensions: ["sqlite", "db", "sqlite3"]}],
                 multiple: false,
             });
 

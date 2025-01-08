@@ -22,6 +22,13 @@ const Menu: React.FC = () => {
                     </Link>
                 </MenubarMenu>
 
+                {/* Load Menu */}
+                <MenubarMenu>
+                    <Link to={"/copy"}>
+                        <MenubarTrigger className={"cursor-pointer"}>Copy</MenubarTrigger>
+                    </Link>
+                </MenubarMenu>
+
                 {/* Help Menu */}
                 <MenubarMenu>
                     <Link to={"/help"}>

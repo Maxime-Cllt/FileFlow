@@ -4,7 +4,6 @@ import LoadDataSql from "@/components/fileflowui/load/LoadDataSql.tsx";
 import HelpComponent from "@/components/fileflowui/other/Help.tsx";
 import Layout from "@/Layout.tsx";
 import Insert from "./components/fileflowui/insert/Insert.tsx";
-import Copy from "@/components/fileflowui/copy/Copy.tsx";
 
 
 function App() {
@@ -14,7 +13,6 @@ function App() {
                 <Route path="/" element={<Layout/>}>
                     <Route path="" element={<Insert/>}/>
                     <Route path="load" element={<LoadDataSql/>}/>
-                    <Route path="copy" element={<Copy/>}/>
                     <Route path="help" element={<HelpComponent/>}/>
                     <Route path="about" element={<AboutComponent/>}/>
                 </Route>

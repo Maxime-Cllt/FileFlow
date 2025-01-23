@@ -15,7 +15,7 @@ pub fn get_test_pg_config() -> DbConfig {
         db_host: "localhost".to_string(),
         port: "5432".to_string(),
         db_name: "test_db".to_string(),
-        sqlite_file_path: "".to_string(),
+        sqlite_file_path: String::new(),
     }
 }
 
@@ -27,11 +27,11 @@ pub fn get_test_sqlite_config(str: String) -> DbConfig {
     }
     DbConfig {
         db_driver: SQLITE.to_string(),
-        username: "".to_string(),
-        password: "".to_string(),
-        db_host: "".to_string(),
-        port: "".to_string(),
-        db_name: "".to_string(),
+        username: String::new(),
+        password: String::new(),
+        db_host: String::new(),
+        port: String::new(),
+        db_name: String::new(),
         sqlite_file_path: str,
     }
 }
@@ -45,7 +45,7 @@ pub fn get_test_mysql_config() -> DbConfig {
         db_host: "localhost".to_string(),
         port: "3306".to_string(),
         db_name: "test_db".to_string(),
-        sqlite_file_path: "".to_string(),
+        sqlite_file_path: String::new(),
     }
 }
 
@@ -53,12 +53,12 @@ pub fn get_test_mysql_config() -> DbConfig {
 pub fn get_test_maridb_config() -> DbConfig {
     DbConfig {
         db_driver: MARIADB.to_string(),
-        username: "root".to_string(),
+        username: String::from("root"),
         password: "password".to_string(),
         db_host: "localhost".to_string(),
         port: "3306".to_string(),
         db_name: "test_db".to_string(),
-        sqlite_file_path: "".to_string(),
+        sqlite_file_path: String::new(),
     }
 }
 /// Get a test save configuration
@@ -66,12 +66,12 @@ pub fn get_test_save_config(config_name: &str) -> SaveConfig {
     SaveConfig {
         config_name: config_name.to_string(),
         db_driver: SQLITE.to_string(),
-        db_host: "".to_string(),
-        port: "".to_string(),
-        username: "".to_string(),
-        password: "".to_string(),
+        db_host: String::new(),
+        port: String::new(),
+        username: String::new(),
+        password: String::new(),
         db_name: "test_db".to_string(),
-        sqlite_file_path: "".to_string(),
+        sqlite_file_path: String::new(),
     }
 }
 
@@ -132,7 +132,7 @@ pub fn generate_csv_file(file_name: String) -> Result<String, Box<dyn Error>> {
         .to_str()
         .expect("Failed to convert path to string");
 
-    let csv_file_path: String = format!("{}/{}.csv", path, file_name);
+    let csv_file_path: String = format!("{path}/{file_name}.csv");
     let file: File = File::create(&csv_file_path).expect("Failed to create CSV file");
     let mut wtr: Writer<File> = Writer::from_writer(file);
     wtr.write_record(["header1", "header2"])

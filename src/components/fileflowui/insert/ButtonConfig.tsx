@@ -16,6 +16,7 @@ interface ButtonConfigComponentProps {
         sqlite_file_path: string;
     };
     updateDbConfigField: (field: any, value: any) => void;
+    updateUiStateField: (field: any, value: any) => void;
     addLog: (message: string) => void;
 }
 
@@ -65,10 +66,12 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: Butt
             if (typeof response === 'string') {
                 const loadDbConfig = JSON.parse(response);
 
-                Object.keys(loadDbConfig).forEach((key:string) => {
+                Object.keys(loadDbConfig).forEach((key: string) => {
                     props.updateDbConfigField(key, loadDbConfig[key]);
                 });
                 props.updateDbConfigField('is_connected', false);
+
+                props.updateUiStateField('sqlite', loadDbConfig.sqlite_file_path.length > 0)
 
                 toast.success('Config loaded successfully');
             }

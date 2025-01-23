@@ -103,6 +103,11 @@ const Insert: React.FC = () => {
                         <ButtonConfigComponent
                             dbConfig={dbConfig}
                             updateDbConfigField={updateDbConfigField}
+                            updateUiStateField={
+                                (field: string, value: string) => {
+                                    updateUiStateField(field as keyof typeof uiState, value);
+                                }
+                            }
                             addLog={addLog}
                         />
                     </div>

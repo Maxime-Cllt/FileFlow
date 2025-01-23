@@ -5,10 +5,10 @@ use csv::StringRecord;
 #[tokio::test]
 async fn test_detect_separator_in_file() {
     let csv_file_path: String =
-        generate_csv_file("test_detect_separator_in_file".to_string()).unwrap();
+        generate_csv_file(String::from("test_detect_separator_in_file")).unwrap();
     let separator: char = detect_separator_in_file(&csv_file_path).unwrap();
     assert_eq!(separator, ',');
-    let _ = remove_csv_file("test_detect_separator_in_file".to_string());
+    let _ = remove_csv_file(String::from("test_detect_separator_in_file"));
 }
 
 #[tokio::test]

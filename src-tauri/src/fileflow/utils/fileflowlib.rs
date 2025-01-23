@@ -1,8 +1,8 @@
 use crate::fileflow::stuct::save_config::SaveConfig;
-use csv::{ReaderBuilder, StringRecord};
+use csv::StringRecord;
 use std::fs::{File, OpenOptions};
 use std::io;
-use std::io::{BufReader, Read};
+use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
 
 /// This function is used to generate the column names for a CSV file.
@@ -25,11 +25,9 @@ pub fn get_formated_column_names(headers: Vec<String>) -> Vec<String> {
 pub fn detect_separator_in_file(file_path: &str) -> io::Result<char> {
     const POSSIBLE_SEPARATORS: [char; 6] = [',', ';', '\t', '|', ' ', '\0'];
 
-    let file: File = File::open(file_path)?;
-
     if !std::path::Path::new(file_path)
         .extension()
-        .map_or(false, |ext| ext.eq_ignore_ascii_case("csv"))
+        .is_some_and(|ext| ext.eq_ignore_ascii_case("csv"))
     {
         return Err(io::Error::new(
             io::ErrorKind::InvalidData,
@@ -37,17 +35,13 @@ pub fn detect_separator_in_file(file_path: &str) -> io::Result<char> {
         ));
     }
 
+    let file: File = File::open(file_path)?;
     let mut reader: BufReader<File> = BufReader::new(file);
-    let mut buffer: String = String::new();
-    reader.read_to_string(&mut buffer)?;
+    let mut first_line: String = String::new();
+    reader.read_line(&mut first_line)?;
 
     for sep in &POSSIBLE_SEPARATORS {
-        let mut csv_reader = ReaderBuilder::new()
-            .delimiter(*sep as u8)
-            .has_headers(false)
-            .from_reader(buffer.as_bytes());
-
-        if csv_reader.records().next().is_some() {
+        if first_line.contains(*sep) {
             return Ok(*sep);
         }
     }
@@ -73,7 +67,7 @@ pub fn escaped_values(values: StringRecord) -> String {
 }
 
 /// This function is used to get the size of a file.
-pub fn get_all_saved_configs(config_file : &str) -> Vec<SaveConfig> {
+pub fn get_all_saved_configs(config_file: &str) -> Vec<SaveConfig> {
     let default_configs: Vec<SaveConfig> = Vec::new();
 
     let path: PathBuf = PathBuf::from(config_file);

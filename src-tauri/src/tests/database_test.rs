@@ -43,7 +43,7 @@ async fn test_get_connection_url() {
 
 #[tokio::test]
 async fn test_db_connection() {
-    let config: String = load_database_config_by_name("mysql".to_string())
+    let config: String = load_database_config_by_name(String::from("mysql"))
         .await
         .unwrap();
     let config: DbConfig = serde_json::from_str(&config).unwrap();
@@ -55,12 +55,12 @@ async fn test_db_connection() {
 
 #[tokio::test]
 async fn test_sqlite_connection() {
-    let file_path: String = create_test_db("sqlite_connection".to_string());
+    let file_path: String = create_test_db(String::from("sqlite_connection"));
     let config: DbConfig = get_test_sqlite_config(file_path);
     let conn = Connection::connect(&config).await;
     assert!(conn.is_success(), "Failed to connect to the database");
     assert!(conn.is_ok());
-    let _ = remove_test_db("sqlite_connection".to_string());
+    let _ = remove_test_db(String::from("sqlite_connection"));
 }
 
 #[tokio::test]
@@ -179,10 +179,11 @@ async fn test_get_create_statement() {
 
 #[tokio::test]
 async fn test_get_create_statement_with_fixed_size() {
+    const FINAL_TABLE_NAME: &str = "test_table";
+
     let snake_case_headers: Vec<String> = vec!["header1".to_string(), "header2".to_string()];
     let map_max_length: HashMap<&str, usize> =
         snake_case_headers.iter().map(|h| (h.as_str(), 0)).collect();
-    let final_table_name: &str = "test_table";
 
     let mut db_driver: HashMap<&str, &str> = HashMap::new();
     db_driver.insert(
@@ -207,7 +208,7 @@ async fn test_get_create_statement_with_fixed_size() {
     for (driver, expected) in db_driver {
         let result: Result<String, String> = get_create_statement_with_fixed_size(
             driver,
-            final_table_name,
+            FINAL_TABLE_NAME,
             &map_max_length,
             &final_columns,
         );
@@ -239,7 +240,7 @@ async fn test_get_create_statement_with_fixed_size() {
     for (driver, expected) in db_driver {
         let result: Result<String, String> = get_create_statement_with_fixed_size(
             driver,
-            final_table_name,
+            FINAL_TABLE_NAME,
             &map_max_length,
             &final_columns,
         );
@@ -258,7 +259,7 @@ async fn test_get_formated_column_names() {
 
     let headers: Vec<String> = vec![
         "header    1".to_string(),
-        "".to_string(),
+        String::new(),
         "header2".to_string(),
     ];
     let formatted_headers: Vec<String> = get_formated_column_names(headers);
@@ -274,11 +275,12 @@ async fn test_get_formated_column_names() {
 
 #[tokio::test]
 async fn test_generate_load_data_sql() {
+    const FINAL_TABLE_NAME: &str = "test_table";
+
     let csv_file_path: String =
         generate_csv_file("test_generate_load_data_sql".to_string()).unwrap();
 
     let snake_case_headers: Vec<String> = vec!["header1".to_string(), "header2".to_string()];
-    let final_table_name: &str = "test_table";
 
     let config = GenerateLoadData {
         file_path: csv_file_path.clone(),
@@ -296,7 +298,7 @@ async fn test_generate_load_data_sql() {
     let mut sql: String = String::new();
 
     sql.push_str(
-        get_drop_statement(MARIADB, final_table_name)
+        get_drop_statement(MARIADB, FINAL_TABLE_NAME)
             .unwrap()
             .as_str(),
     );
@@ -306,7 +308,7 @@ async fn test_generate_load_data_sql() {
     sql.push_str(
         get_create_statement_with_fixed_size(
             MARIADB,
-            final_table_name,
+            FINAL_TABLE_NAME,
             &size_map,
             &snake_case_headers,
         )
@@ -318,7 +320,7 @@ async fn test_generate_load_data_sql() {
     sql.push_str("LOAD DATA INFILE '");
     sql.push_str(csv_file_path.as_str());
     sql.push_str("'\nINTO TABLE ");
-    sql.push_str(final_table_name);
+    sql.push_str(FINAL_TABLE_NAME);
     sql.push_str("\nCHARACTER SET utf8\n");
     sql.push_str("FIELDS TERMINATED BY '");
     sql.push(separator);
@@ -331,5 +333,5 @@ async fn test_generate_load_data_sql() {
     let result: String = result.unwrap();
 
     assert_eq!(result, sql);
-    let _ = remove_csv_file("test_generate_load_data_sql".to_string());
+    let _ = remove_csv_file(String::from("test_generate_load_data_sql"));
 }

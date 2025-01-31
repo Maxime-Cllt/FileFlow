@@ -1,5 +1,4 @@
 #[cfg(test)]
-#[allow(clippy::module_inception)]
 mod action_test;
 
 #[cfg(test)]

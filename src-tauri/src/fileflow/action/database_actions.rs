@@ -2,7 +2,10 @@ use crate::fileflow::action::actions::DatabaseState;
 use crate::fileflow::database::connection::Connection;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::load_data_struct::GenerateLoadData;
-use crate::fileflow::utils::fileflowlib::{detect_separator_in_file, get_formated_column_names};
+use crate::fileflow::utils::constants::SQLITE;
+use crate::fileflow::utils::fileflowlib::{
+    build_load_data, detect_separator_in_file, get_formated_column_names,
+};
 use crate::fileflow::utils::sql::{get_create_statement_with_fixed_size, get_drop_statement};
 use csv::{Reader, ReaderBuilder, StringRecord};
 use std::collections::HashMap;
@@ -53,6 +56,10 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
         return Err("File path is empty".to_string());
     }
 
+    if load.db_driver == SQLITE {
+        return Err("SQLite is not supported for this operation.".into());
+    }
+
     let file: File =
         File::open(&load.file_path).map_err(|e| format!("Failed to open file: {e}"))?;
     let mut reader: Reader<File> = ReaderBuilder::new().has_headers(true).from_reader(file);
@@ -72,7 +79,10 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
     }
 
     for record in reader.records() {
-        let record: StringRecord = record.unwrap();
+        let record: StringRecord = match record {
+            Ok(record) => record,
+            Err(_) => continue,
+        };
 
         for (i, value) in record.iter().enumerate() {
             let value: String = value.trim().to_string();
@@ -107,18 +117,7 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
     );
     sql.push_str("\n\n");
 
-    // Load data into table from file
-    sql.push_str("LOAD DATA INFILE '");
-    sql.push_str(load.file_path.as_str());
-    sql.push_str("'\nINTO TABLE ");
-    sql.push_str(load.table_name.as_str());
-    sql.push_str("\nCHARACTER SET utf8\n");
-    sql.push_str("FIELDS TERMINATED BY '");
-    sql.push(separator);
-    sql.push_str("'\n");
-    sql.push_str("ENCLOSED BY '\"'\nLINES TERMINATED BY '\\n'\nIGNORE 1 ROWS (");
-    sql.push_str(&final_columns_name.join(", "));
-    sql.push_str(");");
+    sql.push_str(build_load_data(load, separator, final_columns_name)?.as_str());
 
     Ok(sql)
 }
@@ -158,7 +157,7 @@ pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String
     let conn_guard = state.0.lock().await;
 
     if conn_guard.is_none() {
-        return Ok("false".to_string());
+        return Ok(String::from("false"));
     }
 
     let connection: &Connection = conn_guard.as_ref().unwrap();

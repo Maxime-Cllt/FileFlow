@@ -9,9 +9,9 @@ use std::path::PathBuf;
 /// Get a test PostgreSQL configuration
 pub fn get_test_pg_config() -> DbConfig {
     DbConfig {
-        db_driver: POSTGRES.to_string(),
-        username: POSTGRES.to_string(),
-        password: "password".to_string(),
+        db_driver: String::from(POSTGRES),
+        username: String::from(POSTGRES),
+        password: String::from("password"),
         db_host: "localhost".to_string(),
         port: "5432".to_string(),
         db_name: "test_db".to_string(),
@@ -21,18 +21,18 @@ pub fn get_test_pg_config() -> DbConfig {
 
 /// Get a test SQLite configuration
 pub fn get_test_sqlite_config(str: String) -> DbConfig {
-    let mut str: String = str;
-    if str.is_empty() {
-        str = "test_db.db".to_string();
-    }
     DbConfig {
-        db_driver: SQLITE.to_string(),
+        db_driver: String::from(SQLITE),
         username: String::new(),
         password: String::new(),
         db_host: String::new(),
         port: String::new(),
         db_name: String::new(),
-        sqlite_file_path: str,
+        sqlite_file_path: if str.is_empty() {
+            "test_db.db".to_string()
+        } else {
+            str
+        },
     }
 }
 
@@ -41,7 +41,7 @@ pub fn get_test_mysql_config() -> DbConfig {
     DbConfig {
         db_driver: MYSQL.to_string(),
         username: "root".to_string(),
-        password: "password".to_string(),
+        password: String::from("password"),
         db_host: "localhost".to_string(),
         port: "3306".to_string(),
         db_name: "test_db".to_string(),
@@ -52,9 +52,9 @@ pub fn get_test_mysql_config() -> DbConfig {
 /// Get a test MariaDB configuration
 pub fn get_test_maridb_config() -> DbConfig {
     DbConfig {
-        db_driver: MARIADB.to_string(),
+        db_driver: String::from(MARIADB),
         username: String::from("root"),
-        password: "password".to_string(),
+        password: String::from("password"),
         db_host: "localhost".to_string(),
         port: "3306".to_string(),
         db_name: "test_db".to_string(),
@@ -65,7 +65,7 @@ pub fn get_test_maridb_config() -> DbConfig {
 pub fn get_test_save_config(config_name: &str) -> SaveConfig {
     SaveConfig {
         config_name: config_name.to_string(),
-        db_driver: SQLITE.to_string(),
+        db_driver: String::from(SQLITE),
         db_host: String::new(),
         port: String::new(),
         username: String::new(),
@@ -123,7 +123,7 @@ pub fn remove_test_db(db_name: String) -> Result<(), Box<dyn Error>> {
 }
 
 /// Generate a CSV file with the given file name and return the file path
-pub fn generate_csv_file(file_name: String) -> Result<String, Box<dyn Error>> {
+pub fn generate_csv_file(file_name: &str) -> Result<String, Box<dyn Error>> {
     let absolute_path: PathBuf =
         std::env::current_exe().expect("Failed to get current executable path");
     let path: &str = absolute_path

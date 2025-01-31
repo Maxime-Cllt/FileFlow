@@ -24,7 +24,7 @@ async fn test_fast_insert() {
 
     let conn: Connection = conn.unwrap();
 
-    let csv_file_path: String = generate_csv_file("test_fast_insert".to_string()).unwrap();
+    let csv_file_path: String = generate_csv_file("test_fast_insert").unwrap();
 
     let snake_case_headers: Vec<String> = vec!["header1".to_string(), "header2".to_string()];
     let final_table_name: &str = "test_table";

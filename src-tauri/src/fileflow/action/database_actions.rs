@@ -4,7 +4,7 @@ use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::load_data_struct::GenerateLoadData;
 use crate::fileflow::utils::constants::SQLITE;
 use crate::fileflow::utils::fileflowlib::{
-    build_load_data, detect_separator_in_file, get_formated_column_names,
+    build_load_data, find_separator, get_formated_column_names, read_first_line,
 };
 use crate::fileflow::utils::sql::{get_create_statement_with_fixed_size, get_drop_statement};
 use csv::{Reader, ReaderBuilder, StringRecord};
@@ -22,7 +22,7 @@ pub async fn connect_to_database(
     let mut conn_guard = state.0.lock().await;
 
     if conn_guard.is_some() {
-        return Err("Already connected to the database.".to_string());
+        return Err("Already connected to the database.".into());
     }
 
     match Connection::connect(&config).await {
@@ -41,19 +41,19 @@ pub async fn disconnect_from_database(
     let mut conn_guard = state.0.lock().await;
 
     if conn_guard.is_none() {
-        return Err("No active database connection to disconnect.".to_string());
+        return Err("No active database connection to disconnect.".into());
     }
 
     let conn: Connection = conn_guard.take().unwrap();
     conn.disconnect();
 
-    Ok("Disconnected from the database.".to_string())
+    Ok("Disconnected from the database.".into())
 }
 
 #[command]
 pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, String> {
     if load.file_path.is_empty() {
-        return Err("File path is empty".to_string());
+        return Err("File path is empty".into());
     }
 
     if load.db_driver == SQLITE {
@@ -64,12 +64,12 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
         File::open(&load.file_path).map_err(|e| format!("Failed to open file: {e}"))?;
     let mut reader: Reader<File> = ReaderBuilder::new().has_headers(true).from_reader(file);
 
+    let first_line: String = read_first_line(&load.file_path).unwrap();
+    let separator: char = find_separator(&first_line)?;
     let final_columns_name: Vec<String> = get_formated_column_names(
-        reader
-            .headers()
-            .unwrap()
-            .iter()
-            .map(|h| h.to_string())
+        first_line
+            .split(separator)
+            .map(|s| s.replace("\"", ""))
             .collect(),
     );
 
@@ -94,8 +94,6 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
             }
         }
     }
-
-    let separator: char = detect_separator_in_file(&load.file_path).unwrap();
 
     // Generate SQL
     let mut sql: String = String::new();

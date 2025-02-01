@@ -1,16 +1,25 @@
-use crate::fileflow::utils::fileflowlib::{
-    detect_separator_in_file, escaped_values, read_first_line,
-};
+use crate::fileflow::utils::fileflowlib::{escaped_values, find_separator, read_first_line};
 use crate::tests::utils::{generate_csv_file, remove_csv_file};
 use csv::StringRecord;
 
 #[tokio::test]
-async fn test_detect_separator_in_file() {
-    let csv_file_path: String =
-        generate_csv_file("test_detect_separator_in_file").unwrap();
-    let separator: char = detect_separator_in_file(&csv_file_path).unwrap();
-    assert_eq!(separator, ',');
-    let _ = remove_csv_file(String::from("test_detect_separator_in_file"));
+async fn test_detect_separator() {
+    let test_cases = [
+        ("header1,header2", Some(',')),
+        ("header1;header2", Some(';')),
+        ("header1\theader2", Some('\t')),
+        ("header1|header2", Some('|')),
+        ("header1 header2", Some(' ')),
+        ("header1\0header2", Some('\0')),
+        ("header1header2", None),
+    ];
+
+    for (input, expected) in test_cases {
+        match expected {
+            Some(separator) => assert_eq!(find_separator(input).unwrap(), separator),
+            None => assert!(find_separator(input).is_err()),
+        }
+    }
 }
 
 #[tokio::test]

@@ -323,7 +323,7 @@ async fn test_build_load_data_invalid_driver() {
     let file_path: String = generate_csv_file("test_build_load_data_invalid_driver").unwrap();
     let config = GenerateLoadData {
         file_path,
-        db_driver: "invalid_driver".to_string(),
+        db_driver: "invalid_driver".into(),
         table_name: String::from("test_table"),
     };
     let columns: Vec<String> = vec!["header1".to_string(), "header2".to_string()];
@@ -332,6 +332,6 @@ async fn test_build_load_data_invalid_driver() {
     assert!(result.is_err());
     assert_eq!(
         result.unwrap_err(),
-        "Unsupported database driver".to_string()
+        "Unsupported database driver for this operation".to_string()
     );
 }

@@ -23,31 +23,15 @@ pub fn get_formated_column_names(headers: Vec<String>) -> Vec<String> {
         .collect()
 }
 
-/// This function is used to detect the separator in a CSV file.
-pub fn detect_separator_in_file(file_path: &str) -> io::Result<char> {
+/// This function is used to detect the separator from a string.
+pub fn find_separator(line: &str) -> Result<char, String> {
     const POSSIBLE_SEPARATORS: [char; 6] = [',', ';', '\t', '|', ' ', '\0'];
-
-    if !std::path::Path::new(file_path)
-        .extension()
-        .is_some_and(|ext| ext.eq_ignore_ascii_case("csv"))
-    {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "The file is not a CSV file",
-        ));
-    }
-
-    let first_line: String = read_first_line(file_path)?;
     for sep in &POSSIBLE_SEPARATORS {
-        if first_line.contains(*sep) {
+        if line.contains(*sep) {
             return Ok(*sep);
         }
     }
-
-    Err(io::Error::new(
-        io::ErrorKind::InvalidData,
-        "Could not detect a valid separator",
-    ))
+    Err("Could not detect a valid separator".into())
 }
 
 /// Sanitize a value for safe insertion into the database

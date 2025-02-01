@@ -60,8 +60,10 @@ const FormLoadData: React.FC<FormLoadDataProps> = ({generateSQL, updateGenerateS
                             updateGenerateSQL(field, value);
                         }
                     }
-                    updateUiStateField={() => {
-                    }}
+                    updateUiStateField={(field: string, value: string) => {
+                        updateGenerateSQL(field, value);
+                    }
+                    }
                 />
             </div>
 

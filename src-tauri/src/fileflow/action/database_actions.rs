@@ -28,7 +28,7 @@ pub async fn connect_to_database(
     match Connection::connect(&config).await {
         Ok(connection) => {
             *conn_guard = Some(connection);
-            Ok("true".to_string())
+            Ok("true".into())
         }
         Err(err) => Err(format!("Failed to connect to the database: {err}")),
     }
@@ -85,7 +85,7 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
         };
 
         for (i, value) in record.iter().enumerate() {
-            let value: String = value.trim().to_string();
+            let value: String = value.trim().into();
             let max_length: &mut usize = columns_size_map
                 .get_mut(final_columns_name[i].as_str())
                 .unwrap();
@@ -128,7 +128,7 @@ pub async fn execute_sql(
     let conn_guard = state.0.lock().await;
 
     if conn_guard.is_none() {
-        return Err("No active database connection.".to_string());
+        return Err("No active database connection.".into());
     }
 
     let connection: &Connection = conn_guard.as_ref().unwrap();

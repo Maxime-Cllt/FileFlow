@@ -12,9 +12,9 @@ pub fn get_test_pg_config() -> DbConfig {
         db_driver: String::from(POSTGRES),
         username: String::from(POSTGRES),
         password: String::from("password"),
-        db_host: "localhost".to_string(),
-        port: "5432".to_string(),
-        db_name: "test_db".to_string(),
+        db_host: "localhost".into(),
+        port: "5432".into(),
+        db_name: "test_db".into(),
         sqlite_file_path: String::new(),
     }
 }
@@ -29,7 +29,7 @@ pub fn get_test_sqlite_config(str: String) -> DbConfig {
         port: String::new(),
         db_name: String::new(),
         sqlite_file_path: if str.is_empty() {
-            "test_db.db".to_string()
+            "test_db.db".into()
         } else {
             str
         },
@@ -39,12 +39,12 @@ pub fn get_test_sqlite_config(str: String) -> DbConfig {
 /// Get a test MySQL configuration
 pub fn get_test_mysql_config() -> DbConfig {
     DbConfig {
-        db_driver: MYSQL.to_string(),
-        username: "root".to_string(),
+        db_driver: MYSQL.into(),
+        username: "root".into(),
         password: String::from("password"),
-        db_host: "localhost".to_string(),
-        port: "3306".to_string(),
-        db_name: "test_db".to_string(),
+        db_host: "localhost".into(),
+        port: "3306".into(),
+        db_name: "test_db".into(),
         sqlite_file_path: String::new(),
     }
 }
@@ -55,22 +55,22 @@ pub fn get_test_maridb_config() -> DbConfig {
         db_driver: String::from(MARIADB),
         username: String::from("root"),
         password: String::from("password"),
-        db_host: "localhost".to_string(),
-        port: "3306".to_string(),
-        db_name: "test_db".to_string(),
+        db_host: "localhost".into(),
+        port: "3306".into(),
+        db_name: "test_db".into(),
         sqlite_file_path: String::new(),
     }
 }
 /// Get a test save configuration
 pub fn get_test_save_config(config_name: &str) -> SaveConfig {
     SaveConfig {
-        config_name: config_name.to_string(),
+        config_name: config_name.into(),
         db_driver: String::from(SQLITE),
         db_host: String::new(),
         port: String::new(),
         username: String::new(),
         password: String::new(),
-        db_name: "test_db".to_string(),
+        db_name: "test_db".into(),
         sqlite_file_path: String::new(),
     }
 }

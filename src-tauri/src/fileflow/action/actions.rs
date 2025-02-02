@@ -80,7 +80,7 @@ pub async fn save_database_config(save: SaveConfig) -> Result<String, String> {
 
     for config in &existing_configs {
         if config.config_name == save.config_name {
-            return Err("Database configuration already exists".to_string());
+            return Err("Database configuration already exists".into());
         }
     }
     let config_names: &str = &save.config_name.clone();
@@ -111,7 +111,7 @@ pub async fn load_database_config_by_name(name: String) -> Result<String, String
                 .map_err(|e| format!("Failed to serialize config: {e}"));
         }
     }
-    Err("Database configuration not found".to_string())
+    Err("Database configuration not found".into())
 }
 
 #[command]
@@ -144,10 +144,10 @@ pub async fn get_size_of_file(file_path: String) -> Result<String, String> {
     let metadata: Metadata =
         std::fs::metadata(&file_path).map_err(|e| format!("Failed to get metadata: {e}"))?;
     if !metadata.is_file() {
-        return Err("Path is not a file".to_string());
+        return Err("Path is not a file".into());
     }
     if metadata.len() == 0 {
-        return Err("File is empty".to_string());
+        return Err("File is empty".into());
     }
     let size: f64 = metadata.len() as f64 / 1024.0 / 1024.0;
     Ok(format!("{size:.2} MB"))

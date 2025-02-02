@@ -15,9 +15,9 @@ use std::fs::File;
 
 #[tokio::test]
 async fn test_fast_insert() {
-    let sqlite_file_path: String = create_test_db("fast_insert".to_string());
+    let sqlite_file_path: String = create_test_db("fast_insert".into());
 
-    let config: DbConfig = get_test_sqlite_config(sqlite_file_path.to_string());
+    let config: DbConfig = get_test_sqlite_config(sqlite_file_path.into());
     let conn: Result<Connection, Error> = Connection::connect(&config).await;
 
     assert!(conn.is_ok(), "Failed to connect to the database");
@@ -26,7 +26,7 @@ async fn test_fast_insert() {
 
     let csv_file_path: String = generate_csv_file("test_fast_insert").unwrap();
 
-    let snake_case_headers: Vec<String> = vec!["header1".to_string(), "header2".to_string()];
+    let snake_case_headers: Vec<String> = vec!["header1".into(), "header2".into()];
     let final_table_name: &str = "test_table";
 
     let mut reader: Reader<File> = ReaderBuilder::new()
@@ -77,8 +77,8 @@ async fn test_fast_insert() {
     assert_ne!(value1, "value3");
     assert_ne!(value2, "value4");
 
-    let _ = remove_test_db("fast_insert".to_string());
-    let _ = remove_csv_file("test_fast_insert".to_string());
+    let _ = remove_test_db("fast_insert".into());
+    let _ = remove_csv_file("test_fast_insert".into());
 }
 
 #[tokio::test]

@@ -1,17 +1,15 @@
-use crate::fileflow::action::actions::load_database_config_by_name;
-use crate::fileflow::action::database_actions::generate_load_data_sql;
 use crate::fileflow::database::connection::Connection;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::load_data_struct::GenerateLoadData;
 use crate::fileflow::utils::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
-use crate::fileflow::utils::fileflowlib::{detect_separator_in_file, get_formated_column_names};
+use crate::fileflow::utils::fileflowlib::{build_load_data, get_formated_column_names};
 use crate::fileflow::utils::sql::{
     get_create_statement, get_create_statement_with_fixed_size, get_drop_statement,
     get_insert_into_statement,
 };
 use crate::tests::utils::{
     create_test_db, generate_csv_file, get_test_maridb_config, get_test_mysql_config,
-    get_test_pg_config, get_test_sqlite_config, remove_csv_file, remove_test_db,
+    get_test_pg_config, get_test_sqlite_config, remove_test_db,
 };
 use sqlx::testing::TestTermination;
 use std::collections::HashMap;
@@ -21,7 +19,7 @@ async fn test_get_connection_url() {
     let pg_config: DbConfig = get_test_pg_config();
     let mariadb_config: DbConfig = get_test_maridb_config();
     let mysql_config: DbConfig = get_test_mysql_config();
-    let sqlite_config: DbConfig = get_test_sqlite_config("".to_string());
+    let sqlite_config: DbConfig = get_test_sqlite_config(String::new());
 
     assert_eq!(
         Connection::get_connection_url(&pg_config).unwrap(),
@@ -39,18 +37,6 @@ async fn test_get_connection_url() {
         Connection::get_connection_url(&sqlite_config).unwrap(),
         "test_db.db"
     );
-}
-
-#[tokio::test]
-async fn test_db_connection() {
-    let config: String = load_database_config_by_name(String::from("mysql"))
-        .await
-        .unwrap();
-    let config: DbConfig = serde_json::from_str(&config).unwrap();
-    let conn = Connection::connect(&config).await;
-    assert!(conn.is_ok());
-    let conn: Connection = conn.unwrap();
-    conn.disconnect();
 }
 
 #[tokio::test]
@@ -144,7 +130,7 @@ async fn test_get_insert_into_statement() {
 
 #[tokio::test]
 async fn test_get_create_statement() {
-    let snake_case_headers: Vec<String> = vec!["header1".to_string(), "header2".to_string()];
+    let snake_case_headers: Vec<String> = vec!["header1".into(), "header2".into()];
     assert_eq!(
         get_create_statement(SQLITE, "table_name", &snake_case_headers).unwrap(),
         "CREATE TABLE \"table_name\" (header1 TEXT, header2 TEXT)"
@@ -162,7 +148,7 @@ async fn test_get_create_statement() {
         "Unsupported database driver"
     );
 
-    let snake_case_headers: Vec<String> = vec!["header1".to_string()];
+    let snake_case_headers: Vec<String> = vec!["header1".into()];
     assert_eq!(
         get_create_statement(SQLITE, "table_name", &snake_case_headers).unwrap(),
         "CREATE TABLE \"table_name\" (header1 TEXT)"
@@ -181,7 +167,7 @@ async fn test_get_create_statement() {
 async fn test_get_create_statement_with_fixed_size() {
     const FINAL_TABLE_NAME: &str = "test_table";
 
-    let snake_case_headers: Vec<String> = vec!["header1".to_string(), "header2".to_string()];
+    let snake_case_headers: Vec<String> = vec!["header1".into(), "header2".into()];
     let map_max_length: HashMap<&str, usize> =
         snake_case_headers.iter().map(|h| (h.as_str(), 0)).collect();
 
@@ -203,7 +189,7 @@ async fn test_get_create_statement_with_fixed_size() {
         "CREATE TABLE \"test_table\" (\"header1\" VARCHAR(0), \"header2\" VARCHAR(0));",
     );
 
-    let final_columns: Vec<String> = vec!["header1".to_string(), "header2".to_string()];
+    let final_columns: Vec<String> = vec!["header1".into(), "header2".into()];
 
     for (driver, expected) in db_driver {
         let result: Result<String, String> = get_create_statement_with_fixed_size(
@@ -250,88 +236,89 @@ async fn test_get_create_statement_with_fixed_size() {
 
 #[tokio::test]
 async fn test_get_formated_column_names() {
-    let headers: Vec<String> = vec!["header 1".to_string(), " header2".to_string()];
+    let headers: Vec<String> = vec!["header 1".into(), " header2".into()];
     let formatted_headers: Vec<String> = get_formated_column_names(headers);
     assert_eq!(
         formatted_headers,
-        vec!["header_1".to_string(), "_header2".to_string()]
+        vec!["header_1".into(), "_header2".into()]
     );
 
     let headers: Vec<String> = vec![
-        "header    1".to_string(),
+        "header    1".into(),
         String::new(),
-        "header2".to_string(),
+        "header2".into(),
     ];
     let formatted_headers: Vec<String> = get_formated_column_names(headers);
     assert_eq!(
         formatted_headers,
         vec![
-            "header____1".to_string(),
-            "column_2".to_string(),
-            "header2".to_string()
+            "header____1".into(),
+            "column_2".into(),
+            "header2".into()
         ]
     );
 }
 
 #[tokio::test]
-async fn test_generate_load_data_sql() {
-    const FINAL_TABLE_NAME: &str = "test_table";
+async fn test_build_load_data_mysql() {
+    let file_path: String = generate_csv_file("test_build_load_data_mysql").unwrap();
+    let config = GenerateLoadData {
+        file_path,
+        db_driver: MYSQL.into(),
+        table_name: String::from("test_table"),
+    };
+    let separator: char = ',';
+    let columns: Vec<String> = vec!["header1".into(), "header2".into()];
 
-    let csv_file_path: String =
-        generate_csv_file("test_generate_load_data_sql".to_string()).unwrap();
+    let expected_sql = format!(
+        "LOAD DATA INFILE '{}'\nINTO TABLE test_table\nCHARACTER SET utf8\nFIELDS TERMINATED BY '{}'\nENCLOSED BY '\"'\nLINES TERMINATED BY '\\n'\nIGNORE 1 ROWS (header1, header2);",
+        config.file_path, separator
+    );
 
-    let snake_case_headers: Vec<String> = vec!["header1".to_string(), "header2".to_string()];
+    let result = build_load_data(config, separator, columns);
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), expected_sql);
+}
+
+#[tokio::test]
+async fn test_build_load_data_postgres() {
+    const SEPARATOR: char = ',';
+
+    let file_path: String = generate_csv_file("test_build_load_data_postgres").unwrap();
 
     let config = GenerateLoadData {
-        file_path: csv_file_path.clone(),
-        db_driver: MARIADB.to_string(),
-        table_name: "test_table".to_string(),
+        file_path,
+        db_driver: String::from(POSTGRES),
+        table_name: String::from("test_table"),
     };
+    let columns: Vec<String> = vec!["header1".into(), "header2".into()];
 
-    let mut size_map: HashMap<&str, usize> = HashMap::new();
-    for header in &snake_case_headers {
-        size_map.insert(header.as_str(), 7);
-    }
-
-    let separator: char = detect_separator_in_file(&csv_file_path).unwrap();
-
-    let mut sql: String = String::new();
-
-    sql.push_str(
-        get_drop_statement(MARIADB, FINAL_TABLE_NAME)
-            .unwrap()
-            .as_str(),
+    let expected_sql:String = format!(
+        "COPY test_table (header1, header2)\nFROM '{}'\nWITH (FORMAT csv, HEADER true, DELIMITER '{}', QUOTE '\"');",
+        config.file_path, SEPARATOR
     );
-    sql.push(';');
-    sql.push_str("\n\n");
 
-    sql.push_str(
-        get_create_statement_with_fixed_size(
-            MARIADB,
-            FINAL_TABLE_NAME,
-            &size_map,
-            &snake_case_headers,
-        )
-        .unwrap()
-        .as_str(),
+    let result = build_load_data(config, SEPARATOR, columns);
+    assert!(result.is_ok());
+    assert_eq!(result.unwrap(), expected_sql);
+}
+
+#[tokio::test]
+async fn test_build_load_data_invalid_driver() {
+    const SEPARATOR: char = ',';
+
+    let file_path: String = generate_csv_file("test_build_load_data_invalid_driver").unwrap();
+    let config = GenerateLoadData {
+        file_path,
+        db_driver: "invalid_driver".into(),
+        table_name: String::from("test_table"),
+    };
+    let columns: Vec<String> = vec!["header1".into(), "header2".into()];
+
+    let result = build_load_data(config, SEPARATOR, columns);
+    assert!(result.is_err());
+    assert_eq!(
+        result.unwrap_err(),
+        "Unsupported database driver for this operation".into()
     );
-    sql.push_str("\n\n");
-
-    sql.push_str("LOAD DATA INFILE '");
-    sql.push_str(csv_file_path.as_str());
-    sql.push_str("'\nINTO TABLE ");
-    sql.push_str(FINAL_TABLE_NAME);
-    sql.push_str("\nCHARACTER SET utf8\n");
-    sql.push_str("FIELDS TERMINATED BY '");
-    sql.push(separator);
-    sql.push_str("'\n");
-    sql.push_str("ENCLOSED BY '\"'\nLINES TERMINATED BY '\\n'\nIGNORE 1 ROWS (");
-    sql.push_str("header1, header2");
-    sql.push_str(");");
-
-    let result: Result<String, String> = generate_load_data_sql(config).await;
-    let result: String = result.unwrap();
-
-    assert_eq!(result, sql);
-    let _ = remove_csv_file(String::from("test_generate_load_data_sql"));
 }

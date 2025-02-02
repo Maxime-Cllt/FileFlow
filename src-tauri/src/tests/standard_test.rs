@@ -1,14 +1,25 @@
-use crate::fileflow::utils::fileflowlib::{detect_separator_in_file, escaped_values};
+use crate::fileflow::utils::fileflowlib::{escaped_values, find_separator, read_first_line};
 use crate::tests::utils::{generate_csv_file, remove_csv_file};
 use csv::StringRecord;
 
 #[tokio::test]
-async fn test_detect_separator_in_file() {
-    let csv_file_path: String =
-        generate_csv_file(String::from("test_detect_separator_in_file")).unwrap();
-    let separator: char = detect_separator_in_file(&csv_file_path).unwrap();
-    assert_eq!(separator, ',');
-    let _ = remove_csv_file(String::from("test_detect_separator_in_file"));
+async fn test_detect_separator() {
+    let test_cases = [
+        ("header1,header2", Some(',')),
+        ("header1;header2", Some(';')),
+        ("header1\theader2", Some('\t')),
+        ("header1|header2", Some('|')),
+        ("header1 header2", Some(' ')),
+        ("header1\0header2", Some('\0')),
+        ("header1header2", None),
+    ];
+
+    for (input, expected) in test_cases {
+        match expected {
+            Some(separator) => assert_eq!(find_separator(input).unwrap(), separator),
+            None => assert!(find_separator(input).is_err()),
+        }
+    }
 }
 
 #[tokio::test]
@@ -25,4 +36,12 @@ async fn test_escape_values() {
     ]);
     let values: String = escaped_values(record);
     assert_eq!(values, "'INSERT INTO test_table VALUES (1,2);', 'UPDATE test_table SET column1 = 1;', 'DELETE FROM test_table WHERE column1 = 1;', 'SELECT * FROM test_table;'");
+}
+
+#[tokio::test]
+async fn test_read_first_line() {
+    let csv_file_path: String = generate_csv_file("test_read_first_line").unwrap();
+    let first_line: String = read_first_line(&csv_file_path).unwrap();
+    assert_eq!(first_line, "header1,header2");
+    let _ = remove_csv_file(String::from("test_read_first_line"));
 }

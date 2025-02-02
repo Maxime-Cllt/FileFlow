@@ -1,4 +1,6 @@
+use crate::fileflow::stuct::load_data_struct::GenerateLoadData;
 use crate::fileflow::stuct::save_config::SaveConfig;
+use crate::fileflow::utils::constants::{MARIADB, MYSQL, POSTGRES};
 use csv::StringRecord;
 use std::fs::{File, OpenOptions};
 use std::io;
@@ -21,40 +23,30 @@ pub fn get_formated_column_names(headers: Vec<String>) -> Vec<String> {
         .collect()
 }
 
-/// This function is used to detect the separator in a CSV file.
-pub fn detect_separator_in_file(file_path: &str) -> io::Result<char> {
+/// This function is used to detect the separator from a string.
+pub fn find_separator(line: &str) -> Result<char, String> {
     const POSSIBLE_SEPARATORS: [char; 6] = [',', ';', '\t', '|', ' ', '\0'];
-
-    if !std::path::Path::new(file_path)
-        .extension()
-        .is_some_and(|ext| ext.eq_ignore_ascii_case("csv"))
-    {
-        return Err(io::Error::new(
-            io::ErrorKind::InvalidData,
-            "The file is not a CSV file",
-        ));
-    }
-
-    let file: File = File::open(file_path)?;
-    let mut reader: BufReader<File> = BufReader::new(file);
-    let mut first_line: String = String::new();
-    reader.read_line(&mut first_line)?;
-
     for sep in &POSSIBLE_SEPARATORS {
-        if first_line.contains(*sep) {
+        if line.contains(*sep) {
             return Ok(*sep);
         }
     }
-
-    Err(io::Error::new(
-        io::ErrorKind::InvalidData,
-        "Could not detect a valid separator",
-    ))
+    Err("Could not detect a valid separator".into())
 }
 
 /// Sanitize a value for safe insertion into the database
 pub fn sanitize_value(value: &str) -> String {
     value.trim().replace("'", "''").replace("\\", "\\\\")
+}
+
+/// Read the first line of a file
+pub fn read_first_line(file_path: &str) -> io::Result<String> {
+    let file: File = File::open(file_path)?;
+    let reader: BufReader<File> = BufReader::new(file);
+    if let Some(line) = reader.lines().next() {
+        return line;
+    }
+    Err(io::Error::new(io::ErrorKind::NotFound, "File is empty"))
 }
 
 /// Escape values for SQL insert statement to avoid SQL injection attacks and other issues with special characters in values.
@@ -97,4 +89,40 @@ pub fn save_config(configs: &[SaveConfig], config_file: &str) -> io::Result<()> 
         .map_err(|e| format!("Failed to write to file: {e}"))
         .unwrap();
     Ok(())
+}
+
+pub fn build_load_data(
+    load: GenerateLoadData,
+    separator: char,
+    final_columns_name: Vec<String>,
+) -> Result<String, String> {
+    let mut sql: String = String::new();
+    match load.db_driver.as_str() {
+        MYSQL | MARIADB => {
+            sql.push_str("LOAD DATA INFILE '");
+            sql.push_str(load.file_path.as_str());
+            sql.push_str("'\nINTO TABLE ");
+            sql.push_str(load.table_name.as_str());
+            sql.push_str("\nCHARACTER SET utf8\n");
+            sql.push_str("FIELDS TERMINATED BY '");
+            sql.push(separator);
+            sql.push_str("'\n");
+            sql.push_str("ENCLOSED BY '\"'\nLINES TERMINATED BY '\\n'\nIGNORE 1 ROWS (");
+            sql.push_str(&final_columns_name.join(", "));
+            sql.push_str(");");
+        }
+        POSTGRES => {
+            sql.push_str("COPY ");
+            sql.push_str(load.table_name.as_str());
+            sql.push_str(" (");
+            sql.push_str(&final_columns_name.join(", "));
+            sql.push_str(")\nFROM '");
+            sql.push_str(load.file_path.as_str());
+            sql.push_str("'\nWITH (FORMAT csv, HEADER true, DELIMITER '");
+            sql.push(separator);
+            sql.push_str("', QUOTE '\"');");
+        }
+        _ => return Err("Unsupported database driver for this operation".into()),
+    }
+    Ok(sql)
 }

@@ -1,5 +1,3 @@
-// src/fileflow/action/actions.rs
-
 use crate::fileflow::database::connection::Connection;
 use crate::fileflow::fast_insert::fast_insert;
 use crate::fileflow::optimized_insert::optimized_insert;
@@ -7,7 +5,7 @@ use crate::fileflow::stuct::insert_config::InsertConfig;
 use crate::fileflow::stuct::save_config::SaveConfig;
 use crate::fileflow::utils::constants::DATABASE_CONFIG_FILE;
 use crate::fileflow::utils::fileflowlib::{
-    detect_separator_in_file, get_all_saved_configs, get_formated_column_names, save_config,
+    find_separator, get_all_saved_configs, get_formated_column_names, read_first_line, save_config,
 };
 use csv::{Reader, ReaderBuilder};
 use std::fs::{File, Metadata};
@@ -26,28 +24,27 @@ pub async fn insert_csv_data(
     let conn_guard = state.0.lock().await;
 
     if conn_guard.is_none() {
-        return Err("No active database connection.".to_string());
+        return Err("No active database connection.".into());
     }
 
     let connection: &Connection = conn_guard.as_ref().unwrap();
     let start: Instant = Instant::now();
 
     let file: File = File::open(&csv.file_path).unwrap();
-    let separator: char = detect_separator_in_file(&csv.file_path).unwrap();
+
+    let first_line: String = read_first_line(&csv.file_path).unwrap();
+    let separator: char = find_separator(&first_line)?;
+    let final_columns_name: Vec<String> = get_formated_column_names(
+        first_line
+            .split(separator)
+            .map(|s| s.replace("\"", ""))
+            .collect(),
+    );
 
     let mut reader: Reader<File> = ReaderBuilder::new()
         .delimiter(separator as u8)
         .has_headers(true)
         .from_reader(file);
-
-    let final_columns_name: Vec<String> = get_formated_column_names(
-        reader
-            .headers()
-            .unwrap()
-            .iter()
-            .map(|h| h.to_string())
-            .collect(),
-    );
 
     let line_count: u64 = if csv.mode == "fast" {
         fast_insert(
@@ -72,8 +69,8 @@ pub async fn insert_csv_data(
     Ok(format!(
         "Data inserted successfully in {:.2?}, {} rows inserted in table {}",
         start.elapsed(),
-        &line_count,
-        &csv.table_name
+        line_count,
+        csv.table_name
     ))
 }
 
@@ -83,7 +80,7 @@ pub async fn save_database_config(save: SaveConfig) -> Result<String, String> {
 
     for config in &existing_configs {
         if config.config_name == save.config_name {
-            return Err("Database configuration already exists".to_string());
+            return Err("Database configuration already exists".into());
         }
     }
     let config_names: &str = &save.config_name.clone();
@@ -114,7 +111,7 @@ pub async fn load_database_config_by_name(name: String) -> Result<String, String
                 .map_err(|e| format!("Failed to serialize config: {e}"));
         }
     }
-    Err("Database configuration not found".to_string())
+    Err("Database configuration not found".into())
 }
 
 #[command]
@@ -133,7 +130,7 @@ pub async fn delete_database_config(name: String) -> Result<String, String> {
     }
 
     if !found {
-        Err("Database configuration not found".to_string())?;
+        Err(String::from("Database configuration not found"))?;
     }
 
     save_config(&new_configs, DATABASE_CONFIG_FILE)
@@ -147,10 +144,10 @@ pub async fn get_size_of_file(file_path: String) -> Result<String, String> {
     let metadata: Metadata =
         std::fs::metadata(&file_path).map_err(|e| format!("Failed to get metadata: {e}"))?;
     if !metadata.is_file() {
-        return Err("Path is not a file".to_string());
+        return Err("Path is not a file".into());
     }
     if metadata.len() == 0 {
-        return Err("File is empty".to_string());
+        return Err("File is empty".into());
     }
     let size: f64 = metadata.len() as f64 / 1024.0 / 1024.0;
     Ok(format!("{size:.2} MB"))

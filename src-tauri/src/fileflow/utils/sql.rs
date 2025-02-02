@@ -7,7 +7,7 @@ pub fn get_drop_statement(db_driver: &str, final_table_name: &str) -> Result<Str
     match &db_driver.to_lowercase()[..] {
         SQLITE | POSTGRES => Ok(format!("DROP TABLE IF EXISTS \"{final_table_name}\"")),
         MYSQL | MARIADB => Ok(format!("DROP TABLE IF EXISTS `{final_table_name}`")),
-        _ => Err("Unsupported database driver".to_string()),
+        _ => Err("Unsupported database driver".into()),
     }
 }
 
@@ -24,7 +24,7 @@ pub fn get_insert_into_statement(
         MYSQL | MARIADB => Ok(format!(
             "INSERT INTO `{final_table_name}` ({columns}) VALUES "
         )),
-        _ => Err("Unsupported database driver".to_string()),
+        _ => Err("Unsupported database driver".into()),
     }
 }
 
@@ -60,7 +60,7 @@ pub fn get_create_statement_with_fixed_size(
     let mut create_table_sql: String = match driver {
         SQLITE | POSTGRES => format!("CREATE TABLE \"{final_table_name}\" ("),
         MYSQL | MARIADB => format!("CREATE TABLE `{final_table_name}` ("),
-        _ => return Err("Unsupported database driver".to_string()),
+        _ => return Err("Unsupported database driver".into()),
     };
 
     for header in snake_case_headers {
@@ -73,14 +73,14 @@ pub fn get_create_statement_with_fixed_size(
         let column_type: String = if max_length <= MAX_VARCHAR_LENGTH {
             format!("{VARCHAR_TYPE}({max_length})")
         } else {
-            TEXT_TYPE.to_string()
+            String::from(TEXT_TYPE)
         };
 
         // Quote column names as required by each driver
         let quoted_column: String = match driver {
             SQLITE | POSTGRES => format!("\"{header}\""),
             MYSQL | MARIADB => format!("`{header}`"),
-            _ => return Err("Unsupported database driver".to_string()),
+            _ => return Err("Unsupported database driver".into()),
         };
 
         // Append the column definition to the SQL statement
@@ -116,11 +116,11 @@ pub fn get_create_statement(
             "CREATE TABLE `{final_table_name}` ({})",
             snake_case_headers
                 .iter()
-                .map(|h| format!("{h} TEXT"))
+                .map(|h| format!("{h}  TEXT"))
                 .collect::<Vec<String>>()
                 .join(", ")
         )),
-        _ => Err("Unsupported database driver".to_string()),
+        _ => Err("Unsupported database driver".into()),
     }
 }
 

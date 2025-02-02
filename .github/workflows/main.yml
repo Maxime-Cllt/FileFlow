@@ -1,4 +1,4 @@
-name: "publish"
+name: "Build and Release workflow"
 
 on:
   workflow_dispatch:
@@ -20,7 +20,7 @@ jobs:
           node-version: lts/*
 
       - name: install pnpm
-        run: npm install -g pnpm  # Installe pnpm globalement
+        run: npm install -g pnpm
 
       - name: get version
         run: echo "PACKAGE_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
@@ -35,7 +35,7 @@ jobs:
               repo: context.repo.repo,
               tag_name: `app-v${process.env.PACKAGE_VERSION}`,
               name: `Desktop App v${process.env.PACKAGE_VERSION}`,
-              body: 'Take a look at the assets to download and install this app.',
+              body: 'A new release of FileFlow is available.',
               draft: true,
               prerelease: false
             })
@@ -85,7 +85,7 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.0-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
         # webkitgtk 4.0 est pour Tauri v1 - webkitgtk 4.1 est pour Tauri v2.
 
-      - name: install frontend dependencies
+      - name: Install frontend dependencies
         run: pnpm install  # Utilise pnpm pour installer les dépendances frontend
 
       - uses: tauri-apps/tauri-action@v0

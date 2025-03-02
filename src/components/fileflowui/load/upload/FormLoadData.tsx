@@ -1,8 +1,8 @@
 import React from 'react';
-import {Input} from "@/components/ui/input";
+import {Input} from "@/components/ui/input.tsx";
 import FileUpload from "@/components/hooks/file/FileUpload.tsx";
 import SelectDatabase from "@/components/hooks/database/SelectDatabase.tsx";
-import LoadButtonGroupAction from "@/components/fileflowui/load/LoadButtonGroupAction.tsx";
+import LoadButtonGroupAction from "@/components/fileflowui/load/upload/LoadButtonGroupAction.tsx";
 
 interface FormLoadDataProps {
     generateSQL: {

@@ -1,4 +1,4 @@
-import {Menubar, MenubarMenu, MenubarTrigger} from "@/components/ui/menubar.tsx";
+import {Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger} from "@/components/ui/menubar.tsx";
 import React from "react";
 import {Link} from "react-router-dom";
 
@@ -8,18 +8,32 @@ const Menu: React.FC = () => {
         <div className={'fixed top-0 w-full z-50'}>
             <Menubar>
 
-                {/* Home Menu */}
+                {/* Upload Menu */}
                 <MenubarMenu>
-                    <Link to={"/"}>
-                        <MenubarTrigger className={"cursor-pointer"}>Insert</MenubarTrigger>
-                    </Link>
+                    <MenubarTrigger className={"cursor-pointer"}>Extract</MenubarTrigger>
+                    <MenubarContent>
+
+                        <Link to={"/download"}>
+                            <MenubarItem>Download</MenubarItem>
+                        </Link>
+                    </MenubarContent>
                 </MenubarMenu>
 
-                {/* Load Menu */}
+                {/* Upload Menu */}
                 <MenubarMenu>
-                    <Link to={"/load"}>
-                        <MenubarTrigger className={"cursor-pointer"}>Load</MenubarTrigger>
-                    </Link>
+                    <MenubarTrigger className={"cursor-pointer"}>Load</MenubarTrigger>
+                    <MenubarContent>
+                        {/* Download menu items */}
+                        <Link to={"/"}>
+                            <MenubarItem>Upload</MenubarItem>
+                        </Link>
+
+                        {/* Load menu items */}
+                        <Link to={"/upload"}>
+                            <MenubarItem>Load</MenubarItem>
+                        </Link>
+
+                    </MenubarContent>
                 </MenubarMenu>
 
                 {/* Help Menu */}

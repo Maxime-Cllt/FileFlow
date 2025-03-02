@@ -1,15 +1,15 @@
 import React, {useState} from 'react';
-import '../../../Loader.css';
+import '../../../../Loader.css';
 import {Card, CardContent, CardHeader} from "@/components/ui/card.tsx";
 import Loader from "@/components/hooks/Loader.tsx";
-import ModeSelection from "@/components/fileflowui/insert/ModeSelection.tsx";
-import ButtonGroupAction from "@/components/fileflowui/insert/ButtonGroupAction.tsx";
-import Log from "@/components/fileflowui/insert/Log.tsx";
-import SqliteForm from "@/components/fileflowui/insert/SqliteForm.tsx";
+import ModeSelection from "@/components/fileflowui/load/insert/ModeSelection.tsx";
+import ButtonGroupAction from "@/components/fileflowui/load/insert/ButtonGroupAction.tsx";
+import Log from "@/components/fileflowui/load/insert/Log.tsx";
+import SqliteForm from "@/components/fileflowui/load/insert/SqliteForm.tsx";
 import {initialDbConfig, initialUiState} from "@/components/states/initialState.tsx";
-import ButtonConfigComponent from "@/components/fileflowui/insert/ButtonConfig.tsx";
+import ButtonConfigComponent from "@/components/fileflowui/load/insert/ButtonConfig.tsx";
 import {invoke} from "@tauri-apps/api/core";
-import InsertForm from "@/components/fileflowui/insert/InsertForm.tsx";
+import InsertForm from "@/components/fileflowui/load/insert/InsertForm.tsx";
 
 const Insert: React.FC = () => {
     const [dbConfig, setDbConfig] = useState(initialDbConfig);

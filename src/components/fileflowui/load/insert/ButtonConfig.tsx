@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {invoke} from "@tauri-apps/api/core";
 import {toast} from "sonner";
 import InputTextDialog from "@/components/hooks/file/InputTextDialog.tsx";
-import ConfigItemList from "@/components/fileflowui/insert/ConfigItemList.tsx";
+import ConfigItemList from "@/components/fileflowui/load/insert/ConfigItemList.tsx";
 
 interface ButtonConfigComponentProps {
     dbConfig: {

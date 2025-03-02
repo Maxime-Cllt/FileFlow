@@ -1,6 +1,6 @@
 import React from 'react';
-import FormLoadData from "@/components/fileflowui/load/FormLoadData.tsx";
 import {generateSqlConfig} from "@/components/states/generateSqlConfig.tsx";
+import FormLoadData from "@/components/fileflowui/load/upload/FormLoadData.tsx";
 
 const LoadDataSql: React.FC = () => {
 

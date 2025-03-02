@@ -17,8 +17,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Move to src-tauri
-        run: cd src-tauri
-
       - name: Run tests
-        run: cargo test --verbose
+        run: |
+          cd src-tauri
+          cargo test --verbose

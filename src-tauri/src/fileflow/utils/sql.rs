@@ -116,7 +116,7 @@ pub fn get_create_statement(
             "CREATE TABLE `{final_table_name}` ({})",
             snake_case_headers
                 .iter()
-                .map(|h| format!("{h}  TEXT"))
+                .map(|h| format!("{h} TEXT"))
                 .collect::<Vec<String>>()
                 .join(", ")
         )),

@@ -1,7 +1,7 @@
 [package]
 name = "FileFlow"
 version = "1.0.0"
-description = "An app to insert CSV data into a DMBS with a GUI"
+description = "An app to manipulate DMBS tables"
 authors = ["Maxime-Cllt"]
 edition = "2021"
 

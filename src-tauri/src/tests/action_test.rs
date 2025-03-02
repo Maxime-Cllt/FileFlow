@@ -17,7 +17,7 @@ use std::fs::File;
 async fn test_fast_insert() {
     let sqlite_file_path: String = create_test_db("fast_insert".into());
 
-    let config: DbConfig = get_test_sqlite_config(sqlite_file_path.into());
+    let config: DbConfig = get_test_sqlite_config(sqlite_file_path.clone());
     let conn: Result<Connection, Error> = Connection::connect(&config).await;
 
     assert!(conn.is_ok(), "Failed to connect to the database");
@@ -48,7 +48,7 @@ async fn test_fast_insert() {
 
     let pool: Pool<Sqlite> = sqlx::sqlite::SqlitePoolOptions::new()
         .max_connections(1)
-        .connect(sqlite_file_path.as_str())
+        .connect(&sqlite_file_path)
         .await
         .expect("Failed to create a connection pool");
 

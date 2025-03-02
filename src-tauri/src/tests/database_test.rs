@@ -240,7 +240,7 @@ async fn test_get_formated_column_names() {
     let formatted_headers: Vec<String> = get_formated_column_names(headers);
     assert_eq!(
         formatted_headers,
-        vec!["header_1".into(), "_header2".into()]
+        vec!["header_1", "_header2"]
     );
 
     let headers: Vec<String> = vec![
@@ -252,9 +252,9 @@ async fn test_get_formated_column_names() {
     assert_eq!(
         formatted_headers,
         vec![
-            "header____1".into(),
-            "column_2".into(),
-            "header2".into()
+            "header____1",
+            "column_2",
+            "header2"
         ]
     );
 }
@@ -319,6 +319,6 @@ async fn test_build_load_data_invalid_driver() {
     assert!(result.is_err());
     assert_eq!(
         result.unwrap_err(),
-        "Unsupported database driver for this operation".into()
+        "Unsupported database driver for this operation"
     );
 }

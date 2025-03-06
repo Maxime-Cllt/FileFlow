@@ -1,5 +1,5 @@
 use crate::fileflow::database::connection::Connection;
-use crate::fileflow::fast_insert::fast_insert;
+use crate::fileflow::action::fast_insert::fast_insert;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::save_config::SaveConfig;
 use crate::fileflow::utils::constants::SQLITE;

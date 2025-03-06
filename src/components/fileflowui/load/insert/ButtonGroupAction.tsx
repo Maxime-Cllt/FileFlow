@@ -67,7 +67,6 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
     };
 
     const handleReset = () => {
-
         props.updateDbConfigField('db_driver', '');
         props.updateDbConfigField('db_host', '');
         props.updateDbConfigField('port', '');
@@ -91,12 +90,17 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
                 toast.warning('You are not connected to any database');
                 return;
             }
-            await invoke('disconnect_from_database');
-            props.updateDbConfigField('is_connected', false);
-            toast.success('Disconnected successfully');
+            const response = await invoke<boolean | string>('disconnect_from_database');
+
+            if (typeof response === 'boolean' && response) {
+                props.updateDbConfigField('is_connected', false);
+                toast.success('Disconnected successfully');
+            } else {
+                throw Error(response as string)
+            }
         } catch (error) {
             props.addLog(error as string);
-            toast.error('Error disconnecting');
+            toast.error('Error disconnecting from database');
         }
     };
 
@@ -123,7 +127,7 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
         }
 
         try {
-            const response = await invoke('connect_to_database', {
+            const response = await invoke<string | boolean>('connect_to_database', {
                 config: {
                     db_driver: props.dbConfig.db_driver.toLowerCase(),
                     db_host: props.dbConfig.db_host,
@@ -136,10 +140,8 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
                 },
             });
 
-            if (response !== 'true') {
-                props.addLog(response as string);
-                toast.error('Connection failed');
-                return;
+            if (typeof response === "string") {
+                throw Error(response);
             }
 
             toast.success('Connected successfully');

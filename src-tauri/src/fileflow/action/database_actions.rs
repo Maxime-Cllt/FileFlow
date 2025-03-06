@@ -18,7 +18,7 @@ use tauri::{command, State};
 pub async fn connect_to_database(
     state: State<'_, Arc<DatabaseState>>,
     config: DbConfig,
-) -> Result<String, String> {
+) -> Result<bool, String> {
     let mut conn_guard = state.0.lock().await;
 
     if conn_guard.is_some() {
@@ -28,7 +28,7 @@ pub async fn connect_to_database(
     match Connection::connect(&config).await {
         Ok(connection) => {
             *conn_guard = Some(connection);
-            Ok("true".into())
+            Ok(true)
         }
         Err(err) => Err(format!("Failed to connect to the database: {err}")),
     }
@@ -37,17 +37,21 @@ pub async fn connect_to_database(
 #[command]
 pub async fn disconnect_from_database(
     state: State<'_, Arc<DatabaseState>>,
-) -> Result<String, String> {
+) -> Result<bool, String> {
     let mut conn_guard = state.0.lock().await;
 
     if conn_guard.is_none() {
         return Err("No active database connection to disconnect.".into());
     }
 
-    let conn: Connection = conn_guard.take().unwrap();
+    let conn: Connection = match conn_guard.take() {
+        Some(conn) => conn,
+        None => return Err("No active database connection to disconnect.".into()),
+    };
+
     conn.disconnect();
 
-    Ok("Disconnected from the database.".into())
+    Ok(true)
 }
 
 #[command]
@@ -151,15 +155,19 @@ pub async fn execute_sql(
 }
 
 #[command]
-pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String, String> {
+pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String, bool> {
     let conn_guard = state.0.lock().await;
 
     if conn_guard.is_none() {
-        return Ok(String::from("false"));
+        return Ok(String::new());
     }
 
     let connection: &Connection = conn_guard.as_ref().unwrap();
     let db_config: &DbConfig = connection.get_db_config();
 
-    Ok(serde_json::to_string(db_config).unwrap())
+    // Return the database configuration as JSON string
+    match serde_json::to_string(db_config) {
+        Ok(json) => Ok(json),
+        Err(_) => Err(false),
+    }
 }

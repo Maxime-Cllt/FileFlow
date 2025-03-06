@@ -1,6 +1,6 @@
 use crate::fileflow::database::connection::Connection;
-use crate::fileflow::fast_insert::fast_insert;
-use crate::fileflow::optimized_insert::optimized_insert;
+use crate::fileflow::action::fast_insert::fast_insert;
+use crate::fileflow::action::optimized_insert::optimized_insert;
 use crate::fileflow::stuct::insert_config::InsertConfig;
 use crate::fileflow::stuct::save_config::SaveConfig;
 use crate::fileflow::utils::constants::DATABASE_CONFIG_FILE;
@@ -113,7 +113,7 @@ pub async fn load_database_config_by_name(name: String) -> Result<String, bool> 
             };
         }
     }
-    Err("Database configuration not found".into())
+    Err(false)
 }
 
 #[command]

@@ -76,7 +76,7 @@ const LoadButtonGroupAction: React.FC<LoadButtonGroupProps> = (props: LoadButton
             }
 
             if (!dbConfig.is_connected) {
-                const response = await invoke('connect_to_database', {
+                const response = await invoke<string | boolean>('connect_to_database', {
                         config: {
                             db_driver: props.generateSQL.db_driver.toLowerCase(),
                             db_host: dbConfig.db_host,
@@ -90,7 +90,7 @@ const LoadButtonGroupAction: React.FC<LoadButtonGroupProps> = (props: LoadButton
                     }
                 );
 
-                if (response && response !== "" && typeof response === "string") {
+                if (typeof response === "boolean" && response) {
                     updateDbConfigField('is_connected', true);
                     executeSQL().then(() => {
                         toast.success("SQL executed successfully");

@@ -14,7 +14,7 @@ const LoadDataSql: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-100">
+        <div className="h-full w-full">
 
             {/* Load Data Form */}
             <div className="p-4 md:p-8 mt-6">

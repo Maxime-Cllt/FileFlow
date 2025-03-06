@@ -29,20 +29,22 @@ const Insert: React.FC = () => {
 
     const checkConnection = async () => {
         try {
-            const response = await invoke('is_connected');
-            if (typeof response === "string") {
+            const response = await invoke<string | boolean>('is_connected');
 
-                if (response === 'false') {
-                    updateDbConfigField('is_connected', false);
-                    return;
-                }
 
-                const loadDbConfig = JSON.parse(response);
-                Object.keys(loadDbConfig).forEach((key) => {
-                    updateDbConfigField(key as keyof typeof dbConfig, loadDbConfig[key]);
-                });
-                updateDbConfigField('is_connected', true);
+            if (typeof response === "boolean") {
+                throw Error('Failed to check connection');
             }
+
+            if (response === '') {
+                updateDbConfigField('is_connected', false);
+                return;
+            }
+            const loadDbConfig = JSON.parse(response);
+            Object.keys(loadDbConfig).forEach((key) => {
+                updateDbConfigField(key as keyof typeof dbConfig, loadDbConfig[key]);
+            });
+            updateDbConfigField('is_connected', true);
         } catch (error) {
             addLog('Failed to check connection');
         }
@@ -92,7 +94,7 @@ const Insert: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100">
+        <div className="h-full w-full">
 
             {/* Main Content */}
             <div className="pt-8 px-4 md:px-8 mt-6">

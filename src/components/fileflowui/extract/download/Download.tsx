@@ -47,7 +47,7 @@ const Download: React.FC = () => {
                         id: configs[i],
                     });
                 }
-               setConfigList(configList);
+                setConfigList(configList);
             }
         } catch (error) {
             toast.error('Error getting all configs');

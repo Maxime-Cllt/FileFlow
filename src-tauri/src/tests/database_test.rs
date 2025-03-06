@@ -238,24 +238,13 @@ async fn test_get_create_statement_with_fixed_size() {
 async fn test_get_formated_column_names() {
     let headers: Vec<String> = vec!["header 1".into(), " header2".into()];
     let formatted_headers: Vec<String> = get_formated_column_names(headers);
-    assert_eq!(
-        formatted_headers,
-        vec!["header_1", "_header2"]
-    );
+    assert_eq!(formatted_headers, vec!["header_1", "_header2"]);
 
-    let headers: Vec<String> = vec![
-        "header    1".into(),
-        String::new(),
-        "header2".into(),
-    ];
+    let headers: Vec<String> = vec!["header    1".into(), String::new(), "header2".into()];
     let formatted_headers: Vec<String> = get_formated_column_names(headers);
     assert_eq!(
         formatted_headers,
-        vec![
-            "header____1",
-            "column_2",
-            "header2"
-        ]
+        vec!["header____1", "column_2", "header2"]
     );
 }
 

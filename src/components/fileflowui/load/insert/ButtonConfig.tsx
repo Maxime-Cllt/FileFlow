@@ -21,8 +21,9 @@ interface ButtonConfigComponentProps {
 }
 
 const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: ButtonConfigComponentProps) => {
-    const [configName, setConfigName] = useState('');
-    const [configNameList, setConfigNameList] = useState<Array<Item>>([]);
+    const [configName, setConfigName] = useState(''); // Config name
+    const [configNameList, setConfigNameList] = useState<Array<Item>>([]); // List of config names
+    const [hasChanged, setHasChanged] = useState(false); // Used to refresh the config list
 
     const updateConfigName = (name: string) => {
         setConfigName(name);
@@ -37,7 +38,7 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: Butt
                 return;
             }
 
-            await invoke('save_database_config', {
+            const response: boolean = await invoke<boolean>('save_database_config', {
                 save: {
                     config_name: configName,
                     db_driver: props.dbConfig.db_driver.toLowerCase(),
@@ -50,7 +51,13 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: Butt
                     sqlite_file_path: props.dbConfig.sqlite_file_path,
                 },
             });
+
+            if (!response) {
+                throw new Error('Error saving config');
+            }
+
             toast.success(`Config "${configName}" saved successfully`);
+            setHasChanged(prevState => !prevState);
         } catch (error) {
             toast.error('Error saving config');
             props.addLog(`Error saving config: ${error}`);
@@ -59,22 +66,22 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: Butt
 
     const loadConfig = async (item: Item) => {
         try {
-            const response = await invoke('load_database_config_by_name', {
+            const response: string | boolean = await invoke<string | boolean>('load_database_config_by_name', {
                 name: item.id,
             });
 
-            if (typeof response === 'string') {
-                const loadDbConfig = JSON.parse(response);
-
-                Object.keys(loadDbConfig).forEach((key: string) => {
-                    props.updateDbConfigField(key, loadDbConfig[key]);
-                });
-                props.updateDbConfigField('is_connected', false);
-
-                props.updateUiStateField('sqlite', loadDbConfig.sqlite_file_path.length > 0)
-
-                toast.success('Config loaded successfully');
+            if (!response) {
+                throw new Error('Error loading config');
             }
+            const loadDbConfig = JSON.parse(response as string);
+
+            Object.keys(loadDbConfig).forEach((key: string) => {
+                props.updateDbConfigField(key, loadDbConfig[key]);
+            });
+
+            props.updateDbConfigField('is_connected', false);
+            props.updateUiStateField('sqlite', loadDbConfig.sqlite_file_path.length > 0)
+            toast.success('Config loaded successfully');
         } catch (error) {
             props.addLog(`Error loading config: ${error}`);
             toast.error('Error loading config');
@@ -83,32 +90,34 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: Butt
 
     const deleteConfig = async (item: Item) => {
         try {
-            const response = await invoke('delete_database_config', {
-                name: item.id,
-            });
+            const response = await invoke<boolean>('delete_database_config', {name: item.id});
 
-            if (typeof response === 'string') {
-                toast.success(response);
-            }
+            if (!response) throw new Error('Error deleting config');
+
+            toast.success('Config deleted successfully');
         } catch (error) {
-            props.addLog(`Error loading config: ${error}`);
-            toast.error('Error loading config');
+            props.addLog(error instanceof Error ? error.message : String(error));
+            toast.error('Error deleting config');
         }
     };
 
+
     const getAllConfigs = async () => {
         try {
-            const response = await invoke('get_all_database_configs_name');
-            if (typeof response === 'string') {
-                const configs = JSON.parse(response);
-                let configList: Array<Item> = [];
-                for (let i = 0; i < configs.length; i++) {
-                    configList.push({
-                        id: configs[i],
-                    });
-                }
-                setConfigNameList(configList);
+            const response: string | boolean = await invoke<string | boolean>('get_all_database_configs_name');
+
+            if (!response) {
+                throw new Error('Error getting all configs');
             }
+
+            const configs = JSON.parse(response as string);
+            let configList: Array<Item> = [];
+            for (let i = 0; i < configs.length; i++) {
+                configList.push({
+                    id: configs[i],
+                });
+            }
+            setConfigNameList(configList);
         } catch (error) {
             props.addLog(`Error getting all configs: ${error}`);
             toast.error('Error getting all configs');
@@ -117,7 +126,7 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: Butt
 
     useEffect(() => {
         getAllConfigs();
-    }, []);
+    }, [hasChanged]);
 
     return (
         <div className="flex space-x-4">

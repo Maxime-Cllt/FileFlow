@@ -75,53 +75,55 @@ pub async fn insert_csv_data(
 }
 
 #[command]
-pub async fn save_database_config(save: SaveConfig) -> Result<String, String> {
+pub async fn save_database_config(save: SaveConfig) -> Result<bool, bool> {
     let mut existing_configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE);
 
-    for config in &existing_configs {
+    for config in existing_configs.iter() {
         if config.config_name == save.config_name {
-            return Err("Database configuration already exists".into());
+            return Err(false);
         }
     }
-    let config_names: &str = &save.config_name.clone();
     existing_configs.push(save);
-    save_config(&existing_configs, DATABASE_CONFIG_FILE)
-        .map_err(|e| format!("Failed to save new configs: {e}"))?;
 
-    Ok(format!(
-        "Database configuration {config_names} added successfully",
-    ))
+    match save_config(&existing_configs, DATABASE_CONFIG_FILE) {
+        Ok(_) => Ok(true),
+        Err(_) => Err(false),
+    }
 }
 
 #[command]
-pub async fn get_all_database_configs_name() -> Result<String, String> {
+pub async fn get_all_database_configs_name() -> Result<String, bool> {
     let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE);
     let configs_names: Vec<String> = configs.iter().map(|c| c.config_name.clone()).collect();
-    let configs_json: String = serde_json::to_string(&configs_names)
-        .map_err(|e| format!("Failed to serialize configs: {e}"))?;
+    let configs_json: String = match serde_json::to_string(&configs_names) {
+        Ok(json) => json,
+        Err(_) => return Err(false),
+    };
     Ok(configs_json)
 }
 
 #[command]
-pub async fn load_database_config_by_name(name: String) -> Result<String, String> {
+pub async fn load_database_config_by_name(name: String) -> Result<String, bool> {
     let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE);
-    for config in &configs {
+    for config in configs.iter() {
         if config.config_name == name {
-            return serde_json::to_string(&config)
-                .map_err(|e| format!("Failed to serialize config: {e}"));
+            return match serde_json::to_string(&config) {
+                Ok(json) => Ok(json),
+                Err(_) => Err(false),
+            };
         }
     }
     Err("Database configuration not found".into())
 }
 
 #[command]
-pub async fn delete_database_config(name: String) -> Result<String, String> {
+pub async fn delete_database_config(name: String) -> Result<bool, bool> {
     let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE);
 
     let mut new_configs: Vec<SaveConfig> = Vec::new();
     let mut found: bool = false;
 
-    for config in &configs {
+    for config in configs.iter() {
         if config.config_name != name {
             new_configs.push(config.clone());
         } else {
@@ -130,13 +132,13 @@ pub async fn delete_database_config(name: String) -> Result<String, String> {
     }
 
     if !found {
-        Err(String::from("Database configuration not found"))?;
+        Err(false)?;
     }
 
-    save_config(&new_configs, DATABASE_CONFIG_FILE)
-        .map_err(|e| format!("Failed to save new configs: {e}"))?;
-
-    Ok(format!("Database configuration {name} deleted"))
+    match save_config(&new_configs, DATABASE_CONFIG_FILE) {
+        Ok(_) => Ok(true),
+        Err(_) => Err(false),
+    }
 }
 
 #[command]

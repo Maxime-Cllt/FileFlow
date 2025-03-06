@@ -14,6 +14,11 @@ export const initialDbConfig = {
     is_connected: false
 };
 
+export const databaseConfigList = {
+    id: '',
+    config: '',
+};
+
 export const initialUiState = {
     histoLog: 'Logs will appear here',
     filePath: null as string | null,

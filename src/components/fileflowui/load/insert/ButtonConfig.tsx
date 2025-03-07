@@ -17,7 +17,6 @@ interface ButtonConfigComponentProps {
     };
     updateDbConfigField: (field: any, value: any) => void;
     updateUiStateField: (field: any, value: any) => void;
-    addLog: (message: string) => void;
 }
 
 const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: ButtonConfigComponentProps) => {
@@ -59,8 +58,7 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: Butt
             toast.success(`Config "${configName}" saved successfully`);
             setHasChanged(prevState => !prevState);
         } catch (error) {
-            toast.error('Error saving config');
-            props.addLog(`Error saving config: ${error}`);
+            toast.error(`Error saving config: ${error}`);
         }
     };
 
@@ -83,8 +81,7 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: Butt
             props.updateUiStateField('sqlite', loadDbConfig.sqlite_file_path.length > 0)
             toast.success('Config loaded successfully');
         } catch (error) {
-            props.addLog(`Error loading config: ${error}`);
-            toast.error('Error loading config');
+            toast.error(error as string);
         }
     };
 
@@ -96,8 +93,7 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: Butt
 
             toast.success('Config deleted successfully');
         } catch (error) {
-            props.addLog(error instanceof Error ? error.message : String(error));
-            toast.error('Error deleting config');
+            toast.error(error as string);
         }
     };
 
@@ -107,7 +103,7 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: Butt
             const response: string | boolean = await invoke<string | boolean>('get_all_database_configs_name');
 
             if (!response) {
-                throw new Error('Error getting all configs');
+                throw new Error('Internal error');
             }
 
             const configs = JSON.parse(response as string);
@@ -119,8 +115,7 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: Butt
             }
             setConfigNameList(configList);
         } catch (error) {
-            props.addLog(`Error getting all configs: ${error}`);
-            toast.error('Error getting all configs');
+            toast.error(`Error getting all configs: ${error}`);
         }
     };
 

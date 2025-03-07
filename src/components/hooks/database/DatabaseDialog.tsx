@@ -67,17 +67,20 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = (props: DataBaseDialogProp
 
     const getAllConfigs = async () => {
         try {
-            const response = await invoke('get_all_database_configs_name');
-            if (typeof response === 'string') {
-                const configs = JSON.parse(response);
-                let configList: Array<Item> = [];
-                for (let i = 0; i < configs.length; i++) {
-                    configList.push({
-                        id: configs[i],
-                    });
-                }
-                setConfigNameList(configList);
+            const response: string | boolean = await invoke<string | boolean>('get_all_database_configs_name');
+
+            if (!response) {
+                throw new Error('Error getting all configs');
             }
+
+            const configs = JSON.parse(response as string);
+            let configList: Array<Item> = [];
+            for (let i = 0; i < configs.length; i++) {
+                configList.push({
+                    id: configs[i],
+                });
+            }
+            setConfigNameList(configList);
         } catch (error) {
             toast.error('Error getting all configs');
         }

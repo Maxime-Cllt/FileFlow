@@ -164,3 +164,38 @@ pub async fn batch_insert(
     let insert_query: String = format!("{insert_query_base}{}", batch.join(", "));
     execute_query(connection, &insert_query, context).await
 }
+
+/// Create the final table and copy data from the temporary table
+pub async fn create_and_copy_final_table(
+    connection: &Connection,
+    db_driver: &str,
+    final_table_name: &str,
+    temporary_table_name: &str,
+    columns_size_map: &HashMap<&str, usize>,
+    final_columns_name: &[String],
+) -> Result<(), String> {
+    let create_final_table_query: String = get_create_statement_with_fixed_size(
+        db_driver,
+        final_table_name,
+        columns_size_map,
+        final_columns_name,
+    )?;
+    execute_query(
+        connection,
+        &create_final_table_query,
+        "Failed to create final table",
+    )
+        .await?;
+
+    let copy_data_query: String =
+        get_copy_temp_to_final_table(db_driver, temporary_table_name, final_table_name)?;
+
+    execute_query(
+        connection,
+        &copy_data_query,
+        "Failed to copy data to final table",
+    )
+        .await?;
+
+    Ok(())
+}

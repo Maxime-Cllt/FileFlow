@@ -1,8 +1,8 @@
 use crate::fileflow::database::connection::Connection;
-use crate::fileflow::utils::fileflowlib::sanitize_value;
+use crate::fileflow::utils::fileflowlib::{escaped_values, sanitize_value};
 use crate::fileflow::utils::sql::{
-    batch_insert, drop_table_if_exists, execute_query, get_copy_temp_to_final_table,
-    get_create_statement, get_create_statement_with_fixed_size, get_insert_into_statement,
+    batch_insert, create_and_copy_final_table, drop_table_if_exists, execute_query,
+    get_create_statement, get_insert_into_statement,
 };
 use csv::{Reader, StringRecord};
 use std::collections::HashMap;
@@ -144,36 +144,61 @@ async fn insert_batch(
     .map(|_| batch.len() as u64)
 }
 
-/// Create the final table and copy data from the temporary table
-async fn create_and_copy_final_table(
+/// Fast insert data the csv file into the database table
+pub async fn fast_insert(
     connection: &Connection,
-    db_driver: &str,
-    final_table_name: &str,
-    temporary_table_name: &str,
-    columns_size_map: &HashMap<&str, usize>,
+    reader: &mut Reader<File>,
     final_columns_name: &[String],
-) -> Result<(), String> {
-    let create_final_table_query: String = get_create_statement_with_fixed_size(
-        db_driver,
-        final_table_name,
-        columns_size_map,
-        final_columns_name,
-    )?;
+    final_table_name: &str,
+    db_driver: &str,
+) -> Result<u64, String> {
+    const MAX_BATCH_SIZE: usize = 4000;
+
+    // Drop the table if it exists
+    drop_table_if_exists(connection, db_driver, final_table_name).await?;
+
+    // Create the table
     execute_query(
         connection,
-        &create_final_table_query,
-        "Failed to create final table",
+        get_create_statement(db_driver, final_table_name, final_columns_name)?.as_str(),
+        "Failed to create table {final_table_name}",
     )
     .await?;
 
-    let copy_data_query: String =
-        get_copy_temp_to_final_table(db_driver, temporary_table_name, final_table_name)?;
-    execute_query(
+    let columns: &str = &final_columns_name.join(", ");
+    let mut line_count: u64 = 0;
+    let mut batch: Vec<String> = Vec::with_capacity(MAX_BATCH_SIZE);
+
+    // Prepare the insert query
+    let insert_query_base: &str = &get_insert_into_statement(db_driver, final_table_name, columns)?;
+
+    for result in reader.records() {
+        let record: StringRecord = result.unwrap();
+        let values: String = escaped_values(record);
+        batch.push(format!("({values})"));
+
+        if batch.len() == MAX_BATCH_SIZE {
+            batch_insert(
+                connection,
+                insert_query_base,
+                &batch,
+                "Failed to insert batch data",
+            )
+            .await?;
+            line_count += batch.len() as u64;
+            batch.clear();
+        }
+    }
+
+    // Insert the remaining records if any
+    batch_insert(
         connection,
-        &copy_data_query,
-        "Failed to copy data to final table",
+        insert_query_base,
+        &batch,
+        "Failed to insert batch data",
     )
     .await?;
+    line_count += batch.len() as u64;
 
-    Ok(())
+    Ok(line_count)
 }

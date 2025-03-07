@@ -18,14 +18,12 @@ interface ButtonGroupProps {
     uiState: {
         fileName: string;
         filePath: string | null;
-        histoLog: string;
         showLoader: boolean;
         sqlite: boolean;
         mode: string;
     };
     updateUiStateField: (field: any, value: any) => void;
     updateDbConfigField: (field: any, value: any) => void;
-    addLog: (message: string) => void;
 }
 
 const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) => {
@@ -43,11 +41,10 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
             return;
         }
 
-        props.addLog('Inserting data...');
         props.updateUiStateField('showLoader', true);
 
         try {
-            const response = await invoke('insert_csv_data', {
+            const response = await invoke<string | boolean>('insert_csv_data', {
                 csv: {
                     table_name: props.dbConfig.tableName,
                     file_path: props.uiState.filePath,
@@ -56,14 +53,15 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
                 },
             });
 
-            props.updateUiStateField('showLoader', false);
-            props.addLog(response as string);
-            toast.success('Data inserted successfully');
+            if (typeof response === "boolean" && !response) {
+                throw new Error('Error inserting data');
+            }
+
+            toast.success('Data inserted successfully into ' + props.dbConfig.tableName);
         } catch (error) {
-            props.addLog(`Insert error: ${error}`);
-            props.updateUiStateField('showLoader', false);
             toast.error('Error inserting data');
         }
+        props.updateUiStateField('showLoader', false);
     };
 
     const handleReset = () => {
@@ -99,34 +97,32 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
                 throw Error(response as string)
             }
         } catch (error) {
-            props.addLog(error as string);
             toast.error('Error disconnecting from database');
         }
     };
 
     const handleConnection = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (props.dbConfig.is_connected) {
-            handleDeconnection(e as React.MouseEvent).then(() => {
-                props.updateDbConfigField('is_connected', false);
-            });
-            return;
-        }
-
-        if (!props.dbConfig.db_driver && props.dbConfig.db_driver !== 'sqlite') {
-            if (!props.dbConfig.db_host || !props.dbConfig.port || !props.dbConfig.username) {
-                toast.warning('Please fill in all the required fields');
-                return;
-            }
-        } else if (props.dbConfig.db_driver === 'sqlite') {
-            if (!props.dbConfig.sqlite_file_path) {
-                toast.warning('Please select a SQLite file');
-                return;
-            }
-        }
-
         try {
+            if (props.dbConfig.is_connected) {
+                handleDeconnection(e as React.MouseEvent).then(() => {
+                    props.updateDbConfigField('is_connected', false);
+                });
+                return;
+            }
+
+            if (!props.dbConfig.db_driver && props.dbConfig.db_driver !== 'sqlite') {
+                if (!props.dbConfig.db_host || !props.dbConfig.port || !props.dbConfig.username) {
+                    toast.warning('Please fill in all the required fields');
+                    return;
+                }
+            } else if (props.dbConfig.db_driver === 'sqlite') {
+                if (!props.dbConfig.sqlite_file_path) {
+                    toast.warning('Please select a SQLite file');
+                    return;
+                }
+            }
+
             const response = await invoke<string | boolean>('connect_to_database', {
                 config: {
                     db_driver: props.dbConfig.db_driver.toLowerCase(),
@@ -144,15 +140,12 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
                 throw Error(response);
             }
 
-            toast.success('Connected successfully');
-            props.addLog("Connected to database " + props.dbConfig.db_name + " with user " + props.dbConfig.username);
+            toast.success('Connected successfully to the database');
             props.updateDbConfigField('is_connected', true);
         } catch (error) {
-            props.addLog(`Connection error: ${error}`);
             toast.error('Connection failed');
         }
     }
-
 
     return (
         <div className="flex items-center justify-center gap-6 mb-6 p-4">

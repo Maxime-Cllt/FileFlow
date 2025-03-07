@@ -1,4 +1,11 @@
-import {Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger} from "@/components/ui/menubar.tsx";
+import {
+    Menubar,
+    MenubarContent,
+    MenubarItem,
+    MenubarMenu,
+    MenubarSeparator,
+    MenubarTrigger
+} from "@/components/ui/menubar.tsx";
 import React from "react";
 import {Link} from "react-router-dom";
 
@@ -27,6 +34,8 @@ const Menu: React.FC = () => {
                         <Link to={"/"}>
                             <MenubarItem>Upload</MenubarItem>
                         </Link>
+
+                        <MenubarSeparator />
 
                         {/* Load menu items */}
                         <Link to={"/upload"}>

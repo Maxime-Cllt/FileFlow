@@ -1,7 +1,7 @@
 import React from 'react';
-import {Input} from "@/components/ui/input.tsx";
 import FileUpload from "@/components/hooks/file/FileUpload.tsx";
-import SelectDatabase from "@/components/hooks/database/SelectDatabase.tsx";
+import SelectDBMS from "@/components/hooks/database/SelectDatabase.tsx";
+import {Input} from "@/components/ui/input.tsx";
 
 interface FormProps {
     dbConfig: {
@@ -19,9 +19,6 @@ interface FormProps {
     };
     updateUiStateField: (field: any, value: any) => void;
     updateDbConfigField: (field: any, value: any) => void;
-    actions: {
-        addLog: (message: string) => void;
-    };
 }
 
 
@@ -60,7 +57,7 @@ const InsertForm: React.FC<FormProps> = (props: FormProps) => {
 
             {/* Database Type Selection and File Upload */}
             <div className="col-span-2 grid grid-cols-2 gap-4 items-center justify-center">
-                <SelectDatabase
+                <SelectDBMS
                     updateUiStateField={props.updateUiStateField}
                     updateDbConfigField={props.updateDbConfigField}
                     db_driver={props.dbConfig.db_driver}

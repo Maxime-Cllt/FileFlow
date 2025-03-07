@@ -4,12 +4,12 @@ import {Card, CardContent, CardHeader} from "@/components/ui/card.tsx";
 import Loader from "@/components/hooks/Loader.tsx";
 import ModeSelection from "@/components/fileflowui/load/insert/ModeSelection.tsx";
 import ButtonGroupAction from "@/components/fileflowui/load/insert/ButtonGroupAction.tsx";
-import Log from "@/components/fileflowui/load/insert/Log.tsx";
 import SqliteForm from "@/components/fileflowui/load/insert/SqliteForm.tsx";
 import {initialDbConfig, initialUiState} from "@/components/states/initialState.tsx";
 import ButtonConfigComponent from "@/components/fileflowui/load/insert/ButtonConfig.tsx";
 import {invoke} from "@tauri-apps/api/core";
 import InsertForm from "@/components/fileflowui/load/insert/InsertForm.tsx";
+import {toast} from "sonner";
 
 const Insert: React.FC = () => {
     const [dbConfig, setDbConfig] = useState(initialDbConfig);
@@ -23,14 +23,9 @@ const Insert: React.FC = () => {
         setUiState(prev => ({...prev, [field]: value}));
     };
 
-    const addLog = (message: string) => {
-        updateUiStateField('histoLog', `${uiState.histoLog}\n${message}`);
-    };
-
     const checkConnection = async () => {
         try {
             const response = await invoke<string | boolean>('is_connected');
-
 
             if (typeof response === "boolean") {
                 throw Error('Failed to check connection');
@@ -46,7 +41,7 @@ const Insert: React.FC = () => {
             });
             updateDbConfigField('is_connected', true);
         } catch (error) {
-            addLog('Failed to check connection');
+            toast.error(error as string);
         }
     }
 
@@ -60,10 +55,8 @@ const Insert: React.FC = () => {
             return (
                 <SqliteForm
                     dbConfig={dbConfig}
-                    uiState={{
-                        fileName: uiState.fileName,
-                    }}
-                    addLog={addLog}
+                    fileName={uiState.fileName}
+                    setFileName={(value: string) => updateUiStateField('fileName', value)}
                     updateDbConfigField={
                         (field: string, value: string) => {
                             updateDbConfigField(field as keyof typeof dbConfig, value);
@@ -83,9 +76,6 @@ const Insert: React.FC = () => {
                 dbConfig={dbConfig}
                 uiState={{
                     fileName: uiState.fileName,
-                }}
-                actions={{
-                    addLog
                 }}
                 updateDbConfigField={updateDbConfigField}
                 updateUiStateField={updateUiStateField}
@@ -110,7 +100,6 @@ const Insert: React.FC = () => {
                                     updateUiStateField(field as keyof typeof uiState, value);
                                 }
                             }
-                            addLog={addLog}
                         />
                     </div>
 
@@ -139,17 +128,11 @@ const Insert: React.FC = () => {
                         <ButtonGroupAction
                             dbConfig={dbConfig}
                             uiState={uiState}
-                            addLog={addLog}
                             updateUiStateField={updateUiStateField}
                             updateDbConfigField={updateDbConfigField}
                         />
                     </div>
                 </Card>
-
-                {/* Logs Section */}
-                <div className="bg-gray-50 p-4 rounded-lg shadow-inner">
-                    <Log histoLog={uiState.histoLog}/>
-                </div>
             </div>
         </div>
     );

@@ -1,6 +1,5 @@
+use crate::fileflow::action::insertion_mode::{fast_insert, optimized_insert};
 use crate::fileflow::database::connection::Connection;
-use crate::fileflow::action::fast_insert::fast_insert;
-use crate::fileflow::action::optimized_insert::optimized_insert;
 use crate::fileflow::stuct::insert_config::InsertConfig;
 use crate::fileflow::stuct::save_config::SaveConfig;
 use crate::fileflow::utils::constants::DATABASE_CONFIG_FILE;
@@ -20,11 +19,11 @@ pub struct DatabaseState(pub Mutex<Option<Connection>>);
 pub async fn insert_csv_data(
     state: State<'_, Arc<DatabaseState>>,
     csv: InsertConfig,
-) -> Result<String, String> {
+) -> Result<String, bool> {
     let conn_guard = state.0.lock().await;
 
     if conn_guard.is_none() {
-        return Err("No active database connection.".into());
+        return Err(false);
     }
 
     let connection: &Connection = conn_guard.as_ref().unwrap();
@@ -33,7 +32,12 @@ pub async fn insert_csv_data(
     let file: File = File::open(&csv.file_path).unwrap();
 
     let first_line: String = read_first_line(&csv.file_path).unwrap();
-    let separator: char = find_separator(&first_line)?;
+
+    let separator: char = match find_separator(&first_line) {
+        Ok(sep) => sep,
+        Err(_) => return Err(false),
+    };
+
     let final_columns_name: Vec<String> = get_formated_column_names(
         first_line
             .split(separator)
@@ -47,29 +51,36 @@ pub async fn insert_csv_data(
         .from_reader(file);
 
     let line_count: u64 = if csv.mode == "fast" {
-        fast_insert(
+        match fast_insert(
             connection,
             &mut reader,
             &final_columns_name,
             &csv.table_name,
             &csv.db_driver,
         )
-        .await?
+        .await
+        {
+            Ok(count) => count,
+            Err(_) => return Err(false),
+        }
     } else {
-        optimized_insert(
+        match optimized_insert(
             connection,
             &mut reader,
             &final_columns_name,
             &csv.table_name,
             &csv.db_driver,
         )
-        .await?
+        .await
+        {
+            Ok(count) => count,
+            Err(_) => return Err(false),
+        }
     };
 
     Ok(format!(
-        "Data inserted successfully in {:.2?}, {} rows inserted in table {}",
+        "Data inserted successfully in {:.2?}, {line_count} rows inserted in table {}",
         start.elapsed(),
-        line_count,
         csv.table_name
     ))
 }
@@ -93,9 +104,10 @@ pub async fn save_database_config(save: SaveConfig) -> Result<bool, bool> {
 
 #[command]
 pub async fn get_all_database_configs_name() -> Result<String, bool> {
-    let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE);
-    let configs_names: Vec<String> = configs.iter().map(|c| c.config_name.clone()).collect();
+    let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE); // Get all saved configs
+    let configs_names: Vec<String> = configs.iter().map(|c| c.config_name.clone()).collect(); // Get only the names
     let configs_json: String = match serde_json::to_string(&configs_names) {
+        // Convert to json string
         Ok(json) => json,
         Err(_) => return Err(false),
     };
@@ -104,10 +116,12 @@ pub async fn get_all_database_configs_name() -> Result<String, bool> {
 
 #[command]
 pub async fn load_database_config_by_name(name: String) -> Result<String, bool> {
-    let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE);
+    let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE); // Get all saved configs
     for config in configs.iter() {
+        // Find the config with the given name
         if config.config_name == name {
             return match serde_json::to_string(&config) {
+                // Convert to json string
                 Ok(json) => Ok(json),
                 Err(_) => Err(false),
             };

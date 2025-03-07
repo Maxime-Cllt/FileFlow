@@ -7,14 +7,14 @@ interface SelectDatabaseProps {
     updateUiStateField: (field: any, value: any) => void;
 }
 
-const databaseOptions = {
-    mysql: "MySQL",
-    mariadb: "MariaDB",
-    postgres: "Postgres",
-    sqlite: "SQLite",
-};
-
 const SelectDatabase: React.FC<SelectDatabaseProps> = (props: SelectDatabaseProps) => {
+
+    const databaseOptions = {
+        mysql: "MySQL",
+        mariadb: "MariaDB",
+        postgres: "Postgres",
+        sqlite: "SQLite",
+    };
 
     const handledbDriverChange = (value: string) => {
         const portMap: Record<string, string> = {mysql: '3306', mariadb: '3306', postgres: '5432'};

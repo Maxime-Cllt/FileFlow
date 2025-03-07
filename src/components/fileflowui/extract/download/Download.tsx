@@ -3,44 +3,66 @@ import SelectDatabaseConfig from "@/components/hooks/database/SelectDatabaseConf
 import {initialDbConfig} from "@/components/states/initialState.tsx";
 import {invoke} from "@tauri-apps/api/core";
 import {toast} from "sonner";
+import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group.tsx";
+import {Label} from "@/components/ui/label.tsx";
 
 
 const Download: React.FC = () => {
 
-    const [dbConfig, setDbConfig] = useState(initialDbConfig);
+        const [dbConfig, setDbConfig] = useState(initialDbConfig);
 
-    const [configName, setConfigName] = useState<string>('');
+        const [configName, setConfigName] = useState<string>('');
 
-    const [configList, setConfigList] = useState<Array<Item>>([]);
+        const [configList, setConfigList] = useState<Array<Item>>([]);
 
-    const [error, setError] = useState<string | null>(null);
-    const [loadingTables, setLoadingTables] = useState<boolean>(false);
-    const [loadingDownload, setLoadingDownload] = useState<boolean>(false);
-    const [connectionMode, setConnectionMode] = useState<'predefined' | 'manual'>('predefined');
-    const [selectedTable, setSelectedTable] = useState<string | null>(null);
+        const [uiState, setUiState] = useState({
+        });
 
-    const updateDbConfigField = (field: keyof typeof dbConfig, value: any) => {
-        setDbConfig(prev => ({...prev, [field]: value}));
-    }
+        const [error, setError] = useState<string | null>(null);
+        const [loadingTables, setLoadingTables] = useState<boolean>(false);
+        const [loadingDownload, setLoadingDownload] = useState<boolean>(false);
+        const [connectionMode, setConnectionMode] = useState<'predefined' | 'manual'>('predefined');
+        const [selectedTable, setSelectedTable] = useState<string | null>(null);
 
-    const updateConfigName = (name: string) => {
-        setConfigName(name);
-    }
+        const updateDbConfigField = (field: keyof typeof dbConfig, value: any) => {
+            setDbConfig(prev => ({...prev, [field]: value}));
+        }
 
-    function handleConnect() {
+        const updateUiStateField = (field: keyof typeof uiState, value: any) => {
+            setUiState(prev => ({...prev, [field]: value}));
+        };
 
 
-    }
+        const updateConfigName = (name: string) => {
+            setConfigName(name);
+        }
 
-    function handleDownload() {
+        function handleConnect() {
 
-    }
+            if (connectionMode === 'predefined') {
+                toast.success(configName)
+            } else if (connectionMode === 'manual') {
+                if (!dbConfig.db_host || !dbConfig.db_name || !dbConfig.username || !dbConfig.password) {
+                    setError('Please fill all fields');
+                    return;
+                }
+            }
+        }
 
-    const getAllConfigs = async () => {
-        try {
-            const response = await invoke('get_all_database_configs_name');
-            if (typeof response === 'string') {
-                const configs = JSON.parse(response);
+
+        function handleDownload() {
+
+        }
+
+        const getAllConfigs = async () => {
+            try {
+                const response: string | boolean = await invoke<string | boolean>('get_all_database_configs_name');
+
+                if (!response) {
+                    throw new Error('Error getting all configs');
+                }
+
+                const configs = JSON.parse(response as string);
                 let configList: Array<Item> = [];
                 for (let i = 0; i < configs.length; i++) {
                     configList.push({
@@ -48,70 +70,60 @@ const Download: React.FC = () => {
                     });
                 }
                 setConfigList(configList);
+            } catch
+                (error) {
+                toast.error('Error getting all configs');
             }
-        } catch (error) {
-            toast.error('Error getting all configs');
-        }
-    };
+        };
 
-    useEffect(() => {
-        getAllConfigs();
-    }, []);
+        useEffect(() => {
+            getAllConfigs();
+        }, []);
 
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-r bg-gray-100 p-4">
+        return (
+            <div className="h-full w-full flex items-center justify-center p-4">
+                <div className="bg-white shadow-2xl rounded-lg p-8 w-full max-w-3xl">
+                    {error && (
+                        <div className="bg-red-200 text-red-700 px-4 py-2 rounded mb-4">
+                            {error}
+                        </div>
+                    )}
 
-            <div className="bg-white shadow-2xl rounded-lg p-8 w-full max-w-3xl">
-                <h1 className="text-3xl font-bold text-center text-gray-800 mb-6">
-                    Téléchargement du contenu d'une table
-                </h1>
-                {error && (
-                    <div className="bg-red-200 text-red-700 px-4 py-2 rounded mb-4">
-                        {error}
-                    </div>
-                )}
-
-                {/* Section choix du mode de connexion */}
-                <div className="mb-6">
-                    <h2 className="text-xl font-semibold text-gray-700 mb-2">Mode de connexion</h2>
-                    <div className="flex space-x-4">
-                        <label className="inline-flex items-center">
-                            <input
-                                type="radio"
-                                name="connectionMode"
-                                value="predefined"
-                                checked={connectionMode === 'predefined'}
-                                onChange={() => setConnectionMode('predefined')}
-                                className="form-radio text-blue-500"
-                            />
-                            <span className="ml-2">Prédéfinie</span>
-                        </label>
-                        <label className="inline-flex items-center">
-                            <input
-                                type="radio"
-                                name="connectionMode"
-                                value="manual"
-                                checked={connectionMode === 'manual'}
-                                onChange={() => setConnectionMode('manual')}
-                                className="form-radio text-blue-500"
-                            />
-                            <span className="ml-2">Manuelle</span>
-                        </label>
-                    </div>
-                </div>
-
-                {/* Section de configuration */}
-                {connectionMode === 'predefined' ? (
+                    {/* Section choix du mode de connexion */}
                     <div className="mb-6">
-                        <label htmlFor="predefined" className="block text-gray-700 font-medium mb-2">
-                            Choisir une connexion prédéfinie
-                        </label>
-                        <SelectDatabaseConfig
-                            updateConfigName={updateConfigName}
-                            configName={configName}
-                            configNameList={configList}
-                        />
+                        <h2 className="text-xl font-semibold text-gray-700 mb-2">Connection mode</h2>
+                        <div className="flex space-x-4 justify-center">
+                            <RadioGroup defaultValue="fast" className="flex justify-center gap-10"
+                                        onValueChange={(e: string): void => {
+                                            if (e === "manual" || e === "predefined") {
+                                                setConnectionMode(e);
+                                            }
+                                        }
+                                        }>
+                                <div className="space-x-2">
+                                    <RadioGroupItem value="predefined" id="r1"/>
+                                    <Label htmlFor="r1">Saved configurations</Label>
+                                </div>
+                                <div className="space-x-2">
+                                    <RadioGroupItem value="manual" id="r2"/>
+                                    <Label htmlFor="r2">Manual</Label>
+                                </div>
+                            </RadioGroup>
+                        </div>
                     </div>
+
+                    {/* Section de configuration */}
+                    {connectionMode === 'predefined' ? (
+                        <div className="mb-6">
+                            <label htmlFor="predefined" className="block text-gray-700 font-medium mb-2">
+                                Choose a predefined configuration
+                            </label>
+                            <SelectDatabaseConfig
+                                updateConfigName={updateConfigName}
+                                configName={configName}
+                                configNameList={configList}
+                            />
+                        </div>
 
                 ) : (
                     <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -183,52 +195,53 @@ const Download: React.FC = () => {
                     </div>
                 )}
 
-                {/* Bouton pour se connecter et charger les tables */}
-                <div className="flex justify-center mb-6">
-                    <button
-                        onClick={handleConnect}
-                        disabled={loadingTables}
-                        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded focus:outline-none focus:ring"
-                    >
-                        {loadingTables ? "Connexion en cours..." : "Se connecter"}
-                    </button>
-                </div>
+                    {/* Bouton pour se connecter et charger les tables */}
+                    <div className="flex justify-center mb-6">
+                        <button
+                            onClick={handleConnect}
+                            disabled={loadingTables}
+                            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded focus:outline-none focus:ring"
+                        >
+                            {loadingTables ? "Connexion en cours..." : "Se connecter"}
+                        </button>
+                    </div>
 
-                {/* Affichage des tables récupérées */}
-                {/*{tables.length > 0 && (*/}
-                {/*    <div className="mb-6">*/}
-                {/*        <h2 className="text-xl font-semibold text-gray-700 mb-2">*/}
-                {/*            Tables disponibles ({tables.length})*/}
-                {/*        </h2>*/}
-                {/*        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">*/}
-                {/*            {tables.map((table, idx) => (*/}
-                {/*                <div*/}
-                {/*                    key={idx}*/}
-                {/*                    onClick={() => setSelectedTable(table)}*/}
-                {/*                    className={`cursor-pointer p-4 rounded shadow hover:shadow-lg transition ${*/}
-                {/*                        selectedTable === table ? "bg-green-100 border-2 border-green-500" : "bg-gray-50"*/}
-                {/*                    }`}*/}
-                {/*                >*/}
-                {/*                    {table}*/}
-                {/*                </div>*/}
-                {/*            ))}*/}
-                {/*        </div>*/}
-                {/*    </div>*/}
-                {/*)}*/}
+                    {/* Affichage des tables récupérées */}
+                    {/*{tables.length > 0 && (*/}
+                    {/*    <div className="mb-6">*/}
+                    {/*        <h2 className="text-xl font-semibold text-gray-700 mb-2">*/}
+                    {/*            Tables disponibles ({tables.length})*/}
+                    {/*        </h2>*/}
+                    {/*        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">*/}
+                    {/*            {tables.map((table, idx) => (*/}
+                    {/*                <div*/}
+                    {/*                    key={idx}*/}
+                    {/*                    onClick={() => setSelectedTable(table)}*/}
+                    {/*                    className={`cursor-pointer p-4 rounded shadow hover:shadow-lg transition ${*/}
+                    {/*                        selectedTable === table ? "bg-green-100 border-2 border-green-500" : "bg-gray-50"*/}
+                    {/*                    }`}*/}
+                    {/*                >*/}
+                    {/*                    {table}*/}
+                    {/*                </div>*/}
+                    {/*            ))}*/}
+                    {/*        </div>*/}
+                    {/*    </div>*/}
+                    {/*)}*/}
 
-                {/* Bouton de téléchargement */}
-                <div className="flex justify-center">
-                    <button
-                        onClick={handleDownload}
-                        disabled={loadingDownload || !selectedTable}
-                        className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded focus:outline-none focus:ring"
-                    >
-                        {loadingDownload ? "Téléchargement en cours..." : "Télécharger la table"}
-                    </button>
+                    {/* Bouton de téléchargement */}
+                    <div className="flex justify-center">
+                        <button
+                            onClick={handleDownload}
+                            disabled={loadingDownload || !selectedTable}
+                            className="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded focus:outline-none focus:ring"
+                        >
+                            {loadingDownload ? "Téléchargement en cours..." : "Télécharger la table"}
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
-    );
-};
+        );
+    }
+;
 
 export default Download;

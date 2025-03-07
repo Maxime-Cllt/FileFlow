@@ -2,9 +2,10 @@ import React from 'react';
 import {Input} from "@/components/ui/input.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {HardDrive} from "lucide-react";
-import SelectDatabase from "@/components/hooks/database/SelectDatabase.tsx";
+import SelectDBMS from "@/components/hooks/database/SelectDatabase.tsx";
 import FileUpload from "@/components/hooks/file/FileUpload.tsx";
 import * as dialog from "@tauri-apps/plugin-dialog";
+import {toast} from "sonner";
 
 interface SqliteFormProps {
     dbConfig: {
@@ -12,12 +13,10 @@ interface SqliteFormProps {
         db_driver: string;
         tableName: string;
     };
-    uiState: {
-        fileName: string;
-    };
-    addLog: (message: string) => void;
-    updateUiStateField: (field: string, value: any) => void;
     updateDbConfigField: (field: string, value: any) => void;
+    updateUiStateField: (field: string, value: any) => void;
+    fileName: string;
+    setFileName: (value: string) => void;
 }
 
 const SqliteForm: React.FC<SqliteFormProps> = (props: SqliteFormProps) => {
@@ -32,7 +31,7 @@ const SqliteForm: React.FC<SqliteFormProps> = (props: SqliteFormProps) => {
                 props.updateDbConfigField("sqlite_file_path", selectedFilePath);
             }
         } catch (error) {
-            props.addLog(`Error opening file dialog: ${error}`);
+            toast.error("Failed to open file");
         }
     };
 
@@ -57,7 +56,7 @@ const SqliteForm: React.FC<SqliteFormProps> = (props: SqliteFormProps) => {
                 </div>
 
                 <div className="mt-4 w-1/4">
-                    <SelectDatabase
+                    <SelectDBMS
                         db_driver={props.dbConfig.db_driver}
                         updateDbConfigField={props.updateDbConfigField}
                         updateUiStateField={props.updateUiStateField}
@@ -84,14 +83,13 @@ const SqliteForm: React.FC<SqliteFormProps> = (props: SqliteFormProps) => {
 
             {/* File Upload Component */}
             <FileUpload
-                fileName={props.uiState.fileName}
+                fileName={props.fileName}
                 tableName={props.dbConfig.tableName}
                 updateDbConfigField={props.updateDbConfigField}
-                updateUiStateField={props.updateUiStateField}
+                updateUiStateField={props.setFileName}
             />
         </div>
-    )
-        ;
+    );
 };
 
 export default SqliteForm;

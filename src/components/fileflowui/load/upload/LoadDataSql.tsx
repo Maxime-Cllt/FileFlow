@@ -1,8 +1,18 @@
 import React from 'react';
-import {generateSqlConfig} from "@/components/states/generateSqlConfig.tsx";
-import FormLoadData from "@/components/fileflowui/load/upload/FormLoadData.tsx";
+import {Input} from "@/components/ui/input.tsx";
+import SelectDBMS from "@/components/hooks/database/SelectDatabase.tsx";
+import FileUpload from "@/components/hooks/file/FileUpload.tsx";
+import LoadButtonGroupAction from "@/components/fileflowui/load/upload/LoadButtonGroupAction.tsx";
 
 const LoadDataSql: React.FC = () => {
+
+    const generateSqlConfig = {
+        tableName: '',
+        db_driver: '',
+        filePath: '',
+        fileName: '',
+        sql: ''
+    };
 
     const [generateSQL, setGenerateSQL] = React.useState(generateSqlConfig);
 
@@ -17,11 +27,78 @@ const LoadDataSql: React.FC = () => {
         <div className="h-full w-full">
 
             {/* Load Data Form */}
-            <div className="p-4 md:p-8 mt-6">
-                <FormLoadData
-                    generateSQL={generateSQL}
-                    updateGenerateSQL={updateGenerateSQL}
-                />
+            <div className="pt-8 px-4 md:px-8 mt-6">
+
+                <form className="space-y-6 p-6 rounded-lg shadow-lg bg-white  mx-auto">
+
+                    {/* Table Name Input */}
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Table Name</label>
+                        <Input
+                            type="text"
+                            autoComplete="off"
+                            autoCorrect="off"
+                            value={generateSQL.tableName}
+                            placeholder="Enter table name"
+                            required
+                            onChange={(e) => updateGenerateSQL('tableName', e.target.value)}
+                            className="w-full rounded-lg border border-gray-300 p-2 focus:ring-2 focus:ring-green-500"
+                        />
+                    </div>
+
+                    {/* Database Selection */}
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Database Type</label>
+                        <SelectDBMS
+                            db_driver={generateSQL.db_driver}
+                            updateDbConfigField={
+                                (field: string, value: string) => {
+                                    updateGenerateSQL(field, value);
+                                }
+                            }
+                            updateUiStateField={() => {
+                            }}
+                        />
+                    </div>
+
+                    {/* File Upload Section */}
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Upload File</label>
+                        <FileUpload
+                            fileName={generateSQL.fileName}
+                            tableName={generateSQL.tableName}
+                            updateDbConfigField={
+                                (field: string, value: string) => {
+                                    updateGenerateSQL(field, value);
+                                }
+                            }
+                            updateUiStateField={(field: string, value: string) => {
+                                updateGenerateSQL(field, value);
+                            }
+                            }
+                        />
+                    </div>
+
+                    {/* Action Buttons */}
+                    <LoadButtonGroupAction
+                        generateSQL={generateSQL}
+                        updateGenerateSQL={updateGenerateSQL}
+                    />
+
+                    {/* Textarea for Generated SQL */}
+                    <div className="mb-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Generated SQL</label>
+                        <textarea
+                            className="w-full p-2 rounded-lg border border-gray-300 shadow-md focus:ring-2 focus:ring-blue-500"
+                            rows={10}
+                            value={generateSQL.sql}
+                            onChange={(e) => updateGenerateSQL('sql', e.target.value)}
+                            placeholder="Your generated SQL will appear here..."
+                        />
+                    </div>
+
+                </form>
+
             </div>
 
         </div>

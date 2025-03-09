@@ -45,16 +45,19 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = (props: DataBaseDialogProp
 
     const loadConfig = async (config_name: string) => {
         try {
-            const response = await invoke('load_database_config_by_name', {
+            const response = await invoke<string | boolean>('load_database_config_by_name', {
                 name: config_name,
             });
-            if (typeof response === "string") {
-                const loadDbConfig = JSON.parse(response);
-                for (const key in loadDbConfig) {
-                    props.updateDbConfigField(key, loadDbConfig[key]);
-                }
-                props.updateDbConfigField('is_connected', false);
+
+            if (typeof response === "boolean") {
+                throw new Error('Error loading config');
             }
+
+            const loadDbConfig = JSON.parse(response);
+            for (const key in loadDbConfig) {
+                props.updateDbConfigField(key, loadDbConfig[key]);
+            }
+            props.updateDbConfigField('is_connected', false);
         } catch (error) {
             toast.error(error as string);
         }

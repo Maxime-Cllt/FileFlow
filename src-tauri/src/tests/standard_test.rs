@@ -40,8 +40,8 @@ async fn test_escape_values() {
 
 #[tokio::test]
 async fn test_read_first_line() {
-    let csv_file_path: String = generate_csv_file("test_read_first_line").unwrap();
-    let first_line: String = read_first_line(&csv_file_path).unwrap();
+    let csv_file_path: String = generate_csv_file("test_read_first_line").expect("Failed to generate csv file");
+    let first_line: String = read_first_line(&csv_file_path).expect("Failed to read first line");
     assert_eq!(first_line, "header1,header2");
-    let _ = remove_csv_file(String::from("test_read_first_line"));
+    let _ = remove_csv_file("test_read_first_line");
 }

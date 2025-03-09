@@ -8,6 +8,7 @@ use crate::fileflow::utils::fileflowlib::{
 };
 use crate::fileflow::utils::sql::{get_create_statement_with_fixed_size, get_drop_statement};
 use csv::{Reader, ReaderBuilder, StringRecord};
+use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::fs::File;
 use std::sync::Arc;
@@ -78,7 +79,7 @@ pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, St
     );
 
     let mut columns_size_map: HashMap<&str, usize> = HashMap::new();
-    for header in &final_columns_name {
+    for header in final_columns_name.iter() {
         columns_size_map.insert(header, 0);
     }
 
@@ -170,4 +171,21 @@ pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String
         Ok(json) => Ok(json),
         Err(_) => Err(false),
     }
+}
+
+#[command]
+pub async fn get_table_list(state: State<'_, Arc<DatabaseState>>) -> Result<Value, bool> {
+    let conn_guard = state.0.lock().await;
+
+    if conn_guard.is_none() {
+        return Err(false);
+    }
+
+    Ok(json!([
+        { "value": "next.js", "label": "Next.js" },
+        { "value": "sveltekit", "label": "SvelteKit" },
+        { "value": "nuxt.js", "label": "Nuxt.js" },
+        { "value": "remix", "label": "Remix" },
+        { "value": "astro", "label": "Astro" }
+    ]))
 }

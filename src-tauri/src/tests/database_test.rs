@@ -1,4 +1,4 @@
-use crate::fileflow::database::connection::Connection;
+use crate::fileflow::database::connection::{Connection, QueryResult};
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::load_data_struct::GenerateLoadData;
 use crate::fileflow::utils::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
@@ -12,6 +12,7 @@ use crate::tests::utils::{
     get_test_pg_config, get_test_sqlite_config, remove_test_db,
 };
 use sqlx::testing::TestTermination;
+use sqlx::{Error, Row};
 use std::collections::HashMap;
 
 #[tokio::test]
@@ -41,12 +42,12 @@ async fn test_get_connection_url() {
 
 #[tokio::test]
 async fn test_sqlite_connection() {
-    let file_path: String = create_test_db(String::from("sqlite_connection"));
+    let file_path: String = create_test_db("sqlite_connection");
     let config: DbConfig = get_test_sqlite_config(file_path);
     let conn = Connection::connect(&config).await;
     assert!(conn.is_success(), "Failed to connect to the database");
     assert!(conn.is_ok());
-    let _ = remove_test_db(String::from("sqlite_connection"));
+    let _ = remove_test_db("sqlite_connection");
 }
 
 #[tokio::test]
@@ -282,7 +283,7 @@ async fn test_build_load_data_postgres() {
     };
     let columns: Vec<String> = vec!["header1".into(), "header2".into()];
 
-    let expected_sql:String = format!(
+    let expected_sql: String = format!(
         "COPY test_table (header1, header2)\nFROM '{}'\nWITH (FORMAT csv, HEADER true, DELIMITER '{}', QUOTE '\"');",
         config.file_path, SEPARATOR
     );
@@ -310,4 +311,46 @@ async fn test_build_load_data_invalid_driver() {
         result.unwrap_err(),
         "Unsupported database driver for this operation"
     );
+}
+
+#[tokio::test]
+async fn test_query_many_with_result() {
+    let file_path: String = create_test_db("test_query_many_with_result");
+    let config: DbConfig = get_test_sqlite_config(file_path);
+    let conn: Result<Connection, Error> = Connection::connect(&config).await;
+    assert!(conn.is_success(), "Failed to connect to the database");
+    assert!(conn.is_ok());
+    let conn: Connection = conn.unwrap();
+
+    let sql_array: [&str; 3] = [
+        "DROP TABLE IF EXISTS test_table",
+        "CREATE TABLE test_table (header1 VARCHAR(10), header2 VARCHAR(10))",
+        "INSERT INTO test_table (header1, header2) VALUES ('value1', 'value2')",
+    ];
+
+    for sql in sql_array.iter() {
+        match conn.query(sql).await {
+            Ok(_) => {}
+            Err(e) => {
+                println!("Error: {:?} for query: {sql}", e);
+            }
+        }
+    }
+
+    let query_result: Result<QueryResult, Error> = conn
+        .query_many_with_result("SELECT * FROM test_table")
+        .await;
+    assert!(query_result.is_ok());
+
+    let query_result: QueryResult = query_result.unwrap();
+
+    match query_result {
+        QueryResult::SQLite(rows) => {
+            assert_eq!(rows.len(), 1);
+            assert_eq!(rows[0].len(), 2);
+        }
+        _ => {}
+    }
+
+    let _ = remove_test_db("test_query_many_with_result");
 }

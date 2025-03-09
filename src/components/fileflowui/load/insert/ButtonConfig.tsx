@@ -79,7 +79,6 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: Butt
 
             props.updateDbConfigField('is_connected', false);
             props.updateUiStateField('sqlite', loadDbConfig.sqlite_file_path.length > 0)
-            toast.success('Config loaded successfully');
         } catch (error) {
             toast.error(error as string);
         }

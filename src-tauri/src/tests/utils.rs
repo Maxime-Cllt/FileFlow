@@ -86,7 +86,7 @@ pub fn delete_config_file(config_file_name: &str) -> Result<(), Box<dyn Error>> 
 }
 
 /// Create a test SQLite database file if it does not exist and return the file path
-pub fn create_test_db(db_name: String) -> String {
+pub fn create_test_db(db_name: &str) -> String {
     let absolute_path: PathBuf =
         std::env::current_exe().expect("Failed to get current executable path");
     let path: &str = absolute_path
@@ -104,7 +104,7 @@ pub fn create_test_db(db_name: String) -> String {
 }
 
 /// Remove the test SQLite database file if it exists from its path
-pub fn remove_test_db(db_name: String) -> Result<(), Box<dyn Error>> {
+pub fn remove_test_db(db_name: &str) -> Result<(), Box<dyn Error>> {
     let absolute_path: PathBuf =
         std::env::current_exe().expect("Failed to get current executable path");
     let path: &str = absolute_path
@@ -153,7 +153,7 @@ pub fn generate_csv_file(file_name: &str) -> Result<String, Box<dyn Error>> {
 }
 
 /// Remove the CSV file with the given file name if it exists
-pub fn remove_csv_file(file_name: String) -> Result<(), Box<dyn Error>> {
+pub fn remove_csv_file(file_name: &str) -> Result<(), Box<dyn Error>> {
     let absolute_path: PathBuf =
         std::env::current_exe().expect("Failed to get current executable path");
     let path: &str = absolute_path

@@ -1,3 +1,4 @@
+use crate::fileflow::action::insertion_mode::fast_insert;
 use crate::fileflow::database::connection::Connection;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::save_config::SaveConfig;
@@ -11,11 +12,10 @@ use csv::{Reader, ReaderBuilder};
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Pool, Row, Sqlite};
 use std::fs::File;
-use crate::fileflow::action::insertion_mode::fast_insert;
 
 #[tokio::test]
 async fn test_fast_insert() {
-    let sqlite_file_path: String = create_test_db("fast_insert".into());
+    let sqlite_file_path: String = create_test_db("fast_insert");
 
     let config: DbConfig = get_test_sqlite_config(sqlite_file_path.clone());
     let conn: Result<Connection, Error> = Connection::connect(&config).await;
@@ -24,7 +24,8 @@ async fn test_fast_insert() {
 
     let conn: Connection = conn.unwrap();
 
-    let csv_file_path: String = generate_csv_file("test_fast_insert").unwrap();
+    let csv_file_path: String =
+        generate_csv_file("test_fast_insert").expect("Failed to generate csv file");
 
     let snake_case_headers: Vec<String> = vec!["header1".into(), "header2".into()];
     let final_table_name: &str = "test_table";
@@ -77,8 +78,8 @@ async fn test_fast_insert() {
     assert_ne!(value1, "value3");
     assert_ne!(value2, "value4");
 
-    let _ = remove_test_db("fast_insert".into());
-    let _ = remove_csv_file("test_fast_insert".into());
+    let _ = remove_test_db("fast_insert");
+    let _ = remove_csv_file("test_fast_insert");
 }
 
 #[tokio::test]

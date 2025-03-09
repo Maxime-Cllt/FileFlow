@@ -16,6 +16,7 @@ use fileflow::action::database_actions::{
 };
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use crate::fileflow::action::database_actions::get_table_list;
 
 fn main() {
     let database_state: Arc<DatabaseState> = Arc::new(DatabaseState(Mutex::new(None)));
@@ -34,7 +35,8 @@ fn main() {
             execute_sql,
             is_connected,
             get_all_database_configs_name,
-            delete_database_config
+            delete_database_config,
+            get_table_list
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

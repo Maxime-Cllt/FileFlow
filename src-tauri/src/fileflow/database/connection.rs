@@ -8,6 +8,12 @@ pub enum ConnectionEnum {
     SQLite(SqlitePool),
 }
 
+pub enum QueryResult {
+    Postgres(Vec<sqlx::postgres::PgRow>),
+    MySQL(Vec<sqlx::mysql::MySqlRow>),
+    SQLite(Vec<sqlx::sqlite::SqliteRow>),
+}
+
 pub struct Connection {
     pub db_config: DbConfig,
     pub connection: ConnectionEnum,
@@ -41,6 +47,32 @@ impl Connection {
 
     pub const fn get_db_config(&self) -> &DbConfig {
         &self.db_config
+    }
+
+    /// Executes a query and returns the query result wrapped in a QueryResult enum.
+    pub async fn query_many_with_result(&self, query: &str) -> Result<QueryResult, Error> {
+        match &self.connection {
+            ConnectionEnum::Postgres(pool) => {
+                let rows = sqlx::query(query).fetch_all(pool).await?;
+                Ok(QueryResult::Postgres(rows))
+            }
+            ConnectionEnum::MySQL(pool) => {
+                let rows = sqlx::query(query).fetch_all(pool).await?;
+                Ok(QueryResult::MySQL(rows))
+            }
+            ConnectionEnum::SQLite(pool) => {
+                let rows = sqlx::query(query).fetch_all(pool).await?;
+                Ok(QueryResult::SQLite(rows))
+            }
+        }
+    }
+
+    pub fn get_pool(&self) -> Result<ConnectionEnum, Error> {
+        match &self.connection {
+            ConnectionEnum::Postgres(pool) => Ok(ConnectionEnum::Postgres(pool.clone())),
+            ConnectionEnum::MySQL(pool) => Ok(ConnectionEnum::MySQL(pool.clone())),
+            ConnectionEnum::SQLite(pool) => Ok(ConnectionEnum::SQLite(pool.clone())),
+        }
     }
 
     pub async fn query(&self, query: &str) -> Result<(), Error> {
@@ -92,7 +124,6 @@ impl Connection {
         }
     }
 
-    // Drop the connection
     pub fn disconnect(&self) {
         match &self.connection {
             ConnectionEnum::Postgres(pool) => {

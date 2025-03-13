@@ -1,11 +1,4 @@
-import {
-    Menubar,
-    MenubarContent,
-    MenubarItem,
-    MenubarMenu,
-    MenubarSeparator,
-    MenubarTrigger
-} from "@/components/ui/menubar.tsx";
+import {Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarTrigger} from "@/components/ui/menubar.tsx";
 import React from "react";
 import {Link} from "react-router-dom";
 
@@ -17,39 +10,42 @@ const Menu: React.FC = () => {
 
                 {/* Upload Menu */}
                 <MenubarMenu>
+                    <Link to={"/download"}>
                     <MenubarTrigger className={"cursor-pointer"}>Extract</MenubarTrigger>
-                    <MenubarContent>
-
-                        <Link to={"/download"}>
-                            <MenubarItem>Download</MenubarItem>
-                        </Link>
-                    </MenubarContent>
+                    </Link>
+                    {/*<MenubarContent>*/}
+                    {/*    <Link to={"/download"}>*/}
+                    {/*        <MenubarItem>Download</MenubarItem>*/}
+                    {/*    </Link>*/}
+                    {/*</MenubarContent>*/}
                 </MenubarMenu>
 
                 {/* Upload Menu */}
                 <MenubarMenu>
-                    <MenubarTrigger className={"cursor-pointer"}>Load</MenubarTrigger>
-                    <MenubarContent>
-                        {/* Download menu items */}
-                        <Link to={"/"}>
-                            <MenubarItem>Upload</MenubarItem>
-                        </Link>
-
-                        <MenubarSeparator />
-
-                        {/* Load menu items */}
-                        <Link to={"/upload"}>
-                            <MenubarItem>Load</MenubarItem>
-                        </Link>
-
-                    </MenubarContent>
+                    <Link to={"/"}>
+                        <MenubarTrigger className={"cursor-pointer"}>Load</MenubarTrigger>
+                    </Link>
+                    {/*<MenubarContent>*/}
+                    {/*    /!* Download menu items *!/*/}
+                    {/*    <Link to={"/"}>*/}
+                    {/*        <MenubarItem>Upload</MenubarItem>*/}
+                    {/*    </Link>*/}
+                    {/*</MenubarContent>*/}
                 </MenubarMenu>
 
                 {/* Help Menu */}
                 <MenubarMenu>
-                    <Link to={"/help"}>
-                        <MenubarTrigger className={"cursor-pointer"}>Help</MenubarTrigger>
-                    </Link>
+                    <MenubarTrigger className={"cursor-pointer"}>Help</MenubarTrigger>
+                    <MenubarContent>
+
+                        <Link to={"/help-insert"}>
+                            <MenubarItem>Help for Insert</MenubarItem>
+                        </Link>
+
+                        <Link to={"/help-download"}>
+                            <MenubarItem>Help for Download</MenubarItem>
+                        </Link>
+                    </MenubarContent>
                 </MenubarMenu>
 
                 {/* About Menu */}

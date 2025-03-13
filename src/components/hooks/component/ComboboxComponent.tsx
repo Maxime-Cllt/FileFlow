@@ -1,14 +1,15 @@
 import * as React from "react"
 import {Check, ChevronsUpDown} from "lucide-react"
 
-import {cn} from "@/lib/utils"
-import {Button} from "@/components/ui/button"
-import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,} from "@/components/ui/command"
-import {Popover, PopoverContent, PopoverTrigger,} from "@/components/ui/popover"
+import {cn} from "@/lib/utils.ts"
+import {Button} from "@/components/ui/button.tsx"
+import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,} from "@/components/ui/command.tsx"
+import {Popover, PopoverContent, PopoverTrigger,} from "@/components/ui/popover.tsx"
 
 
 interface ComboboxComponentProps {
     lists: Array<ComboItem>
+    setSelectedValue: (value: string) => void
 }
 
 export function ComboboxComponent(props: ComboboxComponentProps) {
@@ -43,6 +44,7 @@ export function ComboboxComponent(props: ComboboxComponentProps) {
                                     onSelect={(currentValue) => {
                                         setValue(currentValue === value ? "" : currentValue)
                                         setOpen(false)
+                                        props.setSelectedValue(currentValue)
                                     }}
                                 >
                                     <Check

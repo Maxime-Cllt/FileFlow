@@ -1,19 +1,20 @@
 use crate::fileflow::database::connection::{Connection, QueryResult};
 use crate::fileflow::stuct::db_config::DbConfig;
-use crate::fileflow::stuct::load_data_struct::GenerateLoadData;
+use crate::fileflow::stuct::download_config::DownloadConfig;
 use crate::fileflow::utils::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
-use crate::fileflow::utils::fileflowlib::{build_load_data, get_formated_column_names};
+use crate::fileflow::utils::fileflowlib::get_formated_column_names;
 use crate::fileflow::utils::sql::{
-    get_create_statement, get_create_statement_with_fixed_size, get_drop_statement,
-    get_insert_into_statement,
+    export_table, get_all_tables_query, get_create_statement, get_create_statement_with_fixed_size,
+    get_drop_statement, get_insert_into_statement,
 };
 use crate::tests::utils::{
-    create_test_db, generate_csv_file, get_test_maridb_config, get_test_mysql_config,
-    get_test_pg_config, get_test_sqlite_config, remove_test_db,
+    create_test_db, get_test_maridb_config, get_test_mysql_config, get_test_pg_config,
+    get_test_sqlite_config, remove_test_db,
 };
 use sqlx::testing::TestTermination;
 use sqlx::{Error, Row};
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 #[tokio::test]
 async fn test_get_connection_url() {
@@ -250,70 +251,6 @@ async fn test_get_formated_column_names() {
 }
 
 #[tokio::test]
-async fn test_build_load_data_mysql() {
-    let file_path: String = generate_csv_file("test_build_load_data_mysql").unwrap();
-    let config = GenerateLoadData {
-        file_path,
-        db_driver: MYSQL.into(),
-        table_name: String::from("test_table"),
-    };
-    let separator: char = ',';
-    let columns: Vec<String> = vec!["header1".into(), "header2".into()];
-
-    let expected_sql = format!(
-        "LOAD DATA INFILE '{}'\nINTO TABLE test_table\nCHARACTER SET utf8\nFIELDS TERMINATED BY '{}'\nENCLOSED BY '\"'\nLINES TERMINATED BY '\\n'\nIGNORE 1 ROWS (header1, header2);",
-        config.file_path, separator
-    );
-
-    let result = build_load_data(config, separator, columns);
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap(), expected_sql);
-}
-
-#[tokio::test]
-async fn test_build_load_data_postgres() {
-    const SEPARATOR: char = ',';
-
-    let file_path: String = generate_csv_file("test_build_load_data_postgres").unwrap();
-
-    let config = GenerateLoadData {
-        file_path,
-        db_driver: String::from(POSTGRES),
-        table_name: String::from("test_table"),
-    };
-    let columns: Vec<String> = vec!["header1".into(), "header2".into()];
-
-    let expected_sql: String = format!(
-        "COPY test_table (header1, header2)\nFROM '{}'\nWITH (FORMAT csv, HEADER true, DELIMITER '{}', QUOTE '\"');",
-        config.file_path, SEPARATOR
-    );
-
-    let result = build_load_data(config, SEPARATOR, columns);
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap(), expected_sql);
-}
-
-#[tokio::test]
-async fn test_build_load_data_invalid_driver() {
-    const SEPARATOR: char = ',';
-
-    let file_path: String = generate_csv_file("test_build_load_data_invalid_driver").unwrap();
-    let config = GenerateLoadData {
-        file_path,
-        db_driver: "invalid_driver".into(),
-        table_name: String::from("test_table"),
-    };
-    let columns: Vec<String> = vec!["header1".into(), "header2".into()];
-
-    let result = build_load_data(config, SEPARATOR, columns);
-    assert!(result.is_err());
-    assert_eq!(
-        result.unwrap_err(),
-        "Unsupported database driver for this operation"
-    );
-}
-
-#[tokio::test]
 async fn test_query_many_with_result() {
     let file_path: String = create_test_db("test_query_many_with_result");
     let config: DbConfig = get_test_sqlite_config(file_path);
@@ -344,13 +281,136 @@ async fn test_query_many_with_result() {
 
     let query_result: QueryResult = query_result.unwrap();
 
-    match query_result {
-        QueryResult::SQLite(rows) => {
-            assert_eq!(rows.len(), 1);
-            assert_eq!(rows[0].len(), 2);
-        }
-        _ => {}
+    if let QueryResult::SQLite(rows) = query_result {
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].len(), 2);
     }
 
     let _ = remove_test_db("test_query_many_with_result");
+}
+
+#[tokio::test]
+async fn test_get_all_tables_query() {
+    let test_cases = vec![
+        (
+            MYSQL,
+            Ok(
+                "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'test';"
+                    .into(),
+            ),
+        ),
+        (
+            MARIADB,
+            Ok(
+                "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'test';"
+                    .into(),
+            ),
+        ),
+        (
+            POSTGRES,
+            Ok(
+                "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'public';"
+                    .into(),
+            ),
+        ),
+        (
+            SQLITE,
+            Ok("SELECT name FROM sqlite_master WHERE type='table';".into()),
+        ),
+        ("oracle", Err("Unsupported database driver".into())),
+        ("invalid_driver", Err("Unsupported database driver".into())),
+    ];
+
+    for (driver, expected) in test_cases {
+        assert_eq!(
+            get_all_tables_query(driver, "test"),
+            expected,
+            "Failed for driver: {driver}"
+        );
+    }
+}
+
+#[tokio::test]
+async fn test_download_table() {
+    let file_path: String = create_test_db("test_download_table");
+    let config: DbConfig = get_test_sqlite_config(file_path);
+    let conn: Result<Connection, Error> = Connection::connect(&config).await;
+
+    assert!(conn.is_success(), "Failed to connect to the database");
+    assert!(conn.is_ok());
+
+    let conn: Connection = conn.unwrap();
+
+    const SQL_ARRAY: [&str; 4] = [
+        "DROP TABLE IF EXISTS test_table",
+        "CREATE TABLE test_table (header1 VARCHAR(10), header2 VARCHAR(10))",
+        "INSERT INTO test_table (header1, header2) VALUES ('value1', 'value2')",
+        "INSERT INTO test_table (header1, header2) VALUES ('value3', 'value4')",
+    ];
+
+    for sql in SQL_ARRAY.iter() {
+        if let Err(e) = conn.query(sql).await {
+            println!("Error: {:?} for query: {sql}", e);
+        }
+    }
+
+    let query_result: QueryResult = conn
+        .query_many_with_result("SELECT * FROM test_table")
+        .await
+        .unwrap();
+
+    if let QueryResult::SQLite(rows) = query_result {
+        assert_eq!(rows.len(), 2);
+        assert_eq!(rows[0].len(), 2);
+        assert_eq!(rows[1].len(), 2);
+    }
+
+    let download_config: DownloadConfig = DownloadConfig {
+        separator: ";".into(),
+        table_name: "test_table".into(),
+        location: "./".into(),
+    };
+
+    let file_path: PathBuf = PathBuf::from(format!(
+        "{}/{}_export.csv",
+        download_config.location, download_config.table_name
+    ));
+
+    export_table(&conn, download_config)
+        .await
+        .expect("Failed to export table");
+
+    // check if file exists
+    assert!(std::path::Path::new(&file_path).exists());
+
+    // get the content of the file
+    let content: String = std::fs::read_to_string(&file_path).expect("Failed to read file");
+    assert_eq!(
+        content, "header1;header2\nvalue1;value2\nvalue3;value4\n",
+        "Failed to export table"
+    );
+
+    let download_config: DownloadConfig = DownloadConfig {
+        separator: ",".into(),
+        table_name: "test_table".into(),
+        location: "./".into(),
+    };
+
+    export_table(&conn, download_config)
+        .await
+        .expect("Failed to export table");
+
+    // check if file exists
+    assert!(std::path::Path::new(&file_path).exists());
+
+    // get the content of the file
+    let content: String = std::fs::read_to_string(&file_path).expect("Failed to read file");
+    assert_eq!(
+        content, "header1,header2\nvalue1,value2\nvalue3,value4\n",
+        "Failed to export table"
+    );
+
+    // Clean up
+    std::fs::remove_file(&file_path).expect("Failed to remove file");
+    let _ = remove_test_db("test_download_table");
 }

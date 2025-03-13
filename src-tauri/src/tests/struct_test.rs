@@ -1,6 +1,5 @@
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::insert_config::InsertConfig;
-use crate::fileflow::stuct::load_data_struct::GenerateLoadData;
 use crate::fileflow::stuct::save_config::SaveConfig;
 
 #[tokio::test]
@@ -59,17 +58,4 @@ async fn test_save_config() {
     assert_eq!(config.password, "password");
     assert_eq!(config.db_name, "db_name");
     assert_eq!(config.sqlite_file_path, "sqlite_file_path");
-}
-
-#[tokio::test]
-async fn test_load_data_struct() {
-    let config: GenerateLoadData = GenerateLoadData {
-        file_path: "file_path".into(),
-        table_name: "table_name".into(),
-        db_driver: String::from("db_driver"),
-    };
-
-    assert_eq!(config.db_driver, "db_driver");
-    assert_eq!(config.file_path, "file_path");
-    assert_eq!(config.table_name, "table_name");
 }

@@ -23,6 +23,7 @@ pub async fn insert_csv_data(
     let conn_guard = state.0.lock().await;
 
     if conn_guard.is_none() {
+        eprint!("Error: Connection is not established");
         return Err(false);
     }
 
@@ -35,7 +36,10 @@ pub async fn insert_csv_data(
 
     let separator: char = match find_separator(&first_line) {
         Ok(sep) => sep,
-        Err(_) => return Err(false),
+        Err(_) => {
+            eprint!("Error: Separator not found");
+            return Err(false);
+        }
     };
 
     let final_columns_name: Vec<String> = get_formated_column_names(
@@ -61,7 +65,10 @@ pub async fn insert_csv_data(
         .await
         {
             Ok(count) => count,
-            Err(_) => return Err(false),
+            Err(_) => {
+                eprintln!("Error: Failed to insert data");
+                return Err(false);
+            }
         }
     } else {
         match optimized_insert(
@@ -156,14 +163,13 @@ pub async fn delete_database_config(name: String) -> Result<bool, bool> {
 }
 
 #[command]
-pub async fn get_size_of_file(file_path: String) -> Result<String, String> {
-    let metadata: Metadata =
-        std::fs::metadata(&file_path).map_err(|e| format!("Failed to get metadata: {e}"))?;
+pub async fn get_size_of_file(file_path: String) -> Result<String, bool> {
+    let metadata: Metadata = std::fs::metadata(&file_path).map_err(|_| false)?;
     if !metadata.is_file() {
-        return Err("Path is not a file".into());
+        return Err(false);
     }
     if metadata.len() == 0 {
-        return Err("File is empty".into());
+        return Err(false);
     }
     let size: f64 = metadata.len() as f64 / 1024.0 / 1024.0;
     Ok(format!("{size:.2} MB"))

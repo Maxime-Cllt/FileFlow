@@ -155,19 +155,26 @@ pub async fn fast_insert(
     const MAX_BATCH_SIZE: usize = 4000;
 
     // Drop the table if it exists
-    drop_table_if_exists(connection, db_driver, final_table_name).await?;
+    if let Err(err) = drop_table_if_exists(connection, db_driver, final_table_name).await {
+        eprintln!("Error: {err}");
+        return Err(err);
+    }
 
     // Create the table
-    execute_query(
+    if let Err(err) = execute_query(
         connection,
         get_create_statement(db_driver, final_table_name, final_columns_name)?.as_str(),
         "Failed to create table {final_table_name}",
-    )
-    .await?;
+    ).await {
+        eprintln!("Error: {err}");
+        return Err(err);
+    }
 
     let columns: &str = &final_columns_name.join(", ");
     let mut line_count: u64 = 0;
     let mut batch: Vec<String> = Vec::with_capacity(MAX_BATCH_SIZE);
+
+    println!("Inserting data");
 
     // Prepare the insert query
     let insert_query_base: &str = &get_insert_into_statement(db_driver, final_table_name, columns)?;
@@ -189,6 +196,8 @@ pub async fn fast_insert(
             batch.clear();
         }
     }
+
+    println!("Inserted batch");
 
     // Insert the remaining records if any
     batch_insert(

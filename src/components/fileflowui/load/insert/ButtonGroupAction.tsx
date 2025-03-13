@@ -1,7 +1,9 @@
 import React from 'react';
-import {Database, Eraser, Upload} from "lucide-react";
+import {Eraser, Upload} from "lucide-react";
 import {toast} from "sonner";
 import {invoke} from "@tauri-apps/api/core";
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
+import {log_error} from "@/components/hooks/utils.tsx";
 
 interface ButtonGroupProps {
     dbConfig: {
@@ -15,53 +17,50 @@ interface ButtonGroupProps {
         sqlite_file_path: string;
         is_connected: boolean;
     };
-    uiState: {
-        fileName: string;
-        filePath: string | null;
-        showLoader: boolean;
-        sqlite: boolean;
-        mode: string;
-    };
-    updateUiStateField: (field: any, value: any) => void;
     updateDbConfigField: (field: any, value: any) => void;
+    filePath: string;
+    setFilePath: (path: string) => void;
+    mode: string;
+    setMode: (mode: string) => void;
+    showLoader: boolean;
+    setShowLoader: (showLoader: boolean) => void;
 }
 
 const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) => {
 
     const handleInsert = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (!props.uiState.filePath) {
-            toast.warning('Please select a file');
-            return;
-        }
-
-        if (!props.dbConfig.is_connected) {
-            toast.warning('Please connect to the database');
-            return;
-        }
-
-        props.updateUiStateField('showLoader', true);
-
         try {
-            const response = await invoke<string | boolean>('insert_csv_data', {
+            if (!props.filePath) {
+                toast.warning('Please select a file');
+                return;
+            }
+
+            if (!props.dbConfig.is_connected) {
+                toast.warning('Please connect to the database');
+                return;
+            }
+
+            props.setShowLoader(true);
+
+            const insert_csv_data_response: string | boolean = await invoke<string | boolean>('insert_csv_data', {
                 csv: {
                     table_name: props.dbConfig.tableName,
-                    file_path: props.uiState.filePath,
+                    file_path: props.filePath,
                     db_driver: props.dbConfig.db_driver.toLowerCase(),
-                    mode: props.uiState.mode,
+                    mode: props.mode,
                 },
             });
 
-            if (typeof response === "boolean" && !response) {
+            if (typeof insert_csv_data_response !== "string") {
                 throw new Error('Error inserting data');
             }
 
-            toast.success('Data inserted successfully into ' + props.dbConfig.tableName);
+            toast.success(insert_csv_data_response);
         } catch (error) {
-            toast.error('Error inserting data');
+            log_error(error);
         }
-        props.updateUiStateField('showLoader', false);
+        props.setShowLoader(false);
     };
 
     const handleReset = () => {
@@ -75,113 +74,59 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
         props.updateDbConfigField('sqlite_file_path', '');
 
 
-        props.updateUiStateField('fileName', '');
-        props.updateUiStateField('filePath', null);
-        props.updateUiStateField('histoLog', '');
-        props.updateUiStateField('showLoader', false);
+        props.setMode('fast');
+        props.setFilePath('');
+        props.setShowLoader(false);
     };
 
-    const handleDeconnection = async (e: React.MouseEvent) => {
-        e.preventDefault();
-        try {
-            if (!props.dbConfig.is_connected) {
-                toast.warning('You are not connected to any database');
-                return;
-            }
-            const response = await invoke<boolean | string>('disconnect_from_database');
-
-            if (typeof response === 'boolean' && response) {
-                props.updateDbConfigField('is_connected', false);
-                toast.success('Disconnected successfully');
-            } else {
-                throw Error(response as string)
-            }
-        } catch (error) {
-            toast.error('Error disconnecting from database');
-        }
-    };
-
-    const handleConnection = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            if (props.dbConfig.is_connected) {
-                handleDeconnection(e as React.MouseEvent).then(() => {
-                    props.updateDbConfigField('is_connected', false);
-                });
-                return;
-            }
-
-            if (!props.dbConfig.db_driver && props.dbConfig.db_driver !== 'sqlite') {
-                if (!props.dbConfig.db_host || !props.dbConfig.port || !props.dbConfig.username) {
-                    toast.warning('Please fill in all the required fields');
-                    return;
-                }
-            } else if (props.dbConfig.db_driver === 'sqlite') {
-                if (!props.dbConfig.sqlite_file_path) {
-                    toast.warning('Please select a SQLite file');
-                    return;
-                }
-            }
-
-            const response = await invoke<string | boolean>('connect_to_database', {
-                config: {
-                    db_driver: props.dbConfig.db_driver.toLowerCase(),
-                    db_host: props.dbConfig.db_host,
-                    port: props.dbConfig.port,
-                    username: props.dbConfig.username,
-                    password: props.dbConfig.password,
-                    db_name: props.dbConfig.db_name,
-                    table_name: props.dbConfig.tableName,
-                    sqlite_file_path: props.dbConfig.sqlite_file_path,
-                },
-            });
-
-            if (typeof response === "string") {
-                throw Error(response);
-            }
-
-            toast.success('Connected successfully to the database');
-            props.updateDbConfigField('is_connected', true);
-        } catch (error) {
-            toast.error('Connection failed');
-        }
-    }
+    const insertOk: boolean = props.filePath !== "" && props.dbConfig.is_connected;
 
     return (
-        <div className="flex items-center justify-center gap-6 mb-6 p-4">
-            <button
-                onClick={handleConnection}
-                className={`flex items-center justify-center p-3 rounded-full shadow-lg transition duration-300 ${
-                    props.dbConfig.is_connected ? 'bg-green-500 hover:bg-green-600 text-white' : 'bg-red-500 text-white'
-                }`}
-                aria-label="Submit to Database"
+        <div className="flex items-center justify-center gap-x-6 mt-4 p-4">
 
-                title={props.dbConfig.is_connected ? "Submit data to the specified database" : "Connect to a database first"}
-            >
-                <Database className="w-5 h-5"/>
-            </button>
+            {/* Insert Data Button */}
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger>
+                        <button
+                            onClick={handleInsert}
+                            disabled={!insertOk}
+                            className={`flex items-center justify-center p-3 rounded-full shadow-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+                                ${
+                                insertOk
+                                    ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:opacity-90"
+                                    : "bg-gray-400 text-gray-700 cursor-not-allowed"
+                            }`}
+                        >
+                            <Upload className="w-6 h-6"/>
+                        </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        {props.dbConfig.is_connected ? "Insert data into database" : "Connect first"}
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
 
-            <button
-                onClick={handleInsert}
-                className={`flex items-center justify-center p-3 rounded-full shadow-lg transition duration-300 ${
-                    props.dbConfig.is_connected ? 'bg-blue-500 hover:bg-blue-600 text-white' : 'bg-gray-500 text-gray-700'
-                }`}
-                aria-label="Insert Data"
 
-                title={props.dbConfig.is_connected ? "Insert data to the specified database" : "Connect to a database first"}
-            >
-                <Upload className="w-5 h-5"/>
-            </button>
+            {/* Reset Button */}
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger>
+                        <button
+                            onClick={handleReset}
+                            className="flex items-center justify-center bg-yellow-500 hover:bg-yellow-600 text-white p-3 rounded-full shadow-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                            title="Reset form"
+                        >
+                            <Eraser className="w-6 h-6"/>
+                        </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        Reset form
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
 
-            <button
-                onClick={handleReset}
-                className="flex items-center justify-center bg-yellow-500 hover:bg-yellow-600 text-white p-3 rounded-full shadow-lg transition duration-300"
-                aria-label="Reset" title={"Reset the form"}
-            >
-                <Eraser className="w-5 h-5"/>
-            </button>
         </div>
-
     );
 };
 

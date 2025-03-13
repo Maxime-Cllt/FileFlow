@@ -4,35 +4,35 @@
   <div align="center">
     <img src="https://img.shields.io/badge/Rust-dea584?style=for-the-badge&logo=rust&logoColor=white" alt="Rust" />
     <img src="https://img.shields.io/badge/Tauri-ffc130?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri" />
-    <img src="https://img.shields.io/badge/Version-1.0.0-7073f6?style=for-the-badge" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-1.0.1-7073f6?style=for-the-badge" alt="Version" />
   </div>
 </div>
 
 <div align="center" style="margin-top: 20px">
-  <img src="/assets/FileFlowDemo.png" alt="FileFlow" height="250px" width="auto" />
-  <img src="/assets/Load_data.png" alt="FileFlow" height="250px" width="auto" />
+  <img src="/assets/Insert.png" alt="FileFlow Insert Mode" height="250px" width="auto" />
+  <img src="/assets/Download.png" alt="FileFlow Download Mode" height="250px" width="auto" />
 </div>
 
-## 📄 Description
+## 📖 About
 
 FileFlow is a simple and easy-to-use tool that allows you to insert data from a CSV file directly into a database table.
-With no privilege required for insertion, it simplifies the process while offering efficiency.
+With no special privileges required for data insertion, it streamlines the process while ensuring efficiency and
+security.
 
 Built with **Rust** and the **Tauri** framework, FileFlow is a **cross-platform** application available on **Windows**,
-**MacOS**, and **Linux**. 🚀
+**macOS**, and **Linux**. 🚀
 
-Check the **Release Section** for the latest version of the application.
+_Check out the [Release Section](#release) for the latest version of the application._
 
 ## 🌟 Features
 
-- ✅ Insert data into a **new table**
-- ✅ Insert data into an **existing table**
-- ✅ **Optimize** column types (e.g., `VARCHAR(MAX_LENGTH)`)
-- ✅ Insert data from a **CSV file**
-- ✅ Does **NOT** require **ANY** privileges for data insertion
-- ✅ Generate **LOAD DATA** SQL query for **faster insertion**
+- **Insert Data Easily**: Insert data into a **new table** or an **existing table** seamlessly.
+- **Optimized Data Types**: Automatically optimize column types (e.g., `VARCHAR(MAX_LENGTH)`).
+- **CSV File Support**: Directly insert data from CSV files.
+- **No Privilege Required**: Operates without requiring any special database privileges.
+- **Table Schema Export**: Download table schema as a CSV file for further analysis.
 
-## 🛠 Supported Databases
+## 🗄️ Supported Databases
 
 <div align="center">
   <img src="https://img.shields.io/badge/MySQL-00758F?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL" />
@@ -41,74 +41,48 @@ Check the **Release Section** for the latest version of the application.
   <img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite" />
 </div>
 
-## 📝 Requirements
+## ⚡ Installation
 
-- **Rust**
-- **Cargo**
-- **pnpm**
+1. **Clone the Repository:**
 
-You can follow the instructions on the [Tauri website](https://tauri.app/) to install **Rust** and **Cargo**.
+```bash
+git clone https://github.com/Maxime-Cllt/FileFlow.git
+```
 
-## 📥 Installation
+2. **Navigate to the Project Directory and Install Dependencies:**
 
-1. Clone the repository:
+```bash
+cd FileFlow
+pnpm install
+```
 
-    ```bash
-    git clone https://github.com/Maxime-Cllt/FileFlow.git
-    ```
+3. **Build the Application:**
 
-2. Install the dependencies:
+```bash
+pnpm tauri build
+```
 
-    ```bash
-    cd FileFlow
-    pnpm install
-    ```
+4. **Run the Application in Development Mode:**
 
-3. Build the application:
+```bash
+pnpm tauri dev
+```
 
-    ```bash
-    pnpm tauri build
-    ```
+## 🚀 Getting Started
 
-4. Run the application:
+To quickly test FileFlow:
 
-    ```bash
-    pnpm tauri dev
-    ```
-
-## 💡 Usage
-
-### 1. Insert Data
-
-- 📁 Select the **CSV file** you want to insert into the database.
-- 💻 Choose the **database** where you want to insert the data.
-- ➡️ Click the **"Insert"** button.
-- ⏳ Wait for the data to be inserted.
-- ✅ **Done!**
-
-### 2. Generate Load Data
-
-- 📁 Select the **CSV file** you want to insert into the database.
-- 🖱️ Click the **"Load"** button in the menu.
-- 📋 Copy the generated **SQL query**.
-- 🏃‍♂️ Run the query if your database supports it.
-- ✅ **Done!**
-
-## ⚙️ Modes of Data Insertion
-
-There are two modes for inserting data into the database:
-
-- **Optimized Mode**: Inserts data into a new table with optimized column types (e.g., `VARCHAR(MAX_LENGTH)`). 🛠️ This
-  mode may take longer but ensures the table structure is optimized.
-
-- **Fast Mode**: Inserts data into an existing table, keeping the original column types as they are in the CSV file. ⚡
-  This mode is quicker but may not optimize the column types.
-
-Additionally, you can generate a **LOAD DATA** SQL query for faster insertion if your database supports it. This method
-is much quicker than row-by-row insertion! 🚀
+1. **Prepare Your CSV File**: Ensure your CSV file is formatted correctly.
+2. **Configure Your Database Connection**: Use the built-in connection form to set up your database connection.
+3. **Select Insertion Mode**: Choose between Optimized Mode and Fast Mode based on your needs.
+4. **Upload and Insert**: Upload your CSV file and start the insertion process. Monitor progress with the on-screen
+   loader.
 
 ## 🤝 Contributing
 
-Want to contribute to the project? Feel free to open an issue or submit a pull request. We welcome contributions and
-ideas from the community! 💡
+Contributions are welcome! To contribute:
 
+- **Fork the Repository**
+- **Create a Feature Branch**:
+  ```bash
+  git checkout -b feature/your-feature-name

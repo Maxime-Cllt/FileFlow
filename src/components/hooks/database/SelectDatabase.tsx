@@ -4,7 +4,6 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/c
 interface SelectDatabaseProps {
     db_driver: string;
     updateDbConfigField: (field: any, value: any) => void;
-    updateUiStateField: (field: any, value: any) => void;
 }
 
 const SelectDatabase: React.FC<SelectDatabaseProps> = (props: SelectDatabaseProps) => {
@@ -20,7 +19,6 @@ const SelectDatabase: React.FC<SelectDatabaseProps> = (props: SelectDatabaseProp
         const portMap: Record<string, string> = {mysql: '3306', mariadb: '3306', postgres: '5432'};
         props.updateDbConfigField('port', portMap[value] || '');
         props.updateDbConfigField('db_driver', value);
-        props.updateUiStateField('sqlite', value === 'sqlite');
     };
 
     return (

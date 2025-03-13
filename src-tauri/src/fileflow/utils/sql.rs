@@ -1,6 +1,10 @@
-use crate::fileflow::database::connection::Connection;
+use crate::fileflow::database::connection::{Connection, QueryResult};
+use crate::fileflow::stuct::download_config::DownloadConfig;
 use crate::fileflow::utils::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
+use csv::{Writer, WriterBuilder};
+use sqlx::{Column, Row};
 use std::collections::HashMap;
+use std::fs::File;
 
 /// This function is used to generate the DROP TABLE statement for different database drivers.
 pub fn get_drop_statement(db_driver: &str, final_table_name: &str) -> Result<String, String> {
@@ -185,7 +189,7 @@ pub async fn create_and_copy_final_table(
         &create_final_table_query,
         "Failed to create final table",
     )
-        .await?;
+    .await?;
 
     let copy_data_query: String =
         get_copy_temp_to_final_table(db_driver, temporary_table_name, final_table_name)?;
@@ -195,7 +199,146 @@ pub async fn create_and_copy_final_table(
         &copy_data_query,
         "Failed to copy data to final table",
     )
-        .await?;
+    .await?;
 
+    Ok(())
+}
+
+/// Get the query to fetch all tables from the database for different drivers
+pub fn get_all_tables_query<'a>(driver: &'a str, schema: &'a str) -> Result<String, String> {
+    match &driver.to_lowercase()[..] {
+        MYSQL | MARIADB => Ok(format!(
+            "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{schema}';"
+        )),
+        POSTGRES => Ok(
+            "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'public';"
+                .into(),
+        ),
+        SQLITE => Ok("SELECT name FROM sqlite_master WHERE type='table';".into()),
+        _ => Err("Unsupported database driver".into()),
+    }
+}
+
+/// Exports a table’s data into a CSV file. It uses offset/LIMIT pagination to retrieve data in batches
+pub async fn export_table(
+    connection: &Connection,
+    download_config: DownloadConfig,
+) -> Result<(), Box<dyn std::error::Error>> {
+    const LIMIT: i32 = 5000;
+    let mut offset: i32 = 0;
+    let mut header_written: bool = false;
+
+    let file_path: String = format!(
+        "{}/{}_export.csv",
+        download_config.location, download_config.table_name
+    );
+
+    let separator: u8 = match &*download_config.separator {
+        "," => b',',
+        ";" => b';',
+        "|" => b'|',
+        _ => b',',
+    };
+
+    let mut wtr: Writer<File> = WriterBuilder::new()
+        .delimiter(separator)
+        .from_path(&file_path)
+        .expect("Failed to create CSV writer");
+
+    let base_sql: String = format!("SELECT * FROM {}", download_config.table_name);
+
+    loop {
+        let sql_query: String = format!("{} LIMIT {} OFFSET {}", base_sql, LIMIT, offset);
+        let query_result: QueryResult = connection.query_many_with_result(&sql_query).await?;
+
+        let (columns, rows): (Vec<String>, Vec<Vec<String>>) = match query_result {
+            QueryResult::MySQL(rows) => {
+                if rows.is_empty() {
+                    break;
+                }
+                let cols = rows[0]
+                    .columns()
+                    .iter()
+                    .map(|col| col.name().to_string())
+                    .collect::<Vec<_>>();
+                let data = rows
+                    .into_iter()
+                    .map(|row| {
+                        row.columns()
+                            .iter()
+                            .map(|col| {
+                                row.try_get::<Option<String>, _>(col.name())
+                                    .unwrap_or(None)
+                                    .unwrap_or_default()
+                            })
+                            .collect::<Vec<_>>()
+                    })
+                    .collect();
+                (cols, data)
+            }
+            QueryResult::Postgres(rows) => {
+                if rows.is_empty() {
+                    break;
+                }
+                let cols = rows[0]
+                    .columns()
+                    .iter()
+                    .map(|col| col.name().to_string())
+                    .collect::<Vec<_>>();
+                let data = rows
+                    .into_iter()
+                    .map(|row| {
+                        row.columns()
+                            .iter()
+                            .map(|col| {
+                                row.try_get::<Option<String>, _>(col.name())
+                                    .unwrap_or(None)
+                                    .unwrap_or_default()
+                            })
+                            .collect::<Vec<_>>()
+                    })
+                    .collect();
+                (cols, data)
+            }
+            QueryResult::SQLite(rows) => {
+                if rows.is_empty() {
+                    break;
+                }
+                let cols = rows[0]
+                    .columns()
+                    .iter()
+                    .map(|col| col.name().to_string())
+                    .collect::<Vec<_>>();
+                let data = rows
+                    .into_iter()
+                    .map(|row| {
+                        row.columns()
+                            .iter()
+                            .map(|col| {
+                                row.try_get::<Option<String>, _>(col.name())
+                                    .unwrap_or(None)
+                                    .unwrap_or_default()
+                            })
+                            .collect::<Vec<_>>()
+                    })
+                    .collect();
+                (cols, data)
+            }
+        };
+
+        if !header_written {
+            wtr.write_record(&columns).expect("Failed to write columns");
+            header_written = true;
+        }
+
+        for record in rows {
+            wtr.write_record(&record)
+                .expect("Failed to write record to CSV");
+        }
+
+        offset += LIMIT;
+    }
+
+    wtr.flush().expect("Failed to flush CSV writer");
     Ok(())
 }

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React from "react";
 import {
     Dialog,
     DialogClose,
@@ -13,9 +13,6 @@ import {Button} from "@/components/ui/button";
 import {Play} from "lucide-react";
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
-import {invoke} from "@tauri-apps/api/core";
-import {toast} from "sonner";
-import SelectDatabaseConfig from "@/components/hooks/database/SelectDatabaseConfig.tsx";
 
 interface DataBaseDialogProps {
     dbConfig: {
@@ -40,58 +37,6 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = (props: DataBaseDialogProp
         props.updateDbConfigField(id, value);
     };
 
-    const [configName, setConfigName] = useState('');
-    const [configNameList, setConfigNameList] = useState<Array<Item>>([]);
-
-    const loadConfig = async (config_name: string) => {
-        try {
-            const response = await invoke<string | boolean>('load_database_config_by_name', {
-                name: config_name,
-            });
-
-            if (typeof response === "boolean") {
-                throw new Error('Error loading config');
-            }
-
-            const loadDbConfig = JSON.parse(response);
-            for (const key in loadDbConfig) {
-                props.updateDbConfigField(key, loadDbConfig[key]);
-            }
-            props.updateDbConfigField('is_connected', false);
-        } catch (error) {
-            toast.error(error as string);
-        }
-    };
-
-    const updateConfigName = (name: string) => {
-        setConfigName(name);
-        loadConfig(name);
-    };
-
-    const getAllConfigs = async () => {
-        try {
-            const response: string | boolean = await invoke<string | boolean>('get_all_database_configs_name');
-
-            if (!response) {
-                throw new Error('Error getting all configs');
-            }
-
-            const configs = JSON.parse(response as string);
-            let configList: Array<Item> = [];
-            for (let i = 0; i < configs.length; i++) {
-                configList.push({
-                    id: configs[i],
-                });
-            }
-            setConfigNameList(configList);
-        } catch (error) {
-            toast.error('Error getting all configs');
-        }
-    };
-
-    useEffect(() => {
-        getAllConfigs();
-    }, []);
 
     return (
         <div>
@@ -122,13 +67,6 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = (props: DataBaseDialogProp
                     {/* Form Layout */}
                     <div className="flex flex-col gap-6 py-4">
 
-                        <div>
-                            <SelectDatabaseConfig
-                                updateConfigName={updateConfigName}
-                                configNameList={configNameList}
-                                configName={configName}
-                            />
-                        </div>
 
                         {/* First Row: Username and Password */}
                         <div className="grid grid-cols-2 gap-4">

@@ -12,8 +12,11 @@ import {
 import {Button} from "@/components/ui/button.tsx";
 import {ArrowDownFromLine, Trash2} from "lucide-react";
 import {toast} from "sonner";
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
 
 interface ConfigItemListProps {
+    title: string;
+    description: string;
     list: Array<Item>;
     onItemSelect: (item: Item) => void;
     onItemDelete: (item: Item) => void;
@@ -26,14 +29,14 @@ const ConfigItemList: React.FC<ConfigItemListProps> = (props: ConfigItemListProp
         if (Array.isArray(props.list)) {
             setItems(props.list);
         } else {
-            toast.error("Error parsing saved configurations");
+            toast.error('Error parsing saved configurations');
             setItems([]);
         }
     }, [props.list]);
 
-    const deleteItem = (event: React.MouseEvent, item: Item) => {
+    const handleDeleteItem = (event: React.MouseEvent, item: Item) => {
         event.stopPropagation();
-        setItems(items.filter((i: Item) => i.id !== item.id));
+        setItems(items.filter((i) => i.id !== item.id));
         props.onItemDelete(item);
     };
 
@@ -55,9 +58,9 @@ const ConfigItemList: React.FC<ConfigItemListProps> = (props: ConfigItemListProp
                 {/* Dialog Content */}
                 <DialogContent className="sm:max-w-[700px]">
                     <DialogHeader>
-                        <DialogTitle>Your Saved Configs</DialogTitle>
+                        <DialogTitle>{props.title}</DialogTitle>
                         <DialogDescription>
-                            Select a config to load or manage your saved configurations.
+                            {props.description}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -67,25 +70,31 @@ const ConfigItemList: React.FC<ConfigItemListProps> = (props: ConfigItemListProp
                             items.map((item) => (
                                 <DialogClose asChild key={item.id}>
                                     <div
-                                        className="flex justify-between items-center p-3 border-b last:border-b-0 hover:bg-gray-100"
+                                        key={item.id}
+                                        className="flex justify-between items-center p-3 border-b last:border-b-0 hover:bg-indigo-50 cursor-pointer transition-colors"
                                         onClick={() => props.onItemSelect(item)}
                                     >
-                                        {/* Clickable item */}
-                                        <div
-                                            className="flex-1 cursor-pointer"
-                                        >
-                                            <span>{item.id}</span>
+                                        <div className="flex-1">
+                                            <span className="text-indigo-800 font-medium">{item.id}</span>
                                         </div>
 
-                                        {/* Delete button */}
-                                        <Button
-                                            className="bg-red-500 hover:bg-red-600 text-white focus:ring-4 focus:ring-red-300"
-                                            onClick={(e) => deleteItem(e, item)}
-                                            type="button"
-                                        >
-                                            <Trash2 className="w-4 h-4 mr-2"/>
-                                            Delete
-                                        </Button>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger>
+                                                    <Button
+                                                        variant="destructive"
+                                                        size="icon"
+                                                        onClick={(e) => handleDeleteItem(e, item)}
+                                                        className="ml-2 bg-red-600 hover:bg-red-700 text-white"
+                                                    >
+                                                        <Trash2 className="w-4 h-4"/>
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    Delete item "{item.id}"
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
                                     </div>
                                 </DialogClose>
                             ))
@@ -98,7 +107,7 @@ const ConfigItemList: React.FC<ConfigItemListProps> = (props: ConfigItemListProp
                     <DialogFooter className="flex justify-end gap-4 mt-4">
                         <DialogClose asChild>
                             <Button
-                                className="bg-gray-500 hover:bg-gray-600 text-white focus:ring-4 focus:ring-gray-300"
+                                className="bg-gray-300 hover:bg-gray-400 text-gray-800"
                                 type="button"
                             >
                                 Close

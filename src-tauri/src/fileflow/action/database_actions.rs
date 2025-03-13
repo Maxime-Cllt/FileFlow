@@ -1,16 +1,11 @@
 use crate::fileflow::action::actions::DatabaseState;
-use crate::fileflow::database::connection::Connection;
+use crate::fileflow::database::connection::{Connection, QueryResult};
+use crate::fileflow::stuct::combo_item::ComboItem;
 use crate::fileflow::stuct::db_config::DbConfig;
-use crate::fileflow::stuct::load_data_struct::GenerateLoadData;
-use crate::fileflow::utils::constants::SQLITE;
-use crate::fileflow::utils::fileflowlib::{
-    build_load_data, find_separator, get_formated_column_names, read_first_line,
-};
-use crate::fileflow::utils::sql::{get_create_statement_with_fixed_size, get_drop_statement};
-use csv::{Reader, ReaderBuilder, StringRecord};
+use crate::fileflow::stuct::download_config::DownloadConfig;
+use crate::fileflow::utils::sql::{export_table, get_all_tables_query};
 use serde_json::{json, Value};
-use std::collections::HashMap;
-use std::fs::File;
+use sqlx::Row;
 use std::sync::Arc;
 use std::time::Instant;
 use tauri::{command, State};
@@ -56,106 +51,6 @@ pub async fn disconnect_from_database(
 }
 
 #[command]
-pub async fn generate_load_data_sql(load: GenerateLoadData) -> Result<String, String> {
-    if load.file_path.is_empty() {
-        return Err("File path is empty".into());
-    }
-
-    if load.db_driver == SQLITE {
-        return Err("SQLite is not supported for this operation.".into());
-    }
-
-    let file: File =
-        File::open(&load.file_path).map_err(|e| format!("Failed to open file: {e}"))?;
-    let mut reader: Reader<File> = ReaderBuilder::new().has_headers(true).from_reader(file);
-
-    let first_line: String = read_first_line(&load.file_path).unwrap();
-    let separator: char = find_separator(&first_line)?;
-    let final_columns_name: Vec<String> = get_formated_column_names(
-        first_line
-            .split(separator)
-            .map(|s| s.replace("\"", ""))
-            .collect(),
-    );
-
-    let mut columns_size_map: HashMap<&str, usize> = HashMap::new();
-    for header in final_columns_name.iter() {
-        columns_size_map.insert(header, 0);
-    }
-
-    for record in reader.records() {
-        let record: StringRecord = match record {
-            Ok(record) => record,
-            Err(_) => continue,
-        };
-
-        for (i, value) in record.iter().enumerate() {
-            let value: String = value.trim().into();
-            let max_length: &mut usize = columns_size_map
-                .get_mut(final_columns_name[i].as_str())
-                .unwrap();
-            if value.len() > *max_length {
-                *max_length = value.len() + 1;
-            }
-        }
-    }
-
-    // Generate SQL
-    let mut sql: String = String::new();
-
-    // Delete table if exists
-    sql.push_str(get_drop_statement(&load.db_driver, &load.table_name)?.as_str());
-    sql.push(';');
-    sql.push_str("\n\n");
-
-    // Create table with fixed size
-    sql.push_str(
-        get_create_statement_with_fixed_size(
-            &load.db_driver,
-            &load.table_name,
-            &columns_size_map,
-            &final_columns_name,
-        )?
-        .as_str(),
-    );
-    sql.push_str("\n\n");
-
-    sql.push_str(build_load_data(load, separator, final_columns_name)?.as_str());
-
-    Ok(sql)
-}
-
-#[command]
-pub async fn execute_sql(
-    state: State<'_, Arc<DatabaseState>>,
-    sql: String,
-) -> Result<String, String> {
-    let conn_guard = state.0.lock().await;
-
-    if conn_guard.is_none() {
-        return Err("No active database connection.".into());
-    }
-
-    let connection: &Connection = conn_guard.as_ref().unwrap();
-    let start: Instant = Instant::now();
-
-    for query in sql.split(';') {
-        if query.trim().is_empty() {
-            continue;
-        }
-        connection
-            .query(query)
-            .await
-            .map_err(|e| format!("Failed to execute query: {e}"))?;
-    }
-
-    Ok(format!(
-        "Query executed successfully in {:.2?}",
-        start.elapsed()
-    ))
-}
-
-#[command]
 pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String, bool> {
     let conn_guard = state.0.lock().await;
 
@@ -181,11 +76,81 @@ pub async fn get_table_list(state: State<'_, Arc<DatabaseState>>) -> Result<Valu
         return Err(false);
     }
 
-    Ok(json!([
-        { "value": "next.js", "label": "Next.js" },
-        { "value": "sveltekit", "label": "SvelteKit" },
-        { "value": "nuxt.js", "label": "Nuxt.js" },
-        { "value": "remix", "label": "Remix" },
-        { "value": "astro", "label": "Astro" }
-    ]))
+    let connection: &Connection = match conn_guard.as_ref() {
+        Some(conn) => conn,
+        None => return Err(false),
+    };
+
+    let db_config: &DbConfig = connection.get_db_config();
+
+    let sql: &str = &get_all_tables_query(&db_config.db_driver, &db_config.db_name)
+        .expect("Failed to get all tables query");
+
+    let result: QueryResult = connection
+        .query_many_with_result(sql)
+        .await
+        .map_err(|_| false)?;
+
+    let mut vec: Vec<ComboItem> = Vec::new();
+
+    match result {
+        QueryResult::MySQL(rows) => {
+            for row in rows {
+                vec.push(ComboItem {
+                    value: row.get("TABLE_NAME"),
+                    label: row.get("TABLE_NAME"),
+                });
+            }
+        }
+        QueryResult::Postgres(rows) => {
+            for row in rows {
+                vec.push(ComboItem {
+                    value: row.get("TABLE_NAME"),
+                    label: row.get("TABLE_NAME"),
+                });
+            }
+        }
+        QueryResult::SQLite(rows) => {
+            for row in rows {
+                vec.push(ComboItem {
+                    value: row.get("TABLE_NAME"),
+                    label: row.get("TABLE_NAME"),
+                });
+            }
+        }
+    }
+
+    Ok(json!(vec))
+}
+
+#[command]
+pub async fn download_table(
+    config: DownloadConfig,
+    state: State<'_, Arc<DatabaseState>>,
+) -> Result<String, String> {
+    let conn_guard = state.0.lock().await;
+
+    let start: Instant = Instant::now();
+
+    if conn_guard.is_none() {
+        return Err("No active database connection.".into());
+    }
+
+    if config.table_name.is_empty() || config.location.is_empty() {
+        return Err("Some required fields are missing.".into());
+    }
+
+    let connection: &Connection = match conn_guard.as_ref() {
+        Some(conn) => conn,
+        None => return Err("No active database connection.".into()),
+    };
+
+    if let Err(err) = export_table(connection, config).await {
+        return Err(format!("Failed to export table: {err}"));
+    }
+
+    Ok(format!(
+        "Table downloaded successfully in {:?} seconds.",
+        start.elapsed()
+    ))
 }

@@ -67,13 +67,13 @@ impl Connection {
         }
     }
 
-    pub fn get_pool(&self) -> Result<ConnectionEnum, Error> {
-        match &self.connection {
-            ConnectionEnum::Postgres(pool) => Ok(ConnectionEnum::Postgres(pool.clone())),
-            ConnectionEnum::MySQL(pool) => Ok(ConnectionEnum::MySQL(pool.clone())),
-            ConnectionEnum::SQLite(pool) => Ok(ConnectionEnum::SQLite(pool.clone())),
-        }
-    }
+    // pub fn get_pool(&self) -> Result<ConnectionEnum, Error> {
+    //     match &self.connection {
+    //         ConnectionEnum::Postgres(pool) => Ok(ConnectionEnum::Postgres(pool.clone())),
+    //         ConnectionEnum::MySQL(pool) => Ok(ConnectionEnum::MySQL(pool.clone())),
+    //         ConnectionEnum::SQLite(pool) => Ok(ConnectionEnum::SQLite(pool.clone())),
+    //     }
+    // }
 
     pub async fn query(&self, query: &str) -> Result<(), Error> {
         match &self.connection {

@@ -1,142 +1,109 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import '../../../../Loader.css';
-import {Card, CardContent, CardHeader} from "@/components/ui/card.tsx";
 import Loader from "@/components/hooks/Loader.tsx";
 import ModeSelection from "@/components/fileflowui/load/insert/ModeSelection.tsx";
 import ButtonGroupAction from "@/components/fileflowui/load/insert/ButtonGroupAction.tsx";
-import SqliteForm from "@/components/fileflowui/load/insert/SqliteForm.tsx";
-import {initialDbConfig, initialUiState} from "@/components/states/initialState.tsx";
-import ButtonConfigComponent from "@/components/fileflowui/load/insert/ButtonConfig.tsx";
-import {invoke} from "@tauri-apps/api/core";
-import InsertForm from "@/components/fileflowui/load/insert/InsertForm.tsx";
-import {toast} from "sonner";
+import FileUpload from "@/components/hooks/file/FileUpload.tsx";
+import {Input} from "@/components/ui/input.tsx";
+import {getNormalizedTableName} from "@/components/hooks/utils.tsx";
+import ConnectionForm from "@/components/hooks/database/ConnectionForm.tsx";
+import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 
 const Insert: React.FC = () => {
-    const [dbConfig, setDbConfig] = useState(initialDbConfig);
-    const [uiState, setUiState] = useState(initialUiState);
+
+    const [dbConfig, setDbConfig] = useState({
+        db_driver: '',
+        db_host: '',
+        port: '',
+        username: '',
+        password: '',
+        db_name: '',
+        tableName: '',
+        sqlite_file_path: '',
+        is_connected: false
+    });
+    const [filePath, setFilePath] = useState<string>('');
+    const [mode, setMode] = useState<string>('fast');
+    const [showLoader, setShowLoader] = useState<boolean>(false);
 
     const updateDbConfigField = (field: keyof typeof dbConfig, value: any) => {
         setDbConfig(prev => ({...prev, [field]: value}));
-    }
-
-    const updateUiStateField = (field: keyof typeof uiState, value: any) => {
-        setUiState(prev => ({...prev, [field]: value}));
     };
 
-    const checkConnection = async () => {
-        try {
-            const response = await invoke<string | boolean>('is_connected');
-
-            if (typeof response === "boolean") {
-                throw Error('Failed to check connection');
-            }
-
-            if (response === '') {
-                updateDbConfigField('is_connected', false);
-                return;
-            }
-            const loadDbConfig = JSON.parse(response);
-            Object.keys(loadDbConfig).forEach((key) => {
-                updateDbConfigField(key as keyof typeof dbConfig, loadDbConfig[key]);
-            });
-            updateDbConfigField('is_connected', true);
-        } catch (error) {
-            toast.error(error as string);
-        }
-    }
-
-    React.useEffect(() => {
-            checkConnection().then();
-        },
-        []);
-
-    const renderForm = () => {
-        if (uiState.sqlite) {
-            return (
-                <SqliteForm
-                    dbConfig={dbConfig}
-                    fileName={uiState.fileName}
-                    setFileName={(value: string) => updateUiStateField('fileName', value)}
-                    updateDbConfigField={
-                        (field: string, value: string) => {
-                            updateDbConfigField(field as keyof typeof dbConfig, value);
-                        }
-                    }
-                    updateUiStateField={
-                        (field: string, value: string) => {
-                            updateUiStateField(field as keyof typeof uiState, value);
-                        }
-                    }
-                />
-            );
+    useEffect(() => {
+        if (filePath && filePath !== "") {
+            updateDbConfigField("tableName", getNormalizedTableName(filePath));
         }
 
-        return (
-            <InsertForm
-                dbConfig={dbConfig}
-                uiState={{
-                    fileName: uiState.fileName,
-                }}
-                updateDbConfigField={updateDbConfigField}
-                updateUiStateField={updateUiStateField}
-            />
-        );
-    };
+    }, [filePath]);
 
     return (
         <div className="h-full w-full">
 
-            {/* Main Content */}
-            <div className="pt-8 px-4 md:px-8 mt-6">
-                <Card className="bg-white shadow-lg rounded-lg mb-8 p-6">
+            {/* Connection Mode Section */}
+            <ConnectionForm dbConfig={dbConfig} updateDbConfigField={updateDbConfigField}/>
 
-                    {/* Save and Load Buttons */}
-                    <div className="flex justify-end space-x-4">
-                        <ButtonConfigComponent
-                            dbConfig={dbConfig}
-                            updateDbConfigField={updateDbConfigField}
-                            updateUiStateField={
-                                (field: string, value: string) => {
-                                    updateUiStateField(field as keyof typeof uiState, value);
-                                }
-                            }
-                        />
-                    </div>
+            {/* Loader */}
+            {showLoader && (
+                <div className="flex justify-center mt-6">
+                    <Loader/>
+                </div>
+            )}
 
-                    {/* Card Header with Form */}
-                    <CardHeader className="border-b-2 border-gray-200 pb-4">
-                        <CardContent>
-                            {/* Render Form */}
-                            {renderForm()}
-                        </CardContent>
+            {/* Insertion Configuration Section */}
+            <div className="container mx-auto pt-8 px-4 md:px-8 space-y-6">
+
+                {/* Insertion Configuration Section */}
+                <Card>
+                    <CardHeader>
+                        {/* Section Header */}
+                        <div className="flex items-center justify-between border-b pb-4">
+                            <CardTitle
+                                className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
+                                Insertion Configuration
+                            </CardTitle>
+                        </div>
                     </CardHeader>
 
-                    {/* Mode Selection Component */}
-                    <div className="mt-6">
-                        <ModeSelection setMode={(value: string) => updateUiStateField('mode', value)}/>
-                    </div>
+                    <CardContent>
+                        {/* File Upload */}
+                        <FileUpload filePath={filePath} setFilePath={setFilePath}/>
 
-                    {/* Loader */}
-                    {uiState.showLoader && (
-                        <div className="flex justify-center mt-6">
-                            <Loader/>
+                        {/* Table Name Input */}
+
+                        <div className="flex justify-center">
+                            <div className="flex items-center space-x-4 w-1/2">
+                                <label className="text-sm font-medium text-gray-700">Table Name</label>
+                                <Input
+                                    type="text"
+                                    value={dbConfig.tableName}
+                                    placeholder="Enter table name"
+                                    onChange={(e) => updateDbConfigField('tableName', e.target.value)}
+                                    className="w-2/3 border border-gray-300 rounded-lg px-4 py-3 text-gray-800"
+                                />
+                            </div>
                         </div>
-                    )}
 
-                    {/* Button Group */}
-                    <div className="flex justify-center mt-6">
+
+                        <ModeSelection setMode={setMode}/>
+
                         <ButtonGroupAction
                             dbConfig={dbConfig}
-                            uiState={uiState}
-                            updateUiStateField={updateUiStateField}
                             updateDbConfigField={updateDbConfigField}
+                            filePath={filePath}
+                            setFilePath={setFilePath}
+                            mode={mode}
+                            setMode={setMode}
+                            showLoader={showLoader}
+                            setShowLoader={setShowLoader}
                         />
-                    </div>
+
+                    </CardContent>
                 </Card>
             </div>
+
         </div>
     );
-
 };
 
 export default Insert;

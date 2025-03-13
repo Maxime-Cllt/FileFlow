@@ -2,7 +2,16 @@ import React, {useEffect, useState} from 'react';
 import {invoke} from "@tauri-apps/api/core";
 import {toast} from "sonner";
 import InputTextDialog from "@/components/hooks/file/InputTextDialog.tsx";
-import ConfigItemList from "@/components/fileflowui/load/insert/ConfigItemList.tsx";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuLabel,
+    DropdownMenuSeparator
+} from '@/components/ui/dropdown-menu';
+import {DropdownMenuTrigger} from "@/components/ui/dropdown-menu.tsx";
+import {Settings} from "lucide-react";
+import {getAllConfigs} from "@/components/hooks/utils.tsx";
+import ConfigItemList from "@/components/hooks/component/ConfigItemList.tsx";
 
 interface ButtonConfigComponentProps {
     dbConfig: {
@@ -12,17 +21,15 @@ interface ButtonConfigComponentProps {
         username: string;
         password: string;
         db_name: string;
-        tableName: string;
         sqlite_file_path: string;
     };
     updateDbConfigField: (field: any, value: any) => void;
-    updateUiStateField: (field: any, value: any) => void;
 }
 
 const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: ButtonConfigComponentProps) => {
-    const [configName, setConfigName] = useState(''); // Config name
-    const [configNameList, setConfigNameList] = useState<Array<Item>>([]); // List of config names
-    const [hasChanged, setHasChanged] = useState(false); // Used to refresh the config list
+    const [configName, setConfigName] = useState('');
+    const [configNameList, setConfigNameList] = useState<Array<Item>>([]);
+    const [hasChanged, setHasChanged] = useState(false);
 
     const updateConfigName = (name: string) => {
         setConfigName(name);
@@ -31,12 +38,10 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: Butt
     const saveConfig = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-
-            if (configName === '' || configName === null || configName === undefined) {
+            if (!configName) {
                 toast.error('Please enter a name for the configuration');
                 return;
             }
-
             const response: boolean = await invoke<boolean>('save_database_config', {
                 save: {
                     config_name: configName,
@@ -46,98 +51,68 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: Butt
                     username: props.dbConfig.username,
                     password: props.dbConfig.password,
                     db_name: props.dbConfig.db_name,
-                    table_name: props.dbConfig.tableName,
                     sqlite_file_path: props.dbConfig.sqlite_file_path,
                 },
             });
-
             if (!response) {
                 throw new Error('Error saving config');
             }
-
             toast.success(`Config "${configName}" saved successfully`);
-            setHasChanged(prevState => !prevState);
-        } catch (error) {
-            toast.error(`Error saving config: ${error}`);
-        }
-    };
-
-    const loadConfig = async (item: Item) => {
-        try {
-            const response: string | boolean = await invoke<string | boolean>('load_database_config_by_name', {
-                name: item.id,
-            });
-
-            if (!response) {
-                throw new Error('Error loading config');
-            }
-            const loadDbConfig = JSON.parse(response as string);
-
-            Object.keys(loadDbConfig).forEach((key: string) => {
-                props.updateDbConfigField(key, loadDbConfig[key]);
-            });
-
-            props.updateDbConfigField('is_connected', false);
-            props.updateUiStateField('sqlite', loadDbConfig.sqlite_file_path.length > 0)
+            setHasChanged(prev => !prev);
         } catch (error) {
             toast.error(error as string);
         }
     };
 
     const deleteConfig = async (item: Item) => {
-        try {
-            const response = await invoke<boolean>('delete_database_config', {name: item.id});
+        toast.info(`Deleting config "${item.id}"`);
+    }
 
-            if (!response) throw new Error('Error deleting config');
-
-            toast.success('Config deleted successfully');
-        } catch (error) {
-            toast.error(error as string);
-        }
-    };
-
-
-    const getAllConfigs = async () => {
-        try {
-            const response: string | boolean = await invoke<string | boolean>('get_all_database_configs_name');
-
-            if (!response) {
-                throw new Error('Internal error');
-            }
-
-            const configs = JSON.parse(response as string);
-            let configList: Array<Item> = [];
-            for (let i = 0; i < configs.length; i++) {
-                configList.push({
-                    id: configs[i],
-                });
-            }
-            setConfigNameList(configList);
-        } catch (error) {
-            toast.error(`Error getting all configs: ${error}`);
-        }
-    };
 
     useEffect(() => {
-        getAllConfigs();
+        getAllConfigs().then(
+            (configs: Array<Item>) => {
+                setConfigNameList(configs);
+            }
+        )
     }, [hasChanged]);
 
     return (
-        <div className="flex space-x-4">
-            {/* Config Item List */}
-            <ConfigItemList
-                onItemSelect={loadConfig}
-                list={configNameList}
-                onItemDelete={deleteConfig}
-            />
+        <DropdownMenu>
+            <DropdownMenuTrigger><Settings/></DropdownMenuTrigger>
+            <DropdownMenuContent>
+                <DropdownMenuLabel>Manage Configurations</DropdownMenuLabel>
+                <DropdownMenuSeparator/>
 
-            {/* Save Config Input Dialog */}
-            <InputTextDialog
-                message_text={configName}
-                updateMessage={updateConfigName}
-                fonction={saveConfig}
-            />
-        </div>
+                <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center space-y-4">
+                    <div className="flex space-x-8">
+
+                        {/* Load Configuration Button */}
+                        <div className="flex flex-col items-center">
+                            <ConfigItemList
+                                title="Your Configuration"
+                                description=""
+                                onItemSelect={function () {
+                                }}
+                                list={configNameList}
+                                onItemDelete={deleteConfig}
+                            />
+                            <span className="mt-2 text-sm text-gray-600">Edit a saved config</span>
+                        </div>
+
+                        {/* Save Configuration Button */}
+                        <div className="flex flex-col items-center">
+                            <InputTextDialog
+                                message_text={configName}
+                                updateMessage={updateConfigName}
+                                fonction={saveConfig}
+                            />
+                            <span className="mt-2 text-sm text-gray-600">Save the current config</span>
+                        </div>
+                    </div>
+                </div>
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 };
 

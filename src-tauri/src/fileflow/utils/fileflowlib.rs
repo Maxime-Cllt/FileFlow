@@ -1,6 +1,4 @@
-use crate::fileflow::stuct::load_data_struct::GenerateLoadData;
 use crate::fileflow::stuct::save_config::SaveConfig;
-use crate::fileflow::utils::constants::{MARIADB, MYSQL, POSTGRES};
 use csv::StringRecord;
 use std::fs::{File, OpenOptions};
 use std::io;
@@ -84,45 +82,9 @@ pub fn save_config(configs: &[SaveConfig], config_file: &str) -> io::Result<()> 
         .truncate(true)
         .open(config_file)
         .map_err(|e| format!("Failed to open file for writing: {e}"))
-        .unwrap();
+        .expect("Failed to open file for writing");
     serde_json::to_writer_pretty(file, &configs)
         .map_err(|e| format!("Failed to write to file: {e}"))
-        .unwrap();
+        .expect("Failed to write to file");
     Ok(())
-}
-
-pub fn build_load_data(
-    load: GenerateLoadData,
-    separator: char,
-    final_columns_name: Vec<String>,
-) -> Result<String, String> {
-    let mut sql: String = String::new();
-    match load.db_driver.as_str() {
-        MYSQL | MARIADB => {
-            sql.push_str("LOAD DATA INFILE '");
-            sql.push_str(load.file_path.as_str());
-            sql.push_str("'\nINTO TABLE ");
-            sql.push_str(load.table_name.as_str());
-            sql.push_str("\nCHARACTER SET utf8\n");
-            sql.push_str("FIELDS TERMINATED BY '");
-            sql.push(separator);
-            sql.push_str("'\n");
-            sql.push_str("ENCLOSED BY '\"'\nLINES TERMINATED BY '\\n'\nIGNORE 1 ROWS (");
-            sql.push_str(&final_columns_name.join(", "));
-            sql.push_str(");");
-        }
-        POSTGRES => {
-            sql.push_str("COPY ");
-            sql.push_str(load.table_name.as_str());
-            sql.push_str(" (");
-            sql.push_str(&final_columns_name.join(", "));
-            sql.push_str(")\nFROM '");
-            sql.push_str(load.file_path.as_str());
-            sql.push_str("'\nWITH (FORMAT csv, HEADER true, DELIMITER '");
-            sql.push(separator);
-            sql.push_str("', QUOTE '\"');");
-        }
-        _ => return Err("Unsupported database driver for this operation".into()),
-    }
-    Ok(sql)
 }

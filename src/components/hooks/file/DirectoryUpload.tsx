@@ -47,6 +47,7 @@ const DirectoryUpload: React.FC<FileUploadProps> = (props: FileUploadProps) => {
                 <Input
                     type="text"
                     value={props.absolutePath}
+                    onChange={(e) => props.setAbsolutePath(e.target.value)}
                     placeholder={'Select a directory'}
                     className="w-full bg-gray-100 border border-gray-300 rounded-md p-3 text-gray-700"
                 />

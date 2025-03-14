@@ -10,28 +10,21 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {DropdownMenuTrigger} from "@/components/ui/dropdown-menu.tsx";
 import {Settings} from "lucide-react";
-import {getAllConfigs} from "@/components/hooks/utils.tsx";
+import {getAllConfigs, log_error} from "@/components/hooks/utils.tsx";
 import ConfigItemList from "@/components/hooks/component/ConfigItemList.tsx";
+import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 
 interface ButtonConfigComponentProps {
-    dbConfig: {
-        db_driver: string;
-        db_host: string;
-        port: string;
-        username: string;
-        password: string;
-        db_name: string;
-        sqlite_file_path: string;
-    };
-    updateDbConfigField: (field: any, value: any) => void;
+    dbConfig: DatabaseConfig;
+    updateDbConfigField: (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => void;
 }
 
 const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: ButtonConfigComponentProps) => {
-    const [configName, setConfigName] = useState('');
+    const [configName, setConfigName] = useState<string>('');
     const [configNameList, setConfigNameList] = useState<Array<Item>>([]);
-    const [hasChanged, setHasChanged] = useState(false);
+    const [hasChanged, setHasChanged] = useState<boolean>(false);
 
-    const updateConfigName = (name: string) => {
+    const updateConfigName = (name: string): void => {
         setConfigName(name);
     };
 
@@ -60,7 +53,7 @@ const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: Butt
             toast.success(`Config "${configName}" saved successfully`);
             setHasChanged(prev => !prev);
         } catch (error) {
-            toast.error(error as string);
+            log_error(error);
         }
     };
 

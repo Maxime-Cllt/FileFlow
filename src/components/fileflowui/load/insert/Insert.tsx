@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import '../../../../Loader.css';
 import Loader from "@/components/hooks/Loader.tsx";
 import ModeSelection from "@/components/fileflowui/load/insert/ModeSelection.tsx";
@@ -8,31 +8,37 @@ import {Input} from "@/components/ui/input.tsx";
 import {getNormalizedTableName} from "@/components/hooks/utils.tsx";
 import ConnectionForm from "@/components/hooks/database/ConnectionForm.tsx";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
+import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 
 const Insert: React.FC = () => {
 
-    const [dbConfig, setDbConfig] = useState({
+    const [dbConfig, setDbConfig] = useState<DatabaseConfig>({
+        config_name: '',
         db_driver: '',
         db_host: '',
-        port: '',
-        username: '',
-        password: '',
         db_name: '',
-        tableName: '',
+        password: '',
+        port: '',
         sqlite_file_path: '',
+        username: '',
         is_connected: false
     });
+
     const [filePath, setFilePath] = useState<string>('');
     const [mode, setMode] = useState<string>('fast');
     const [showLoader, setShowLoader] = useState<boolean>(false);
+    const [tableName, setTableName] = useState<string>('');
 
-    const updateDbConfigField = (field: keyof typeof dbConfig, value: any) => {
-        setDbConfig(prev => ({...prev, [field]: value}));
-    };
+    const updateDbConfigField = useCallback(
+        <K extends keyof DatabaseConfig>(key: K, value: DatabaseConfig[K]) => {
+            setDbConfig(prev => ({...prev, [key]: value}));
+        },
+        []
+    );
 
     useEffect(() => {
         if (filePath && filePath !== "") {
-            updateDbConfigField("tableName", getNormalizedTableName(filePath));
+            setTableName(getNormalizedTableName(filePath));
         }
 
     }, [filePath]);
@@ -76,9 +82,9 @@ const Insert: React.FC = () => {
                                 <label className="text-sm font-medium text-gray-700">Table Name</label>
                                 <Input
                                     type="text"
-                                    value={dbConfig.tableName}
+                                    value={tableName}
                                     placeholder="Enter table name"
-                                    onChange={(e) => updateDbConfigField('tableName', e.target.value)}
+                                    onChange={(e) => setTableName(e.target.value)}
                                     className="w-2/3 border border-gray-300 rounded-lg px-4 py-3 text-gray-800"
                                 />
                             </div>
@@ -92,6 +98,8 @@ const Insert: React.FC = () => {
                             updateDbConfigField={updateDbConfigField}
                             filePath={filePath}
                             setFilePath={setFilePath}
+                            tableName={tableName}
+                            setTableName={setTableName}
                             mode={mode}
                             setMode={setMode}
                             showLoader={showLoader}

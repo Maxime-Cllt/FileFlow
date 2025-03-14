@@ -13,30 +13,16 @@ import {Button} from "@/components/ui/button";
 import {Play} from "lucide-react";
 import {Label} from "@/components/ui/label";
 import {Input} from "@/components/ui/input";
+import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 
 interface DataBaseDialogProps {
-    dbConfig: {
-        db_driver: string;
-        db_host: string;
-        port: string;
-        username: string;
-        password: string;
-        db_name: string;
-        tableName: string;
-        sqlite_file_path: string;
-        is_connected: boolean;
-    };
+    dbConfig: DatabaseConfig;
     sql: string;
-    updateDbConfigField: (field: any, value: any) => void;
+    updateDbConfigField: (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => void;
     executeSQL: () => void;
 }
 
 const DataBaseDialog: React.FC<DataBaseDialogProps> = (props: DataBaseDialogProps) => {
-
-    const handleInputChange = (id: string, value: string) => {
-        props.updateDbConfigField(id, value);
-    };
-
 
     return (
         <div>
@@ -78,7 +64,7 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = (props: DataBaseDialogProp
                                     id="username"
                                     type="text"
                                     value={props.dbConfig.username}
-                                    onChange={(e) => handleInputChange("username", e.target.value)}
+                                    onChange={(e) => props.updateDbConfigField("username", e.target.value)}
                                     className="w-full border rounded-md p-2 shadow-sm focus:ring-purple-300 focus:border-purple-500"
                                 />
                             </div>
@@ -90,7 +76,7 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = (props: DataBaseDialogProp
                                     id="password"
                                     type="password"
                                     value={props.dbConfig.password}
-                                    onChange={(e) => handleInputChange("password", e.target.value)}
+                                    onChange={(e) => props.updateDbConfigField("password", e.target.value)}
                                     className="w-full border rounded-md p-2 shadow-sm focus:ring-purple-300 focus:border-purple-500"
                                 />
                             </div>
@@ -106,7 +92,7 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = (props: DataBaseDialogProp
                                     id="db_host"
                                     type="text"
                                     value={props.dbConfig.db_host}
-                                    onChange={(e) => handleInputChange("db_host", e.target.value)}
+                                    onChange={(e) => props.updateDbConfigField("db_host", e.target.value)}
                                     className="w-full border rounded-md p-2 shadow-sm focus:ring-purple-300 focus:border-purple-500"
                                 />
                             </div>
@@ -118,7 +104,7 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = (props: DataBaseDialogProp
                                     id="port"
                                     type="number"
                                     value={props.dbConfig.port}
-                                    onChange={(e) => handleInputChange("port", e.target.value)}
+                                    onChange={(e) => props.updateDbConfigField("port", e.target.value)}
                                     className="w-full border rounded-md p-2 shadow-sm focus:ring-purple-300 focus:border-purple-500"
                                 />
                             </div>
@@ -133,7 +119,7 @@ const DataBaseDialog: React.FC<DataBaseDialogProps> = (props: DataBaseDialogProp
                                 id="db_name"
                                 type="text"
                                 value={props.dbConfig.db_name}
-                                onChange={(e) => handleInputChange("db_name", e.target.value)}
+                                onChange={(e) => props.updateDbConfigField("db_name", e.target.value)}
                                 className="w-full border rounded-md p-2 shadow-sm focus:ring-purple-300 focus:border-purple-500"
                             />
                         </div>

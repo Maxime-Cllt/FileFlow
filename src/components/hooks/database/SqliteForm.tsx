@@ -5,13 +5,14 @@ import {HardDrive} from "lucide-react";
 import SelectDBMS from "@/components/hooks/database/SelectDatabase.tsx";
 import * as dialog from "@tauri-apps/plugin-dialog";
 import {toast} from "sonner";
+import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 
 interface SqliteFormProps {
     dbConfig: {
         sqlite_file_path: string;
         db_driver: string;
     };
-    updateDbConfigField: (field: string, value: any) => void;
+    updateDbConfigField: (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => void;
 }
 
 const SqliteForm: React.FC<SqliteFormProps> = ({dbConfig, updateDbConfigField}) => {

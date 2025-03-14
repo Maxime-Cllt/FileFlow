@@ -1,9 +1,10 @@
 import React from 'react';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.tsx";
+import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 
 interface SelectDatabaseProps {
     db_driver: string;
-    updateDbConfigField: (field: any, value: any) => void;
+    updateDbConfigField: (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => void;
 }
 
 const SelectDatabase: React.FC<SelectDatabaseProps> = (props: SelectDatabaseProps) => {

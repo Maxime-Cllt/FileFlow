@@ -10,20 +10,22 @@ import DirectoryUpload from "@/components/hooks/file/DirectoryUpload.tsx";
 import Loader from "@/components/hooks/Loader.tsx";
 import ConnectionForm from "@/components/hooks/database/ConnectionForm.tsx";
 import {AnimatePresence, motion} from 'framer-motion';
+import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 
 const Download: React.FC = () => {
 
-        const [dbConfig, setDbConfig] = useState({
+        const [dbConfig, setDbConfig] = useState<DatabaseConfig>({
+            config_name: '',
             db_driver: '',
             db_host: '',
-            port: '',
-            username: '',
-            password: '',
             db_name: '',
-            tableName: '',
+            password: '',
+            port: '',
             sqlite_file_path: '',
+            username: '',
             is_connected: false
         });
+
         const [tables, setTables] = useState<Array<ComboItem>>([]);
         const [selectedTable, setSelectedTable] = useState<string | null>(null);
         const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('csv');
@@ -32,7 +34,7 @@ const Download: React.FC = () => {
         const [showLoader, setShowLoader] = useState<boolean>(false);
 
 
-        const updateDbConfigField = (field: keyof typeof dbConfig, value: any) => {
+        const updateDbConfigField = (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => {
             setDbConfig(prev => ({...prev, [field]: value}));
         }
 
@@ -201,8 +203,7 @@ const Download: React.FC = () => {
                 </div>
 
             </div>
-        )
-            ;
+        );
     }
 ;
 

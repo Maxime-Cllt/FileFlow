@@ -20,15 +20,16 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu.tsx";
+import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 
 const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) => {
 
-        const [connectionMode, setConnectionMode] = React.useState<string>("predefined");
-        const [configName, setConfigName] = React.useState<string>("");
+        const [configName, setConfigName] = React.useState<string>('');
         const [configNameList, setConfigNameList] = useState<Array<Item>>([]);
         const [attemptedConnection, setAttemptedConnection] = useState<boolean>(false);
+        const [connectionMode, setConnectionMode] = React.useState<"predefined" | "manual">("predefined");
 
-        const handleConnect = async () => {
+        const handleConnect = async (): Promise<void> => {
             try {
                 setAttemptedConnection(true);
 
@@ -45,12 +46,16 @@ const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) =
                         throw new Error('Failed to load config');
                     }
 
-                    const loadDbConfig = JSON.parse(config);
+                    const loadDbConfig: DatabaseConfig = JSON.parse(config) as DatabaseConfig;
 
                     Object.keys(loadDbConfig).forEach((key) => {
-                            props.updateDbConfigField(key as keyof typeof props.dbConfig, loadDbConfig[key]);
-                        }
-                    );
+                        props.updateDbConfigField(key as keyof DatabaseConfig, loadDbConfig[key as keyof DatabaseConfig]);
+                    });
+
+                }
+
+                if (!props.dbConfig.db_driver || !props.dbConfig.db_host || !props.dbConfig.port || !props.dbConfig.username || !props.dbConfig.db_name) {
+                    throw new Error('Please fill all fields');
                 }
 
                 const connect_to_database_response: boolean | void = await connect_to_database(
@@ -68,7 +73,6 @@ const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) =
                 }
 
                 props.updateDbConfigField('is_connected', true);
-
             } catch (error) {
                 log_error(error);
             }
@@ -131,6 +135,7 @@ const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) =
                                         updateConfigName={setConfigName}
                                         configName={configName}
                                         configNameList={configNameList}
+                                        updateDbConfigField={props.updateDbConfigField}
                                     />
                                 </div>
                             </TabsContent>
@@ -152,7 +157,7 @@ const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) =
                                                 <button
                                                     disabled={attemptedConnection}
                                                     className={`flex items-center justify-center p-3 rounded-full shadow-md transition duration-300  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
-                                            ${
+                                                    ${
                                                         props.dbConfig.is_connected
                                                             ? "bg-green-500 hover:bg-green-600 text-white"
                                                             : "bg-yellow-500 hover:bg-yellow-600 text-white"

@@ -4,22 +4,15 @@ import {toast} from "sonner";
 import {invoke} from "@tauri-apps/api/core";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
 import {log_error} from "@/components/hooks/utils.tsx";
+import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 
 interface ButtonGroupProps {
-    dbConfig: {
-        db_driver: string;
-        db_host: string;
-        port: string;
-        username: string;
-        password: string;
-        db_name: string;
-        tableName: string;
-        sqlite_file_path: string;
-        is_connected: boolean;
-    };
-    updateDbConfigField: (field: any, value: any) => void;
+    dbConfig: DatabaseConfig;
+    updateDbConfigField: (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => void;
     filePath: string;
     setFilePath: (path: string) => void;
+    tableName: string;
+    setTableName: (name: string) => void
     mode: string;
     setMode: (mode: string) => void;
     showLoader: boolean;
@@ -45,7 +38,7 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
 
             const insert_csv_data_response: string | boolean = await invoke<string | boolean>('insert_csv_data', {
                 csv: {
-                    table_name: props.dbConfig.tableName,
+                    table_name: props.tableName,
                     file_path: props.filePath,
                     db_driver: props.dbConfig.db_driver.toLowerCase(),
                     mode: props.mode,
@@ -63,19 +56,18 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
         props.setShowLoader(false);
     };
 
-    const handleReset = () => {
+    const handleReset = (): void => {
         props.updateDbConfigField('db_driver', '');
         props.updateDbConfigField('db_host', '');
         props.updateDbConfigField('port', '');
         props.updateDbConfigField('username', '');
         props.updateDbConfigField('password', '');
         props.updateDbConfigField('db_name', '');
-        props.updateDbConfigField('tableName', '');
         props.updateDbConfigField('sqlite_file_path', '');
-
 
         props.setMode('fast');
         props.setFilePath('');
+        props.setTableName('');
         props.setShowLoader(false);
     };
 
@@ -102,7 +94,7 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
                         </button>
                     </TooltipTrigger>
                     <TooltipContent>
-                        {props.dbConfig.is_connected ? "Insert data into database" : "Connect first"}
+                        {props.dbConfig.is_connected ? "Start insertion" : "Connect first"}
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>

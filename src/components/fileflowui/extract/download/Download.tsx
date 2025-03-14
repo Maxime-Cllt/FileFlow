@@ -33,17 +33,22 @@ const Download: React.FC = () => {
         const [absolutePath, setAbsolutePath] = useState<string>('');
         const [showLoader, setShowLoader] = useState<boolean>(false);
 
-
         const updateDbConfigField = (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => {
             setDbConfig(prev => ({...prev, [field]: value}));
         }
 
-        const retrieveTables = async () => {
+        const retrieveTables = async (): Promise<void> => {
             try {
+                console.log('Retrieving tables...');
                 const get_table_list_response: boolean | ComboItem[] = await invoke<Array<ComboItem> | boolean>('get_table_list');
 
                 if (typeof get_table_list_response === "boolean") {
                     throw new Error('Failed to get table list');
+                }
+
+
+                if (get_table_list_response.length === 0) {
+                    throw new Error('No tables found');
                 }
 
                 const parsedData: ComboItem[] = get_table_list_response.map(item => ({

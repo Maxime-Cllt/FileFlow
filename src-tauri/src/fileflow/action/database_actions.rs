@@ -105,16 +105,16 @@ pub async fn get_table_list(state: State<'_, Arc<DatabaseState>>) -> Result<Valu
         QueryResult::Postgres(rows) => {
             for row in rows {
                 vec.push(ComboItem {
-                    value: row.get("TABLE_NAME"),
-                    label: row.get("TABLE_NAME"),
+                    value: row.get("table_name"),
+                    label: row.get("table_name"),
                 });
             }
         }
         QueryResult::SQLite(rows) => {
             for row in rows {
                 vec.push(ComboItem {
-                    value: row.get("TABLE_NAME"),
-                    label: row.get("TABLE_NAME"),
+                    value: row.get("name"),
+                    label: row.get("name"),
                 });
             }
         }

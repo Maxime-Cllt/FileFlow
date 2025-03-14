@@ -7,7 +7,6 @@ import {
     disconnect_from_database,
     getAllConfigs,
     is_connected,
-    loadConfig,
     log_error
 } from "@/components/hooks/utils.tsx";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs.tsx";
@@ -20,41 +19,20 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu.tsx";
-import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 
 const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) => {
 
         const [configName, setConfigName] = React.useState<string>('');
         const [configNameList, setConfigNameList] = useState<Array<Item>>([]);
         const [attemptedConnection, setAttemptedConnection] = useState<boolean>(false);
-        const [connectionMode, setConnectionMode] = React.useState<"predefined" | "manual">("predefined");
 
         const handleConnect = async (): Promise<void> => {
             try {
                 setAttemptedConnection(true);
 
-                // Load config if connection mode is predefined
-                if (connectionMode === 'predefined') {
-
-                    if (!configName) {
-                        throw new Error('Please select a configuration');
-                    }
-
-                    const config: string | boolean = await loadConfig(configName)
-
-                    if (typeof config !== "string") {
-                        throw new Error('Failed to load config');
-                    }
-
-                    const loadDbConfig: DatabaseConfig = JSON.parse(config) as DatabaseConfig;
-
-                    Object.keys(loadDbConfig).forEach((key) => {
-                        props.updateDbConfigField(key as keyof DatabaseConfig, loadDbConfig[key as keyof DatabaseConfig]);
-                    });
-
-                }
-
-                if (!props.dbConfig.db_driver || !props.dbConfig.db_host || !props.dbConfig.port || !props.dbConfig.username || !props.dbConfig.db_name) {
+                if (props.dbConfig.db_driver !== 'sqlite' && (!props.dbConfig.db_driver || !props.dbConfig.db_host || !props.dbConfig.port || !props.dbConfig.username || !props.dbConfig.db_name)) {
+                    throw new Error('Please fill all fields');
+                } else if (props.dbConfig.db_driver === 'sqlite' && !props.dbConfig.sqlite_file_path) {
                     throw new Error('Please fill all fields');
                 }
 
@@ -72,8 +50,14 @@ const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) =
                     throw new Error("Failed to connect to database, please check your connection details");
                 }
 
+                if (!connect_to_database_response) {
+                    throw new Error("Failed to connect to database, please check your connection");
+                }
+
                 props.updateDbConfigField('is_connected', true);
-            } catch (error) {
+
+            } catch
+                (error) {
                 log_error(error);
             }
             setAttemptedConnection(false);
@@ -123,10 +107,8 @@ const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) =
                         <Tabs defaultValue="predefined" className="space-y-6">
                             <div className="flex justify-center">
                                 <TabsList>
-                                    <TabsTrigger onClick={() => setConnectionMode('predefined')}
-                                                 value="predefined">Saved</TabsTrigger>
-                                    <TabsTrigger onClick={() => setConnectionMode('manual')}
-                                                 value="manual">Manual</TabsTrigger>
+                                    <TabsTrigger value="predefined">Saved</TabsTrigger>
+                                    <TabsTrigger value="manual">Manual</TabsTrigger>
                                 </TabsList>
                             </div>
                             <TabsContent value="predefined">

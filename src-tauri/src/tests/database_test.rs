@@ -48,7 +48,7 @@ async fn test_sqlite_connection() {
     let conn = Connection::connect(&config).await;
     assert!(conn.is_success(), "Failed to connect to the database");
     assert!(conn.is_ok());
-    let _ = remove_test_db("sqlite_connection");
+    remove_test_db("sqlite_connection").expect("Failed to remove test table");
 }
 
 #[tokio::test]
@@ -255,17 +255,19 @@ async fn test_query_many_with_result() {
     let file_path: String = create_test_db("test_query_many_with_result");
     let config: DbConfig = get_test_sqlite_config(file_path);
     let conn: Result<Connection, Error> = Connection::connect(&config).await;
+
     assert!(conn.is_success(), "Failed to connect to the database");
     assert!(conn.is_ok());
+
     let conn: Connection = conn.unwrap();
 
-    let sql_array: [&str; 3] = [
+    const SQL_ARRAY: [&str; 3] = [
         "DROP TABLE IF EXISTS test_table",
         "CREATE TABLE test_table (header1 VARCHAR(10), header2 VARCHAR(10))",
         "INSERT INTO test_table (header1, header2) VALUES ('value1', 'value2')",
     ];
 
-    for sql in sql_array.iter() {
+    for sql in SQL_ARRAY.iter() {
         match conn.query(sql).await {
             Ok(_) => {}
             Err(e) => {
@@ -286,7 +288,7 @@ async fn test_query_many_with_result() {
         assert_eq!(rows[0].len(), 2);
     }
 
-    let _ = remove_test_db("test_query_many_with_result");
+    remove_test_db("test_query_many_with_result").expect("Failed to remove test query");
 }
 
 #[tokio::test]
@@ -412,5 +414,5 @@ async fn test_download_table() {
 
     // Clean up
     std::fs::remove_file(&file_path).expect("Failed to remove file");
-    let _ = remove_test_db("test_download_table");
+    remove_test_db("test_download_table").expect("Failed to remove test table");
 }

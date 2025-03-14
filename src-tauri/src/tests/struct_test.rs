@@ -1,4 +1,5 @@
 use crate::fileflow::stuct::db_config::DbConfig;
+use crate::fileflow::stuct::download_config::DownloadConfig;
 use crate::fileflow::stuct::insert_config::InsertConfig;
 use crate::fileflow::stuct::save_config::SaveConfig;
 
@@ -58,4 +59,17 @@ async fn test_save_config() {
     assert_eq!(config.password, "password");
     assert_eq!(config.db_name, "db_name");
     assert_eq!(config.sqlite_file_path, "sqlite_file_path");
+}
+
+#[tokio::test]
+async fn test_downlopad_config() {
+    let config = DownloadConfig {
+        table_name : "table_name".into(),
+        location : "location".into(),
+        separator : "separator".into(),
+    };
+
+    assert_eq!(config.table_name, "table_name");
+    assert_eq!(config.location, "location");
+    assert_eq!(config.separator, "separator");
 }

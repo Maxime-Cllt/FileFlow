@@ -78,8 +78,8 @@ async fn test_fast_insert() {
     assert_ne!(value1, "value3");
     assert_ne!(value2, "value4");
 
-    let _ = remove_test_db("fast_insert");
-    let _ = remove_csv_file("test_fast_insert");
+    remove_test_db("fast_insert").expect("Failed to remove test table");
+    remove_csv_file("test_fast_insert").expect("Failed to remove CSV file");
 }
 
 #[tokio::test]

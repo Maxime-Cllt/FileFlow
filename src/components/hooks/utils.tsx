@@ -95,11 +95,9 @@ export const connect_to_database = async (db_driver: string, db_host: string, po
         }
 
         if (db_driver !== 'sqlite' && (!db_host || !port || !username)) {
-            toast.warning('Please fill in all the required fields');
-            return;
+            throw new Error("Please fill in all the required fields");
         } else if (db_driver === 'sqlite' && sqlite_file_path === '') {
-            toast.warning('Please select a SQLite file');
-            return;
+            throw new Error('Please select a SQLite file');
         }
 
         const response: string | boolean = await invoke<string | boolean>('connect_to_database', {

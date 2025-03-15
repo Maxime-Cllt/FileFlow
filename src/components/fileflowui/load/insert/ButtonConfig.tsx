@@ -12,14 +12,10 @@ import {DropdownMenuTrigger} from "@/components/ui/dropdown-menu.tsx";
 import {Settings} from "lucide-react";
 import {getAllConfigs, log_error} from "@/components/hooks/utils.tsx";
 import ConfigItemList from "@/components/hooks/component/ConfigItemList.tsx";
-import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
+import { DatabaseFormProps } from '@/interfaces/DatabaseFormProps';
 
-interface ButtonConfigComponentProps {
-    dbConfig: DatabaseConfig;
-    updateDbConfigField: (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => void;
-}
 
-const ButtonConfigComponent: React.FC<ButtonConfigComponentProps> = (props: ButtonConfigComponentProps) => {
+const ButtonConfigComponent: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) => {
     const [configName, setConfigName] = useState<string>('');
     const [configNameList, setConfigNameList] = useState<Array<Item>>([]);
     const [hasChanged, setHasChanged] = useState<boolean>(false);

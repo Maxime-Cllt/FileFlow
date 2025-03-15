@@ -4,7 +4,7 @@ import {Label} from "@/components/ui/label.tsx";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
 
 interface ModeSelectionProps {
-    setMode: (mode: string) => void;
+    setMode: (mode: "fast" | "optimized") => void;
 }
 
 const ModeSelection: React.FC<ModeSelectionProps> = (props: ModeSelectionProps) => {

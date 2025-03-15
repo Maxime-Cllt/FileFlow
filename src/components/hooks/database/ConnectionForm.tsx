@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import SelectDatabaseConfig from "@/components/hooks/database/SelectDatabaseConfig.tsx";
-import DatabaseForm, {DatabaseFormProps} from "@/components/hooks/database/DatabaseForm.tsx";
 import {
     connect_to_database,
     disconnect_from_database,
@@ -19,6 +18,8 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu.tsx";
+import {DatabaseFormProps} from '@/interfaces/DatabaseFormProps';
+import DatabaseForm from "@/components/hooks/database/DatabaseForm.tsx";
 
 const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) => {
 

@@ -2,12 +2,8 @@ import React from 'react';
 import SelectDBMS from "@/components/hooks/database/SelectDatabase.tsx";
 import {Input} from "@/components/ui/input.tsx";
 import SqliteForm from "@/components/hooks/database/SqliteForm.tsx";
-import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
+import {DatabaseFormProps} from "@/interfaces/DatabaseFormProps.tsx";
 
-export interface DatabaseFormProps {
-    dbConfig: DatabaseConfig;
-    updateDbConfigField: (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => void;
-}
 
 const DatabaseForm: React.FC<DatabaseFormProps> = ({dbConfig, updateDbConfigField}) => {
     const renderForm = () => {

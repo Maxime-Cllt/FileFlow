@@ -25,7 +25,7 @@ const Insert: React.FC = () => {
     });
 
     const [filePath, setFilePath] = useState<string>('');
-    const [mode, setMode] = useState<string>('fast');
+    const [mode, setMode] = useState<"fast" | "optimized">("fast");
     const [showLoader, setShowLoader] = useState<boolean>(false);
     const [tableName, setTableName] = useState<string>('');
 

@@ -14,7 +14,7 @@ interface ButtonGroupProps {
     tableName: string;
     setTableName: (name: string) => void
     mode: string;
-    setMode: (mode: string) => void;
+    setMode: (mode: "fast" | "optimized") => void;
     showLoader: boolean;
     setShowLoader: (showLoader: boolean) => void;
 }

@@ -205,8 +205,8 @@ pub async fn create_and_copy_final_table(
 }
 
 /// Get the query to fetch all tables from the database for different drivers
-pub fn get_all_tables_query<'a>(driver: &'a str, schema: &'a str) -> Result<String, String> {
-    match &driver.to_lowercase()[..] {
+pub fn get_all_tables_query(driver: &str, schema: &str) -> Result<String, String> {
+    match driver.to_lowercase().as_str() {
         MYSQL | MARIADB => Ok(format!(
             "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{schema}';"
         )),
@@ -331,8 +331,8 @@ pub async fn export_table(
             header_written = true;
         }
 
-        for record in rows {
-            wtr.write_record(&record)
+        for record in rows.iter() {
+            wtr.write_record(record)
                 .expect("Failed to write record to CSV");
         }
 

@@ -28,7 +28,6 @@ const Download: React.FC = () => {
 
         const [tables, setTables] = useState<Array<ComboItem>>([]);
         const [selectedTable, setSelectedTable] = useState<string | null>(null);
-        const [exportFormat, setExportFormat] = useState<'csv' | 'json'>('csv');
         const [separator, setSeparator] = useState<',' | ';' | '\t'>(',');
         const [absolutePath, setAbsolutePath] = useState<string>('');
         const [showLoader, setShowLoader] = useState<boolean>(false);
@@ -144,52 +143,35 @@ const Download: React.FC = () => {
                                 {/* Export Configuration Section */}
                                 <div className="border-t pt-6 space-y-4">
 
-                                    <div className="max-w-md mx-auto">
-                                        <div className="grid grid-cols-2 gap-4">
+                                    <div className="flex justify-center gap-6 align-middle">
 
-                                            {/* File Format */}
-                                            <div className="flex flex-col">
-                                                <Label htmlFor="export-format"
-                                                       className="text-sm font-medium text-gray-700">
-                                                    File Format:
-                                                </Label>
-                                                <Select
-                                                    value={exportFormat}
-                                                    onValueChange={(value) => setExportFormat(value as 'csv' | 'json')}
-                                                >
-                                                    <SelectTrigger id="export-format" className="w-32">
-                                                        {exportFormat.toUpperCase()}
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="csv">CSV</SelectItem>
-                                                        <SelectItem value="json">JSON</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-
-                                            {/* Separator Format */}
-                                            <div className="flex flex-col">
-                                                <Label htmlFor="separator" className="text-sm font-medium text-gray-700">
-                                                    Separator:
-                                                </Label>
-                                                <Select
-                                                    value={separator}
-                                                    onValueChange={(value) => setSeparator(value as ',' | ';' | '\t')}
-                                                >
-                                                    <SelectTrigger id="separator" className="w-32">
-                                                        {separator === ',' ? 'Comma' : separator === ';' ? 'Semicolon' : 'Tab'}
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value=",">Comma</SelectItem>
-                                                        <SelectItem value=";">Semicolon</SelectItem>
-                                                        <SelectItem value="\t">Tab</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
+                                        {/* File Format */}
+                                        <div className="flex flex-col w-1/2">
+                                            <DirectoryUpload absolutePath={absolutePath}
+                                                             setAbsolutePath={setAbsolutePath}/>
                                         </div>
+                                        {/* Separator Format */}
+                                        <div className="flex flex-col">
+                                            <Label htmlFor="separator" className="text-sm font-medium text-gray-700">
+                                                Separator:
+                                            </Label>
+                                            <Select
+                                                value={separator}
+                                                onValueChange={(value) => setSeparator(value as ',' | ';' | '\t')}
+                                            >
+                                                <SelectTrigger id="separator" className="w-32">
+                                                    {separator === ',' ? 'Comma' : separator === ';' ? 'Semicolon' : 'Tab'}
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value=",">Comma</SelectItem>
+                                                    <SelectItem value=";">Semicolon</SelectItem>
+                                                    <SelectItem value="\t">Tab</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+
                                     </div>
 
-                                    <DirectoryUpload absolutePath={absolutePath} setAbsolutePath={setAbsolutePath}/>
                                 </div>
 
                                 {/* Download Button Section */}

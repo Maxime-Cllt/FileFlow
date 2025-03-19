@@ -34,7 +34,7 @@ async fn test_fast_insert() {
         .has_headers(true)
         .from_reader(File::open(&csv_file_path).expect("Failed to open CSV file"));
 
-    let result: Result<u64, String> = fast_insert(
+    let result: Result<u32, String> = fast_insert(
         &conn,
         &mut reader,
         &snake_case_headers,
@@ -44,7 +44,7 @@ async fn test_fast_insert() {
     .await;
 
     // Ensure the number of rows inserted is as expected
-    let inserted_count: u64 = result.unwrap();
+    let inserted_count: u32 = result.expect("Failed to insert data");
     assert_eq!(inserted_count, 2, "Unexpected number of rows inserted");
 
     let pool: Pool<Sqlite> = sqlx::sqlite::SqlitePoolOptions::new()

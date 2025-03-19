@@ -24,7 +24,7 @@ pub fn get_formated_column_names(headers: Vec<String>) -> Vec<String> {
 /// This function is used to detect the separator from a string.
 pub fn find_separator(line: &str) -> Result<char, String> {
     const POSSIBLE_SEPARATORS: [char; 6] = [',', ';', '\t', '|', ' ', '\0'];
-    for sep in &POSSIBLE_SEPARATORS {
+    for sep in POSSIBLE_SEPARATORS.iter() {
         if line.contains(*sep) {
             return Ok(*sep);
         }
@@ -39,7 +39,7 @@ pub fn sanitize_value(value: &str) -> String {
 
 /// Read the first line of a file
 pub fn read_first_line(file_path: &str) -> io::Result<String> {
-    let file: File = File::open(file_path)?;
+    let file: File = File::open(file_path).expect("Could not open file");
     let reader: BufReader<File> = BufReader::new(file);
     if let Some(line) = reader.lines().next() {
         return line;

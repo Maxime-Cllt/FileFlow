@@ -28,19 +28,10 @@ pub async fn insert_csv_data(
     }
 
     let connection: &Connection = conn_guard.as_ref().unwrap();
+    let file: File = File::open(&csv.file_path).expect("Failed to open file");
+    let first_line: String = read_first_line(&csv.file_path).expect("Failed to read first line");
+    let separator: char = find_separator(&first_line).expect("Failed to find separator");
     let start: Instant = Instant::now();
-
-    let file: File = File::open(&csv.file_path).unwrap();
-
-    let first_line: String = read_first_line(&csv.file_path).unwrap();
-
-    let separator: char = match find_separator(&first_line) {
-        Ok(sep) => sep,
-        Err(_) => {
-            eprint!("Error: Separator not found");
-            return Err(false);
-        }
-    };
 
     let final_columns_name: Vec<String> = get_formated_column_names(
         first_line
@@ -54,8 +45,8 @@ pub async fn insert_csv_data(
         .has_headers(true)
         .from_reader(file);
 
-    let line_count: u64 = if csv.mode == "fast" {
-        match fast_insert(
+    let line_count: u32 = if csv.mode == "fast" {
+        fast_insert(
             connection,
             &mut reader,
             &final_columns_name,
@@ -63,15 +54,9 @@ pub async fn insert_csv_data(
             &csv.db_driver,
         )
         .await
-        {
-            Ok(count) => count,
-            Err(_) => {
-                eprintln!("Error: Failed to insert data");
-                return Err(false);
-            }
-        }
+        .map_err(|_| false)?
     } else {
-        match optimized_insert(
+        optimized_insert(
             connection,
             &mut reader,
             &final_columns_name,
@@ -79,10 +64,7 @@ pub async fn insert_csv_data(
             &csv.db_driver,
         )
         .await
-        {
-            Ok(count) => count,
-            Err(_) => return Err(false),
-        }
+            .map_err(|_| false)?
     };
 
     Ok(format!(

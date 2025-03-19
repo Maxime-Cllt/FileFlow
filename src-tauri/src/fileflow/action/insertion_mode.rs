@@ -15,8 +15,7 @@ pub async fn optimized_insert(
     final_columns_name: &[String],
     final_table_name: &str,
     db_driver: &str,
-) -> Result<u64, String> {
-    const MAX_BATCH_SIZE: usize = 4000;
+) -> Result<u32, String> {
     let temporary_table_name: &str = &format!("{final_table_name}_temporary");
 
     // Drop existing tables
@@ -30,7 +29,9 @@ pub async fn optimized_insert(
 
     // Create the temporary table
     let create_temp_table_query: String =
-        get_create_statement(db_driver, temporary_table_name, final_columns_name)?;
+        get_create_statement(db_driver, temporary_table_name, final_columns_name)
+            .expect("Failed to create temporary table query");
+
     execute_query(
         connection,
         &create_temp_table_query,
@@ -40,6 +41,7 @@ pub async fn optimized_insert(
     .expect("Failed to create temporary table query");
 
     // Initialize variables
+    const MAX_BATCH_SIZE: usize = 4000;
     let mut batch: Vec<String> = Vec::with_capacity(MAX_BATCH_SIZE);
     let mut columns_size_map: HashMap<&str, usize> =
         initialize_columns_size_map(final_columns_name);
@@ -49,13 +51,15 @@ pub async fn optimized_insert(
         &final_columns_name.join(", "),
     )
     .expect("Failed to insert into temporary table");
-    let mut line_count: u64 = 0;
+    let mut line_count: u32 = 0;
 
     // Read and process records from the CSV
     for result in reader.records() {
-        let record: StringRecord = result
-            .map_err(|err| format!("CSV record error: {err}"))
-            .expect("CSV record error");
+        let record: StringRecord = match result {
+            Ok(record) => record,
+            Err(_) => continue,
+        };
+
         process_record(
             &record,
             &mut batch,
@@ -142,7 +146,7 @@ async fn insert_batch(
     connection: &Connection,
     insert_query_base: &str,
     batch: &[String],
-) -> Result<u64, String> {
+) -> Result<u32, String> {
     batch_insert(
         connection,
         insert_query_base,
@@ -150,7 +154,7 @@ async fn insert_batch(
         "Failed to insert batch data",
     )
     .await
-    .map(|_| batch.len() as u64)
+    .map(|_| u32::try_from(batch.len()).expect("Failed to convert batch len"))
 }
 
 /// Fast insert data the csv file into the database table
@@ -160,9 +164,7 @@ pub async fn fast_insert(
     final_columns_name: &[String],
     final_table_name: &str,
     db_driver: &str,
-) -> Result<u64, String> {
-    const MAX_BATCH_SIZE: usize = 4000;
-
+) -> Result<u32, String> {
     // Drop the table if it exists
     if let Err(err) = drop_table_if_exists(connection, db_driver, final_table_name).await {
         eprintln!("Error: {err}");
@@ -181,8 +183,9 @@ pub async fn fast_insert(
         return Err(err);
     }
 
+    const MAX_BATCH_SIZE: usize = 10_000;
     let columns: &str = &final_columns_name.join(", ");
-    let mut line_count: u64 = 0;
+    let mut line_count: u32 = 0;
     let mut batch: Vec<String> = Vec::with_capacity(MAX_BATCH_SIZE);
 
     // Prepare the insert query
@@ -203,7 +206,7 @@ pub async fn fast_insert(
             )
             .await
             .expect("Failed to insert batch data");
-            line_count += batch.len() as u64;
+            line_count += u32::try_from(batch.len()).expect("Failed to convert batch len");
             batch.clear();
         }
     }
@@ -216,9 +219,9 @@ pub async fn fast_insert(
         "Failed to insert batch data",
     )
     .await
-    .expect("Failed to insert batch data");
+    .map_err(|e| format!("Failed to insert batch data: {e}"))?;
 
-    line_count += batch.len() as u64;
+    line_count += u32::try_from(batch.len()).expect("Failed to convert batch len");
 
     Ok(line_count)
 }

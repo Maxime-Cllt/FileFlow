@@ -83,8 +83,7 @@ pub async fn get_table_list(state: State<'_, Arc<DatabaseState>>) -> Result<Valu
 
     let db_config: &DbConfig = connection.get_db_config();
 
-    let sql: &str = &get_all_tables_query(&db_config.db_driver, &db_config.db_name)
-        .expect("Failed to get all tables query");
+    let sql: &str = &get_all_tables_query(&db_config.db_driver, &db_config.db_name);
 
     let result: QueryResult = connection
         .query_many_with_result(sql)

@@ -1,3 +1,4 @@
+use crate::fileflow::enumeration::database_engine::DatabaseEngine;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::download_config::DownloadConfig;
 use crate::fileflow::stuct::insert_config::InsertConfig;
@@ -6,7 +7,7 @@ use crate::fileflow::stuct::save_config::SaveConfig;
 #[tokio::test]
 async fn test_db_config() {
     let config = DbConfig {
-        db_driver: String::from("db_driver"),
+        db_driver: DatabaseEngine::Postgres,
         username: String::from("username"),
         password: String::from("password"),
         db_host: String::from("db_host"),
@@ -15,7 +16,7 @@ async fn test_db_config() {
         sqlite_file_path: "sqlite_file_path".into(),
     };
 
-    assert_eq!(config.db_driver, "db_driver");
+    assert_eq!(config.db_driver, DatabaseEngine::Postgres);
     assert_eq!(config.username, "username");
     assert_eq!(config.password, "password");
     assert_eq!(config.db_host, "db_host");
@@ -30,10 +31,10 @@ async fn test_insert_config() {
         file_path: "file_path".into(),
         table_name: "table_name".into(),
         mode: "mode".into(),
-        db_driver: String::from("db_driver"),
+        db_driver: DatabaseEngine::Postgres,
     };
 
-    assert_eq!(config.db_driver, "db_driver");
+    assert_eq!(config.db_driver, DatabaseEngine::Postgres);
     assert_eq!(config.file_path, "file_path");
     assert_eq!(config.table_name, "table_name");
     assert_eq!(config.mode, "mode");
@@ -43,7 +44,7 @@ async fn test_insert_config() {
 async fn test_save_config() {
     let config = SaveConfig {
         config_name: "config_name".into(),
-        db_driver: String::from("db_driver"),
+        db_driver: DatabaseEngine::Postgres,
         db_host: String::from("db_host"),
         port: String::from("port"),
         username: String::from("username"),
@@ -52,7 +53,7 @@ async fn test_save_config() {
         sqlite_file_path: "sqlite_file_path".into(),
     };
 
-    assert_eq!(config.db_driver, "db_driver");
+    assert_eq!(config.db_driver, DatabaseEngine::Postgres);
     assert_eq!(config.db_host, "db_host");
     assert_eq!(config.port, "port");
     assert_eq!(config.username, "username");
@@ -64,9 +65,9 @@ async fn test_save_config() {
 #[tokio::test]
 async fn test_downlopad_config() {
     let config = DownloadConfig {
-        table_name : "table_name".into(),
-        location : "location".into(),
-        separator : "separator".into(),
+        table_name: "table_name".into(),
+        location: "location".into(),
+        separator: "separator".into(),
     };
 
     assert_eq!(config.table_name, "table_name");

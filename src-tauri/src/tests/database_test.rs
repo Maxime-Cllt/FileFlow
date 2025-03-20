@@ -1,7 +1,7 @@
 use crate::fileflow::database::connection::{Connection, QueryResult};
+use crate::fileflow::enumeration::database_engine::DatabaseEngine;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::download_config::DownloadConfig;
-use crate::fileflow::utils::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
 use crate::fileflow::utils::fileflowlib::get_formated_column_names;
 use crate::fileflow::utils::sql::{
     export_table, get_all_tables_query, get_create_statement, get_create_statement_with_fixed_size,
@@ -54,32 +54,27 @@ async fn test_sqlite_connection() {
 #[tokio::test]
 async fn test_get_drop_statement() {
     assert_eq!(
-        get_drop_statement(SQLITE, "table_name").unwrap(),
+        get_drop_statement(&DatabaseEngine::SQLite, "table_name").unwrap(),
         "DROP TABLE IF EXISTS \"table_name\""
     );
     assert_eq!(
-        get_drop_statement(MYSQL, "table_name").unwrap(),
+        get_drop_statement(&DatabaseEngine::MySQL, "table_name").unwrap(),
         "DROP TABLE IF EXISTS `table_name`"
     );
     assert_eq!(
-        get_drop_statement(POSTGRES, "table_name").unwrap(),
+        get_drop_statement(&DatabaseEngine::Postgres, "table_name").unwrap(),
         "DROP TABLE IF EXISTS \"table_name\""
     );
     assert_eq!(
-        get_drop_statement("unsupported", "table_name").unwrap_err(),
-        "Unsupported database driver"
-    );
-
-    assert_eq!(
-        get_drop_statement(SQLITE, "").unwrap(),
+        get_drop_statement(&DatabaseEngine::SQLite, "").unwrap(),
         "DROP TABLE IF EXISTS \"\""
     );
     assert_eq!(
-        get_drop_statement(MYSQL, "").unwrap(),
+        get_drop_statement(&DatabaseEngine::MySQL, "").unwrap(),
         "DROP TABLE IF EXISTS ``"
     );
     assert_eq!(
-        get_drop_statement(POSTGRES, "").unwrap(),
+        get_drop_statement(&DatabaseEngine::Postgres, "").unwrap(),
         "DROP TABLE IF EXISTS \"\""
     );
 }
@@ -87,45 +82,44 @@ async fn test_get_drop_statement() {
 #[tokio::test]
 async fn test_get_insert_into_statement() {
     assert_eq!(
-        get_insert_into_statement(SQLITE, "table_name", "columns").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::SQLite, "table_name", "columns").unwrap(),
         "INSERT INTO \"table_name\" (columns) VALUES "
     );
     assert_eq!(
-        get_insert_into_statement(MYSQL, "table_name", "columns").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::MySQL, "table_name", "columns").unwrap(),
         "INSERT INTO `table_name` (columns) VALUES "
     );
     assert_eq!(
-        get_insert_into_statement(POSTGRES, "table_name", "columns").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::Postgres, "table_name", "columns").unwrap(),
         "INSERT INTO \"table_name\" (columns) VALUES "
-    );
-    assert_eq!(
-        get_insert_into_statement("unsupported", "table_name", "columns").unwrap_err(),
-        "Unsupported database driver"
     );
 
     assert_eq!(
-        get_insert_into_statement(SQLITE, "table_name", "").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::SQLite, "table_name", "").unwrap(),
         "INSERT INTO \"table_name\" () VALUES "
     );
     assert_eq!(
-        get_insert_into_statement(MYSQL, "table_name", "").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::MySQL, "table_name", "").unwrap(),
         "INSERT INTO `table_name` () VALUES "
     );
     assert_eq!(
-        get_insert_into_statement(POSTGRES, "table_name", "").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::Postgres, "table_name", "").unwrap(),
         "INSERT INTO \"table_name\" () VALUES "
     );
 
     assert_eq!(
-        get_insert_into_statement(SQLITE, "table_name", "header1, header2").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::SQLite, "table_name", "header1, header2")
+            .unwrap(),
         "INSERT INTO \"table_name\" (header1, header2) VALUES "
     );
     assert_eq!(
-        get_insert_into_statement(MYSQL, "table_name", "header1, header2").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::MySQL, "table_name", "header1, header2")
+            .unwrap(),
         "INSERT INTO `table_name` (header1, header2) VALUES "
     );
     assert_eq!(
-        get_insert_into_statement(POSTGRES, "table_name", "header1, header2").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::Postgres, "table_name", "header1, header2")
+            .unwrap(),
         "INSERT INTO \"table_name\" (header1, header2) VALUES "
     );
 }
@@ -134,33 +128,29 @@ async fn test_get_insert_into_statement() {
 async fn test_get_create_statement() {
     let snake_case_headers: Vec<String> = vec!["header1".into(), "header2".into()];
     assert_eq!(
-        get_create_statement(SQLITE, "table_name", &snake_case_headers).unwrap(),
+        get_create_statement(&DatabaseEngine::SQLite, "table_name", &snake_case_headers).unwrap(),
         "CREATE TABLE \"table_name\" (header1 TEXT, header2 TEXT)"
     );
     assert_eq!(
-        get_create_statement(MYSQL, "table_name", &snake_case_headers).unwrap(),
+        get_create_statement(&DatabaseEngine::MySQL, "table_name", &snake_case_headers).unwrap(),
         "CREATE TABLE `table_name` (header1 TEXT, header2 TEXT)"
     );
     assert_eq!(
-        get_create_statement(POSTGRES, "table_name", &snake_case_headers).unwrap(),
+        get_create_statement(&DatabaseEngine::Postgres, "table_name", &snake_case_headers).unwrap(),
         "CREATE TABLE \"table_name\" (header1 TEXT, header2 TEXT)"
-    );
-    assert_eq!(
-        get_create_statement("unsupported", "table_name", &snake_case_headers).unwrap_err(),
-        "Unsupported database driver"
     );
 
     let snake_case_headers: Vec<String> = vec!["header1".into()];
     assert_eq!(
-        get_create_statement(SQLITE, "table_name", &snake_case_headers).unwrap(),
+        get_create_statement(&DatabaseEngine::SQLite, "table_name", &snake_case_headers).unwrap(),
         "CREATE TABLE \"table_name\" (header1 TEXT)"
     );
     assert_eq!(
-        get_create_statement(MYSQL, "table_name", &snake_case_headers).unwrap(),
+        get_create_statement(&DatabaseEngine::MySQL, "table_name", &snake_case_headers).unwrap(),
         "CREATE TABLE `table_name` (header1 TEXT)"
     );
     assert_eq!(
-        get_create_statement(POSTGRES, "table_name", &snake_case_headers).unwrap(),
+        get_create_statement(&DatabaseEngine::Postgres, "table_name", &snake_case_headers).unwrap(),
         "CREATE TABLE \"table_name\" (header1 TEXT)"
     );
 }
@@ -173,21 +163,21 @@ async fn test_get_create_statement_with_fixed_size() {
     let map_max_length: HashMap<&str, usize> =
         snake_case_headers.iter().map(|h| (h.as_str(), 0)).collect();
 
-    let mut db_driver: HashMap<&str, &str> = HashMap::new();
+    let mut db_driver: HashMap<&DatabaseEngine, &str> = HashMap::new();
     db_driver.insert(
-        POSTGRES,
+        &DatabaseEngine::Postgres,
         "CREATE TABLE \"test_table\" (\"header1\" VARCHAR(0), \"header2\" VARCHAR(0));",
     );
     db_driver.insert(
-        MYSQL,
+        &DatabaseEngine::MySQL,
         "CREATE TABLE `test_table` (`header1` VARCHAR(0), `header2` VARCHAR(0));",
     );
     db_driver.insert(
-        MARIADB,
+        &DatabaseEngine::MariaDB,
         "CREATE TABLE `test_table` (`header1` VARCHAR(0), `header2` VARCHAR(0));",
     );
     db_driver.insert(
-        SQLITE,
+        &DatabaseEngine::SQLite,
         "CREATE TABLE \"test_table\" (\"header1\" VARCHAR(0), \"header2\" VARCHAR(0));",
     );
 
@@ -207,21 +197,21 @@ async fn test_get_create_statement_with_fixed_size() {
         .iter()
         .map(|h| (h.as_str(), 10))
         .collect();
-    let mut db_driver: HashMap<&str, &str> = HashMap::new();
+    let mut db_driver: HashMap<&DatabaseEngine, &str> = HashMap::new();
     db_driver.insert(
-        POSTGRES,
+        &DatabaseEngine::Postgres,
         "CREATE TABLE \"test_table\" (\"header1\" VARCHAR(10), \"header2\" VARCHAR(10));",
     );
     db_driver.insert(
-        MYSQL,
+        &DatabaseEngine::MySQL,
         "CREATE TABLE `test_table` (`header1` VARCHAR(10), `header2` VARCHAR(10));",
     );
     db_driver.insert(
-        MARIADB,
+        &DatabaseEngine::MariaDB,
         "CREATE TABLE `test_table` (`header1` VARCHAR(10), `header2` VARCHAR(10));",
     );
     db_driver.insert(
-        SQLITE,
+        &DatabaseEngine::SQLite,
         "CREATE TABLE \"test_table\" (\"header1\" VARCHAR(10), \"header2\" VARCHAR(10));",
     );
 
@@ -293,41 +283,32 @@ async fn test_query_many_with_result() {
 
 #[tokio::test]
 async fn test_get_all_tables_query() {
-    let test_cases = vec![
+    let test_cases: Vec<(&DatabaseEngine, String)> = vec![
         (
-            MYSQL,
-            Ok(
-                "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'test';"
-                    .into(),
-            ),
+            &DatabaseEngine::MySQL,
+            "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'test';".into(),
         ),
         (
-            MARIADB,
-            Ok(
-                "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'test';"
-                    .into(),
-            ),
+            &DatabaseEngine::MariaDB,
+            "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'test';".into(),
         ),
         (
-            POSTGRES,
-            Ok(
-                "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'public';"
-                    .into(),
-            ),
+            &DatabaseEngine::Postgres,
+            "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'public';"
+                .into(),
         ),
         (
-            SQLITE,
-            Ok("SELECT name FROM sqlite_master WHERE type='table';".into()),
+            &DatabaseEngine::SQLite,
+            "SELECT name FROM sqlite_master WHERE type='table';".into(),
         ),
-        ("oracle", Err("Unsupported database driver".into())),
-        ("invalid_driver", Err("Unsupported database driver".into())),
     ];
 
     for (driver, expected) in test_cases {
         assert_eq!(
             get_all_tables_query(driver, "test"),
             expected,
-            "Failed for driver: {driver}"
+            "Failed for driver: {:?}",
+            driver
         );
     }
 }

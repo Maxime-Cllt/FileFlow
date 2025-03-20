@@ -1,8 +1,8 @@
 use crate::fileflow::action::insertion_mode::fast_insert;
 use crate::fileflow::database::connection::Connection;
+use crate::fileflow::enumeration::database_engine::DatabaseEngine;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::save_config::SaveConfig;
-use crate::fileflow::utils::constants::SQLITE;
 use crate::fileflow::utils::fileflowlib::{get_all_saved_configs, save_config};
 use crate::tests::utils::{
     create_test_db, delete_config_file, generate_csv_file, get_test_save_config,
@@ -16,7 +16,6 @@ use std::fs::File;
 #[tokio::test]
 async fn test_fast_insert() {
     let sqlite_file_path: String = create_test_db("fast_insert");
-
     let config: DbConfig = get_test_sqlite_config(sqlite_file_path.clone());
     let conn: Result<Connection, Error> = Connection::connect(&config).await;
 
@@ -39,7 +38,7 @@ async fn test_fast_insert() {
         &mut reader,
         &snake_case_headers,
         final_table_name,
-        SQLITE,
+        &DatabaseEngine::SQLite,
     )
     .await;
 

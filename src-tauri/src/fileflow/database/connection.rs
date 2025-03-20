@@ -1,5 +1,5 @@
+use crate::fileflow::enumeration::database_engine::DatabaseEngine;
 use crate::fileflow::stuct::db_config::DbConfig;
-use crate::fileflow::utils::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
 use sqlx::{Error, MySql, MySqlPool, PgPool, Pool, Postgres, Sqlite, SqlitePool};
 
 pub enum ConnectionEnum {
@@ -23,20 +23,19 @@ impl Connection {
     pub async fn connect(config: &DbConfig) -> Result<Self, Error> {
         let connection_str: String = Self::get_connection_url(config)?;
 
-        let connection_enum = match config.db_driver.as_str() {
-            POSTGRES => {
+        let connection_enum: ConnectionEnum = match config.db_driver {
+            DatabaseEngine::Postgres => {
                 let pool: Pool<Postgres> = PgPool::connect(&connection_str).await?;
                 ConnectionEnum::Postgres(pool)
             }
-            MYSQL | MARIADB => {
+            DatabaseEngine::MariaDB | DatabaseEngine::MySQL => {
                 let pool: Pool<MySql> = MySqlPool::connect(&connection_str).await?;
                 ConnectionEnum::MySQL(pool)
             }
-            SQLITE => {
+            DatabaseEngine::SQLite => {
                 let pool: Pool<Sqlite> = SqlitePool::connect(&connection_str).await?;
                 ConnectionEnum::SQLite(pool)
             }
-            _ => return Err(Error::Configuration("Unsupported database driver".into())),
         };
 
         Ok(Self {
@@ -67,14 +66,6 @@ impl Connection {
         }
     }
 
-    // pub fn get_pool(&self) -> Result<ConnectionEnum, Error> {
-    //     match &self.connection {
-    //         ConnectionEnum::Postgres(pool) => Ok(ConnectionEnum::Postgres(pool.clone())),
-    //         ConnectionEnum::MySQL(pool) => Ok(ConnectionEnum::MySQL(pool.clone())),
-    //         ConnectionEnum::SQLite(pool) => Ok(ConnectionEnum::SQLite(pool.clone())),
-    //     }
-    // }
-
     pub async fn query(&self, query: &str) -> Result<(), Error> {
         match &self.connection {
             ConnectionEnum::Postgres(pool) => {
@@ -91,8 +82,8 @@ impl Connection {
     }
 
     pub(crate) fn get_connection_url(config: &DbConfig) -> Result<String, Error> {
-        match config.db_driver.as_str() {
-            POSTGRES => Ok(format!(
+        match config.db_driver {
+            DatabaseEngine::Postgres => Ok(format!(
                 "postgres://{}{}@{}:{}/{}",
                 config.username,
                 if config.password.is_empty() {
@@ -104,7 +95,7 @@ impl Connection {
                 config.port,
                 config.db_name
             )),
-            MYSQL | MARIADB => Ok(format!(
+            DatabaseEngine::MySQL | DatabaseEngine::MariaDB => Ok(format!(
                 "mysql://{}{}@{}:{}/{}",
                 config.username,
                 if config.password.is_empty() {
@@ -116,11 +107,7 @@ impl Connection {
                 config.port,
                 config.db_name
             )),
-            SQLITE => Ok(config.sqlite_file_path.clone()),
-            _ => Err(Error::Protocol(format!(
-                "Unsupported database driver: {}",
-                config.db_driver
-            ))),
+            DatabaseEngine::SQLite => Ok(config.sqlite_file_path.clone()),
         }
     }
 

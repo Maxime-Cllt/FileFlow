@@ -1,4 +1,5 @@
 use crate::fileflow::database::connection::Connection;
+use crate::fileflow::enumeration::database_engine::DatabaseEngine;
 use crate::fileflow::utils::fileflowlib::{escaped_values, sanitize_value};
 use crate::fileflow::utils::sql::{
     batch_insert, create_and_copy_final_table, drop_table_if_exists, execute_query,
@@ -14,7 +15,7 @@ pub async fn optimized_insert(
     reader: &mut Reader<File>,
     final_columns_name: &[String],
     final_table_name: &str,
-    db_driver: &str,
+    db_driver: &DatabaseEngine,
 ) -> Result<u32, String> {
     let temporary_table_name: &str = &format!("{final_table_name}_temporary");
 
@@ -22,14 +23,14 @@ pub async fn optimized_insert(
     drop_existing_tables(
         connection,
         &[temporary_table_name, final_table_name],
-        db_driver,
+        &db_driver,
     )
     .await
     .expect("Failed to drop existing tables");
 
     // Create the temporary table
     let create_temp_table_query: String =
-        get_create_statement(db_driver, temporary_table_name, final_columns_name)
+        get_create_statement(&db_driver, temporary_table_name, final_columns_name)
             .expect("Failed to create temporary table query");
 
     execute_query(
@@ -46,7 +47,7 @@ pub async fn optimized_insert(
     let mut columns_size_map: HashMap<&str, usize> =
         initialize_columns_size_map(final_columns_name);
     let insert_query_base: String = get_insert_into_statement(
-        db_driver,
+        &db_driver,
         temporary_table_name,
         &final_columns_name.join(", "),
     )
@@ -82,7 +83,7 @@ pub async fn optimized_insert(
     // Create final table and copy data
     create_and_copy_final_table(
         connection,
-        db_driver,
+        &db_driver,
         final_table_name,
         temporary_table_name,
         &columns_size_map,
@@ -100,7 +101,7 @@ pub async fn optimized_insert(
 async fn drop_existing_tables(
     connection: &Connection,
     table_names: &[&str],
-    db_driver: &str,
+    db_driver: &DatabaseEngine,
 ) -> Result<(), String> {
     for table_name in table_names.iter() {
         if let Err(e) = drop_table_if_exists(connection, db_driver, table_name).await {
@@ -163,10 +164,10 @@ pub async fn fast_insert(
     reader: &mut Reader<File>,
     final_columns_name: &[String],
     final_table_name: &str,
-    db_driver: &str,
+    db_driver: &DatabaseEngine,
 ) -> Result<u32, String> {
     // Drop the table if it exists
-    if let Err(err) = drop_table_if_exists(connection, db_driver, final_table_name).await {
+    if let Err(err) = drop_table_if_exists(connection, &db_driver, final_table_name).await {
         eprintln!("Error: {err}");
         return Err(err);
     }
@@ -174,7 +175,7 @@ pub async fn fast_insert(
     // Create the table
     if let Err(err) = execute_query(
         connection,
-        get_create_statement(db_driver, final_table_name, final_columns_name)?.as_str(),
+        get_create_statement(&db_driver, final_table_name, final_columns_name)?.as_str(),
         "Failed to create table {final_table_name}",
     )
     .await
@@ -189,7 +190,7 @@ pub async fn fast_insert(
     let mut batch: Vec<String> = Vec::with_capacity(MAX_BATCH_SIZE);
 
     // Prepare the insert query
-    let insert_query_base: &str = &get_insert_into_statement(db_driver, final_table_name, columns)
+    let insert_query_base: &str = &get_insert_into_statement(&db_driver, final_table_name, columns)
         .expect("Failed to insert batch data");
 
     for result in reader.records() {

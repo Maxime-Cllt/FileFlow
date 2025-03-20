@@ -1,6 +1,6 @@
+use crate::fileflow::enumeration::database_engine::DatabaseEngine;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::save_config::SaveConfig;
-use crate::fileflow::utils::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
 use csv::Writer;
 use std::error::Error;
 use std::fs::File;
@@ -9,8 +9,8 @@ use std::path::PathBuf;
 /// Get a test PostgreSQL configuration
 pub fn get_test_pg_config() -> DbConfig {
     DbConfig {
-        db_driver: String::from(POSTGRES),
-        username: String::from(POSTGRES),
+        db_driver: DatabaseEngine::Postgres,
+        username: "postgres".into(),
         password: String::from("password"),
         db_host: "localhost".into(),
         port: "5432".into(),
@@ -22,7 +22,7 @@ pub fn get_test_pg_config() -> DbConfig {
 /// Get a test SQLite configuration
 pub fn get_test_sqlite_config(str: String) -> DbConfig {
     DbConfig {
-        db_driver: String::from(SQLITE),
+        db_driver: DatabaseEngine::SQLite,
         username: String::new(),
         password: String::new(),
         db_host: String::new(),
@@ -39,9 +39,9 @@ pub fn get_test_sqlite_config(str: String) -> DbConfig {
 /// Get a test MySQL configuration
 pub fn get_test_mysql_config() -> DbConfig {
     DbConfig {
-        db_driver: MYSQL.into(),
+        db_driver: DatabaseEngine::MySQL,
         username: "root".into(),
-        password: String::from("password"),
+        password: "password".into(),
         db_host: "localhost".into(),
         port: "3306".into(),
         db_name: "test_db".into(),
@@ -52,7 +52,7 @@ pub fn get_test_mysql_config() -> DbConfig {
 /// Get a test MariaDB configuration
 pub fn get_test_maridb_config() -> DbConfig {
     DbConfig {
-        db_driver: String::from(MARIADB),
+        db_driver: DatabaseEngine::MariaDB,
         username: String::from("root"),
         password: String::from("password"),
         db_host: "localhost".into(),
@@ -65,7 +65,7 @@ pub fn get_test_maridb_config() -> DbConfig {
 pub fn get_test_save_config(config_name: &str) -> SaveConfig {
     SaveConfig {
         config_name: config_name.into(),
-        db_driver: String::from(SQLITE),
+        db_driver: DatabaseEngine::SQLite,
         db_host: String::new(),
         port: String::new(),
         username: String::new(),

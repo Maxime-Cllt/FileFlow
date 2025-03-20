@@ -25,6 +25,13 @@ custom-protocol = ["tauri/custom-protocol"]
 
 
 [dev-dependencies]
+criterion = "*"
+pprof = { version = "*", features = ["flamegraph", "criterion"] }
+
+#[[bench]]
+#name = "bench_sql"
+#harness = false
+#path = "src/benches/bench_sql.rs"
 
 [profile.dev]
 incremental = true

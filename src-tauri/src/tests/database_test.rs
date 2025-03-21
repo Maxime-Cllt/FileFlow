@@ -1,10 +1,11 @@
 use crate::fileflow::database::connection::{Connection, QueryResult};
 use crate::fileflow::enumeration::database_engine::DatabaseEngine;
+use crate::fileflow::enumeration::separator::SeparatorType;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::download_config::DownloadConfig;
 use crate::fileflow::utils::fileflowlib::get_formated_column_names;
 use crate::fileflow::utils::sql::{
-    export_table, get_all_tables_query, get_create_statement, get_create_statement_with_fixed_size,
+    export_table, build_query_all_tables, get_create_statement, get_create_statement_with_fixed_size,
     get_drop_statement, get_insert_into_statement,
 };
 use crate::tests::utils::{
@@ -282,7 +283,7 @@ async fn test_query_many_with_result() {
 }
 
 #[tokio::test]
-async fn test_get_all_tables_query() {
+async fn test_build_query_all_tables() {
     let test_cases: Vec<(&DatabaseEngine, String)> = vec![
         (
             &DatabaseEngine::MySQL,
@@ -305,7 +306,7 @@ async fn test_get_all_tables_query() {
 
     for (driver, expected) in test_cases {
         assert_eq!(
-            get_all_tables_query(driver, "test"),
+            build_query_all_tables(driver, "test"),
             expected,
             "Failed for driver: {:?}",
             driver
@@ -349,7 +350,7 @@ async fn test_download_table() {
     }
 
     let download_config: DownloadConfig = DownloadConfig {
-        separator: ";".into(),
+        separator: SeparatorType::Semicolon,
         table_name: "test_table".into(),
         location: "./".into(),
     };
@@ -374,7 +375,7 @@ async fn test_download_table() {
     );
 
     let download_config: DownloadConfig = DownloadConfig {
-        separator: ",".into(),
+        separator: SeparatorType::Comma,
         table_name: "test_table".into(),
         location: "./".into(),
     };

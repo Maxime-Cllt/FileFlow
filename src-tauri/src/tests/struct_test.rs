@@ -1,4 +1,6 @@
 use crate::fileflow::enumeration::database_engine::DatabaseEngine;
+use crate::fileflow::enumeration::insertion_type::InsertionType;
+use crate::fileflow::enumeration::separator::SeparatorType;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::download_config::DownloadConfig;
 use crate::fileflow::stuct::insert_config::InsertConfig;
@@ -30,14 +32,14 @@ async fn test_insert_config() {
     let config = InsertConfig {
         file_path: "file_path".into(),
         table_name: "table_name".into(),
-        mode: "mode".into(),
+        mode: InsertionType::Fast,
         db_driver: DatabaseEngine::Postgres,
     };
 
     assert_eq!(config.db_driver, DatabaseEngine::Postgres);
     assert_eq!(config.file_path, "file_path");
     assert_eq!(config.table_name, "table_name");
-    assert_eq!(config.mode, "mode");
+    assert_eq!(config.mode, InsertionType::Fast);
 }
 
 #[tokio::test]
@@ -67,10 +69,10 @@ async fn test_downlopad_config() {
     let config = DownloadConfig {
         table_name: "table_name".into(),
         location: "location".into(),
-        separator: "separator".into(),
+        separator: SeparatorType::Comma,
     };
 
     assert_eq!(config.table_name, "table_name");
     assert_eq!(config.location, "location");
-    assert_eq!(config.separator, "separator");
+    assert_eq!(config.separator, SeparatorType::Comma);
 }

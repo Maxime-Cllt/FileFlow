@@ -28,7 +28,7 @@ const Download: React.FC = () => {
 
         const [tables, setTables] = useState<Array<ComboItem>>([]);
         const [selectedTable, setSelectedTable] = useState<string | null>(null);
-        const [separator, setSeparator] = useState<',' | ';' | '\t'>(',');
+        const [separator, setSeparator] = useState<',' | ';' | ' ' | '|'>(',');
         const [absolutePath, setAbsolutePath] = useState<string>('');
         const [showLoader, setShowLoader] = useState<boolean>(false);
 
@@ -74,7 +74,7 @@ const Download: React.FC = () => {
                     config: {
                         table_name: selectedTable,
                         location: absolutePath,
-                        separator: separator === ',' ? ',' : separator === ';' ? ';' : '\t'
+                        separator: getSeparatorName(separator).toLocaleLowerCase()
                     }
                 });
 
@@ -88,6 +88,19 @@ const Download: React.FC = () => {
             }
 
             setShowLoader(false);
+        }
+
+        const getSeparatorName = (separator: ',' | ';' | ' ' | '|') => {
+            switch (separator) {
+                case ',':
+                    return 'Comma';
+                case ';':
+                    return 'Semicolon';
+                case ' ':
+                    return 'Space';
+                case '|':
+                    return 'Pipe';
+            }
         }
 
         useEffect(() => {
@@ -157,15 +170,17 @@ const Download: React.FC = () => {
                                             </Label>
                                             <Select
                                                 value={separator}
-                                                onValueChange={(value) => setSeparator(value as ',' | ';' | '\t')}
+                                                onValueChange={(value) => setSeparator(value as ',' | ';' | ' ' | '|')}
                                             >
                                                 <SelectTrigger id="separator" className="w-32">
-                                                    {separator === ',' ? 'Comma' : separator === ';' ? 'Semicolon' : 'Tab'}
+                                                    {getSeparatorName(separator)}
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     <SelectItem value=",">Comma</SelectItem>
                                                     <SelectItem value=";">Semicolon</SelectItem>
                                                     <SelectItem value="\t">Tab</SelectItem>
+                                                    <SelectItem value="|">Pipe</SelectItem>
+                                                    <SelectItem value=" ">Space</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </div>

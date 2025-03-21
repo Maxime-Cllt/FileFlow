@@ -3,7 +3,7 @@ use crate::fileflow::database::connection::{Connection, QueryResult};
 use crate::fileflow::stuct::combo_item::ComboItem;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::download_config::DownloadConfig;
-use crate::fileflow::utils::sql::{export_table, get_all_tables_query};
+use crate::fileflow::utils::sql::{export_table, build_query_all_tables};
 use serde_json::{json, Value};
 use sqlx::Row;
 use std::sync::Arc;
@@ -82,8 +82,7 @@ pub async fn get_table_list(state: State<'_, Arc<DatabaseState>>) -> Result<Valu
     };
 
     let db_config: &DbConfig = connection.get_db_config();
-
-    let sql: &str = &get_all_tables_query(&db_config.db_driver, &db_config.db_name);
+    let sql: &str = &build_query_all_tables(&db_config.db_driver, &db_config.db_name);
 
     let result: QueryResult = connection
         .query_many_with_result(sql)

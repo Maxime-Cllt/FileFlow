@@ -1,5 +1,6 @@
 use crate::fileflow::database::connection::{Connection, QueryResult};
 use crate::fileflow::enumeration::database_engine::DatabaseEngine;
+use crate::fileflow::enumeration::separator::SeparatorType;
 use crate::fileflow::stuct::download_config::DownloadConfig;
 use csv::{Writer, WriterBuilder};
 use sqlx::{Column, Row};
@@ -189,7 +190,7 @@ pub async fn create_and_copy_final_table(
     final_columns_name: &[String],
 ) -> Result<(), String> {
     let create_final_table_query: String = get_create_statement_with_fixed_size(
-        &db_driver,
+        db_driver,
         final_table_name,
         columns_size_map,
         final_columns_name,
@@ -202,7 +203,7 @@ pub async fn create_and_copy_final_table(
     .await?;
 
     let copy_data_query: String =
-        get_copy_temp_to_final_table(&db_driver, temporary_table_name, final_table_name)?;
+        get_copy_temp_to_final_table(db_driver, temporary_table_name, final_table_name)?;
 
     execute_query(
         connection,
@@ -215,7 +216,7 @@ pub async fn create_and_copy_final_table(
 }
 
 /// Get the query to fetch all tables from the database for different drivers
-pub fn get_all_tables_query(driver: &DatabaseEngine, schema: &str) -> String {
+pub fn build_query_all_tables(driver: &DatabaseEngine, schema: &str) -> String {
     let query: String = match driver {
         &DatabaseEngine::MySQL | &DatabaseEngine::MariaDB => format!(
             "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '{schema}';"
@@ -236,17 +237,16 @@ pub async fn export_table(
     const LIMIT: i32 = 5000;
     let mut offset: i32 = 0;
     let mut header_written: bool = false;
-
     let file_path: String = format!(
         "{}/{}_export.csv",
         download_config.location, download_config.table_name
     );
 
-    let separator: u8 = match &*download_config.separator {
-        "," => b',',
-        ";" => b';',
-        "|" => b'|',
-        _ => b',',
+    let separator: u8 = match download_config.separator {
+        SeparatorType::Comma => b',',
+        SeparatorType::Semicolon => b';',
+        SeparatorType::Pipe => b'|',
+        SeparatorType::Space => b' ',
     };
 
     let mut wtr: Writer<File> = WriterBuilder::new()

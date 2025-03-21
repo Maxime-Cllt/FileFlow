@@ -1,5 +1,6 @@
 use crate::fileflow::action::insertion_mode::{fast_insert, optimized_insert};
 use crate::fileflow::database::connection::Connection;
+use crate::fileflow::enumeration::insertion_type::InsertionType;
 use crate::fileflow::stuct::insert_config::InsertConfig;
 use crate::fileflow::stuct::save_config::SaveConfig;
 use crate::fileflow::utils::constants::DATABASE_CONFIG_FILE;
@@ -45,8 +46,8 @@ pub async fn insert_csv_data(
         .has_headers(true)
         .from_reader(file);
 
-    let line_count: u32 = if csv.mode == "fast" {
-        fast_insert(
+    let line_count: u32 = match csv.mode {
+        InsertionType::Fast => fast_insert(
             connection,
             &mut reader,
             &final_columns_name,
@@ -54,9 +55,8 @@ pub async fn insert_csv_data(
             &csv.db_driver,
         )
         .await
-        .map_err(|_| false)?
-    } else {
-        optimized_insert(
+        .map_err(|_| false)?,
+        InsertionType::Optimized => optimized_insert(
             connection,
             &mut reader,
             &final_columns_name,
@@ -64,7 +64,7 @@ pub async fn insert_csv_data(
             &csv.db_driver,
         )
         .await
-            .map_err(|_| false)?
+        .map_err(|_| false)?,
     };
 
     Ok(format!(

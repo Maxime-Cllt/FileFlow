@@ -1,6 +1,4 @@
-use crate::fileflow::stuct::load_data_struct::GenerateLoadData;
 use crate::fileflow::stuct::save_config::SaveConfig;
-use crate::fileflow::utils::constants::{MARIADB, MYSQL, POSTGRES};
 use csv::StringRecord;
 use std::fs::{File, OpenOptions};
 use std::io;
@@ -26,7 +24,7 @@ pub fn get_formated_column_names(headers: Vec<String>) -> Vec<String> {
 /// This function is used to detect the separator from a string.
 pub fn find_separator(line: &str) -> Result<char, String> {
     const POSSIBLE_SEPARATORS: [char; 6] = [',', ';', '\t', '|', ' ', '\0'];
-    for sep in &POSSIBLE_SEPARATORS {
+    for sep in POSSIBLE_SEPARATORS.iter() {
         if line.contains(*sep) {
             return Ok(*sep);
         }
@@ -41,7 +39,7 @@ pub fn sanitize_value(value: &str) -> String {
 
 /// Read the first line of a file
 pub fn read_first_line(file_path: &str) -> io::Result<String> {
-    let file: File = File::open(file_path)?;
+    let file: File = File::open(file_path).expect("Could not open file");
     let reader: BufReader<File> = BufReader::new(file);
     if let Some(line) = reader.lines().next() {
         return line;
@@ -84,45 +82,9 @@ pub fn save_config(configs: &[SaveConfig], config_file: &str) -> io::Result<()> 
         .truncate(true)
         .open(config_file)
         .map_err(|e| format!("Failed to open file for writing: {e}"))
-        .unwrap();
+        .expect("Failed to open file for writing");
     serde_json::to_writer_pretty(file, &configs)
         .map_err(|e| format!("Failed to write to file: {e}"))
-        .unwrap();
+        .expect("Failed to write to file");
     Ok(())
-}
-
-pub fn build_load_data(
-    load: GenerateLoadData,
-    separator: char,
-    final_columns_name: Vec<String>,
-) -> Result<String, String> {
-    let mut sql: String = String::new();
-    match load.db_driver.as_str() {
-        MYSQL | MARIADB => {
-            sql.push_str("LOAD DATA INFILE '");
-            sql.push_str(load.file_path.as_str());
-            sql.push_str("'\nINTO TABLE ");
-            sql.push_str(load.table_name.as_str());
-            sql.push_str("\nCHARACTER SET utf8\n");
-            sql.push_str("FIELDS TERMINATED BY '");
-            sql.push(separator);
-            sql.push_str("'\n");
-            sql.push_str("ENCLOSED BY '\"'\nLINES TERMINATED BY '\\n'\nIGNORE 1 ROWS (");
-            sql.push_str(&final_columns_name.join(", "));
-            sql.push_str(");");
-        }
-        POSTGRES => {
-            sql.push_str("COPY ");
-            sql.push_str(load.table_name.as_str());
-            sql.push_str(" (");
-            sql.push_str(&final_columns_name.join(", "));
-            sql.push_str(")\nFROM '");
-            sql.push_str(load.file_path.as_str());
-            sql.push_str("'\nWITH (FORMAT csv, HEADER true, DELIMITER '");
-            sql.push(separator);
-            sql.push_str("', QUOTE '\"');");
-        }
-        _ => return Err("Unsupported database driver for this operation".into()),
-    }
-    Ok(sql)
 }

@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
+use crate::fileflow::enumeration::database_engine::DatabaseEngine;
 
 #[derive(Deserialize, Clone, Serialize)]
 pub struct DbConfig {
-    pub db_driver: String,
+    pub db_driver: DatabaseEngine,
     pub db_host: String,
     pub port: String,
     pub username: String,

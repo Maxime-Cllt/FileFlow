@@ -1,6 +1,6 @@
+use crate::fileflow::action::insertion_mode::{fast_insert, optimized_insert};
 use crate::fileflow::database::connection::Connection;
-use crate::fileflow::fast_insert::fast_insert;
-use crate::fileflow::optimized_insert::optimized_insert;
+use crate::fileflow::enumeration::insertion_type::InsertionType;
 use crate::fileflow::stuct::insert_config::InsertConfig;
 use crate::fileflow::stuct::save_config::SaveConfig;
 use crate::fileflow::utils::constants::DATABASE_CONFIG_FILE;
@@ -20,20 +20,20 @@ pub struct DatabaseState(pub Mutex<Option<Connection>>);
 pub async fn insert_csv_data(
     state: State<'_, Arc<DatabaseState>>,
     csv: InsertConfig,
-) -> Result<String, String> {
+) -> Result<String, bool> {
     let conn_guard = state.0.lock().await;
 
     if conn_guard.is_none() {
-        return Err("No active database connection.".into());
+        eprint!("Error: Connection is not established");
+        return Err(false);
     }
 
     let connection: &Connection = conn_guard.as_ref().unwrap();
+    let file: File = File::open(&csv.file_path).expect("Failed to open file");
+    let first_line: String = read_first_line(&csv.file_path).expect("Failed to read first line");
+    let separator: char = find_separator(&first_line).expect("Failed to find separator");
     let start: Instant = Instant::now();
 
-    let file: File = File::open(&csv.file_path).unwrap();
-
-    let first_line: String = read_first_line(&csv.file_path).unwrap();
-    let separator: char = find_separator(&first_line)?;
     let final_columns_name: Vec<String> = get_formated_column_names(
         first_line
             .split(separator)
@@ -46,82 +46,87 @@ pub async fn insert_csv_data(
         .has_headers(true)
         .from_reader(file);
 
-    let line_count: u64 = if csv.mode == "fast" {
-        fast_insert(
+    let line_count: u32 = match csv.mode {
+        InsertionType::Fast => fast_insert(
             connection,
             &mut reader,
             &final_columns_name,
             &csv.table_name,
             &csv.db_driver,
         )
-        .await?
-    } else {
-        optimized_insert(
+        .await
+        .map_err(|_| false)?,
+        InsertionType::Optimized => optimized_insert(
             connection,
             &mut reader,
             &final_columns_name,
             &csv.table_name,
             &csv.db_driver,
         )
-        .await?
+        .await
+        .map_err(|_| false)?,
     };
 
     Ok(format!(
-        "Data inserted successfully in {:.2?}, {} rows inserted in table {}",
+        "Data inserted successfully in {:.2?}, {line_count} rows inserted in table {}",
         start.elapsed(),
-        line_count,
         csv.table_name
     ))
 }
 
 #[command]
-pub async fn save_database_config(save: SaveConfig) -> Result<String, String> {
+pub async fn save_database_config(save: SaveConfig) -> Result<bool, bool> {
     let mut existing_configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE);
 
-    for config in &existing_configs {
+    for config in existing_configs.iter() {
         if config.config_name == save.config_name {
-            return Err("Database configuration already exists".into());
+            return Err(false);
         }
     }
-    let config_names: &str = &save.config_name.clone();
     existing_configs.push(save);
-    save_config(&existing_configs, DATABASE_CONFIG_FILE)
-        .map_err(|e| format!("Failed to save new configs: {e}"))?;
 
-    Ok(format!(
-        "Database configuration {config_names} added successfully",
-    ))
+    match save_config(&existing_configs, DATABASE_CONFIG_FILE) {
+        Ok(_) => Ok(true),
+        Err(_) => Err(false),
+    }
 }
 
 #[command]
-pub async fn get_all_database_configs_name() -> Result<String, String> {
-    let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE);
-    let configs_names: Vec<String> = configs.iter().map(|c| c.config_name.clone()).collect();
-    let configs_json: String = serde_json::to_string(&configs_names)
-        .map_err(|e| format!("Failed to serialize configs: {e}"))?;
+pub async fn get_all_database_configs_name() -> Result<String, bool> {
+    let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE); // Get all saved configs
+    let configs_names: Vec<String> = configs.iter().map(|c| c.config_name.clone()).collect(); // Get only the names
+    let configs_json: String = match serde_json::to_string(&configs_names) {
+        // Convert to json string
+        Ok(json) => json,
+        Err(_) => return Err(false),
+    };
     Ok(configs_json)
 }
 
 #[command]
-pub async fn load_database_config_by_name(name: String) -> Result<String, String> {
-    let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE);
-    for config in &configs {
+pub async fn load_database_config_by_name(name: String) -> Result<String, bool> {
+    let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE); // Get all saved configs
+    for config in configs.iter() {
+        // Find the config with the given name
         if config.config_name == name {
-            return serde_json::to_string(&config)
-                .map_err(|e| format!("Failed to serialize config: {e}"));
+            return match serde_json::to_string(&config) {
+                // Convert to json string
+                Ok(json) => Ok(json),
+                Err(_) => Err(false),
+            };
         }
     }
-    Err("Database configuration not found".into())
+    Err(false)
 }
 
 #[command]
-pub async fn delete_database_config(name: String) -> Result<String, String> {
+pub async fn delete_database_config(name: String) -> Result<bool, bool> {
     let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE);
 
     let mut new_configs: Vec<SaveConfig> = Vec::new();
     let mut found: bool = false;
 
-    for config in &configs {
+    for config in configs.iter() {
         if config.config_name != name {
             new_configs.push(config.clone());
         } else {
@@ -130,24 +135,23 @@ pub async fn delete_database_config(name: String) -> Result<String, String> {
     }
 
     if !found {
-        Err(String::from("Database configuration not found"))?;
+        Err(false)?;
     }
 
-    save_config(&new_configs, DATABASE_CONFIG_FILE)
-        .map_err(|e| format!("Failed to save new configs: {e}"))?;
-
-    Ok(format!("Database configuration {name} deleted"))
+    match save_config(&new_configs, DATABASE_CONFIG_FILE) {
+        Ok(_) => Ok(true),
+        Err(_) => Err(false),
+    }
 }
 
 #[command]
-pub async fn get_size_of_file(file_path: String) -> Result<String, String> {
-    let metadata: Metadata =
-        std::fs::metadata(&file_path).map_err(|e| format!("Failed to get metadata: {e}"))?;
+pub async fn get_size_of_file(file_path: String) -> Result<String, bool> {
+    let metadata: Metadata = std::fs::metadata(&file_path).map_err(|_| false)?;
     if !metadata.is_file() {
-        return Err("Path is not a file".into());
+        return Err(false);
     }
     if metadata.len() == 0 {
-        return Err("File is empty".into());
+        return Err(false);
     }
     let size: f64 = metadata.len() as f64 / 1024.0 / 1024.0;
     Ok(format!("{size:.2} MB"))

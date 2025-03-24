@@ -1,8 +1,8 @@
+use crate::fileflow::action::insertion_mode::fast_insert;
 use crate::fileflow::database::connection::Connection;
-use crate::fileflow::fast_insert::fast_insert;
+use crate::fileflow::enumeration::database_engine::DatabaseEngine;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::save_config::SaveConfig;
-use crate::fileflow::utils::constants::SQLITE;
 use crate::fileflow::utils::fileflowlib::{get_all_saved_configs, save_config};
 use crate::tests::utils::{
     create_test_db, delete_config_file, generate_csv_file, get_test_save_config,
@@ -15,16 +15,16 @@ use std::fs::File;
 
 #[tokio::test]
 async fn test_fast_insert() {
-    let sqlite_file_path: String = create_test_db("fast_insert".into());
-
-    let config: DbConfig = get_test_sqlite_config(sqlite_file_path.into());
+    let sqlite_file_path: String = create_test_db("fast_insert");
+    let config: DbConfig = get_test_sqlite_config(sqlite_file_path.clone());
     let conn: Result<Connection, Error> = Connection::connect(&config).await;
 
     assert!(conn.is_ok(), "Failed to connect to the database");
 
     let conn: Connection = conn.unwrap();
 
-    let csv_file_path: String = generate_csv_file("test_fast_insert").unwrap();
+    let csv_file_path: String =
+        generate_csv_file("test_fast_insert").expect("Failed to generate csv file");
 
     let snake_case_headers: Vec<String> = vec!["header1".into(), "header2".into()];
     let final_table_name: &str = "test_table";
@@ -33,22 +33,22 @@ async fn test_fast_insert() {
         .has_headers(true)
         .from_reader(File::open(&csv_file_path).expect("Failed to open CSV file"));
 
-    let result: Result<u64, String> = fast_insert(
+    let result: Result<u32, String> = fast_insert(
         &conn,
         &mut reader,
         &snake_case_headers,
         final_table_name,
-        SQLITE,
+        &DatabaseEngine::SQLite,
     )
     .await;
 
     // Ensure the number of rows inserted is as expected
-    let inserted_count: u64 = result.unwrap();
+    let inserted_count: u32 = result.expect("Failed to insert data");
     assert_eq!(inserted_count, 2, "Unexpected number of rows inserted");
 
     let pool: Pool<Sqlite> = sqlx::sqlite::SqlitePoolOptions::new()
         .max_connections(1)
-        .connect(sqlite_file_path.as_str())
+        .connect(&sqlite_file_path)
         .await
         .expect("Failed to create a connection pool");
 
@@ -77,8 +77,8 @@ async fn test_fast_insert() {
     assert_ne!(value1, "value3");
     assert_ne!(value2, "value4");
 
-    let _ = remove_test_db("fast_insert".into());
-    let _ = remove_csv_file("test_fast_insert".into());
+    remove_test_db("fast_insert").expect("Failed to remove test table");
+    remove_csv_file("test_fast_insert").expect("Failed to remove CSV file");
 }
 
 #[tokio::test]

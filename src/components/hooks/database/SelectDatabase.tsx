@@ -1,26 +1,25 @@
 import React from 'react';
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.tsx";
+import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 
 interface SelectDatabaseProps {
     db_driver: string;
-    updateDbConfigField: (field: any, value: any) => void;
-    updateUiStateField: (field: any, value: any) => void;
+    updateDbConfigField: (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => void;
 }
 
-const databaseOptions = {
-    mysql: "MySQL",
-    mariadb: "MariaDB",
-    postgres: "Postgres",
-    sqlite: "SQLite",
-};
-
 const SelectDatabase: React.FC<SelectDatabaseProps> = (props: SelectDatabaseProps) => {
+
+    const databaseOptions = {
+        mysql: "MySQL",
+        mariadb: "MariaDB",
+        postgres: "Postgres",
+        sqlite: "SQLite",
+    };
 
     const handledbDriverChange = (value: string) => {
         const portMap: Record<string, string> = {mysql: '3306', mariadb: '3306', postgres: '5432'};
         props.updateDbConfigField('port', portMap[value] || '');
         props.updateDbConfigField('db_driver', value);
-        props.updateUiStateField('sqlite', value === 'sqlite');
     };
 
     return (

@@ -1,18 +1,21 @@
-use crate::fileflow::database::connection::Connection;
+use crate::fileflow::database::connection::{Connection, QueryResult};
+use crate::fileflow::enumeration::database_engine::DatabaseEngine;
+use crate::fileflow::enumeration::separator::SeparatorType;
 use crate::fileflow::stuct::db_config::DbConfig;
-use crate::fileflow::stuct::load_data_struct::GenerateLoadData;
-use crate::fileflow::utils::constants::{MARIADB, MYSQL, POSTGRES, SQLITE};
-use crate::fileflow::utils::fileflowlib::{build_load_data, get_formated_column_names};
+use crate::fileflow::stuct::download_config::DownloadConfig;
+use crate::fileflow::utils::fileflowlib::get_formated_column_names;
 use crate::fileflow::utils::sql::{
-    get_create_statement, get_create_statement_with_fixed_size, get_drop_statement,
-    get_insert_into_statement,
+    export_table, build_query_all_tables, get_create_statement, get_create_statement_with_fixed_size,
+    get_drop_statement, get_insert_into_statement,
 };
 use crate::tests::utils::{
-    create_test_db, generate_csv_file, get_test_maridb_config, get_test_mysql_config,
-    get_test_pg_config, get_test_sqlite_config, remove_test_db,
+    create_test_db, get_test_maridb_config, get_test_mysql_config, get_test_pg_config,
+    get_test_sqlite_config, remove_test_db,
 };
 use sqlx::testing::TestTermination;
+use sqlx::{Error, Row};
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 #[tokio::test]
 async fn test_get_connection_url() {
@@ -41,43 +44,38 @@ async fn test_get_connection_url() {
 
 #[tokio::test]
 async fn test_sqlite_connection() {
-    let file_path: String = create_test_db(String::from("sqlite_connection"));
+    let file_path: String = create_test_db("sqlite_connection");
     let config: DbConfig = get_test_sqlite_config(file_path);
     let conn = Connection::connect(&config).await;
     assert!(conn.is_success(), "Failed to connect to the database");
     assert!(conn.is_ok());
-    let _ = remove_test_db(String::from("sqlite_connection"));
+    remove_test_db("sqlite_connection").expect("Failed to remove test table");
 }
 
 #[tokio::test]
 async fn test_get_drop_statement() {
     assert_eq!(
-        get_drop_statement(SQLITE, "table_name").unwrap(),
+        get_drop_statement(&DatabaseEngine::SQLite, "table_name").unwrap(),
         "DROP TABLE IF EXISTS \"table_name\""
     );
     assert_eq!(
-        get_drop_statement(MYSQL, "table_name").unwrap(),
+        get_drop_statement(&DatabaseEngine::MySQL, "table_name").unwrap(),
         "DROP TABLE IF EXISTS `table_name`"
     );
     assert_eq!(
-        get_drop_statement(POSTGRES, "table_name").unwrap(),
+        get_drop_statement(&DatabaseEngine::Postgres, "table_name").unwrap(),
         "DROP TABLE IF EXISTS \"table_name\""
     );
     assert_eq!(
-        get_drop_statement("unsupported", "table_name").unwrap_err(),
-        "Unsupported database driver"
-    );
-
-    assert_eq!(
-        get_drop_statement(SQLITE, "").unwrap(),
+        get_drop_statement(&DatabaseEngine::SQLite, "").unwrap(),
         "DROP TABLE IF EXISTS \"\""
     );
     assert_eq!(
-        get_drop_statement(MYSQL, "").unwrap(),
+        get_drop_statement(&DatabaseEngine::MySQL, "").unwrap(),
         "DROP TABLE IF EXISTS ``"
     );
     assert_eq!(
-        get_drop_statement(POSTGRES, "").unwrap(),
+        get_drop_statement(&DatabaseEngine::Postgres, "").unwrap(),
         "DROP TABLE IF EXISTS \"\""
     );
 }
@@ -85,45 +83,44 @@ async fn test_get_drop_statement() {
 #[tokio::test]
 async fn test_get_insert_into_statement() {
     assert_eq!(
-        get_insert_into_statement(SQLITE, "table_name", "columns").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::SQLite, "table_name", "columns").unwrap(),
         "INSERT INTO \"table_name\" (columns) VALUES "
     );
     assert_eq!(
-        get_insert_into_statement(MYSQL, "table_name", "columns").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::MySQL, "table_name", "columns").unwrap(),
         "INSERT INTO `table_name` (columns) VALUES "
     );
     assert_eq!(
-        get_insert_into_statement(POSTGRES, "table_name", "columns").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::Postgres, "table_name", "columns").unwrap(),
         "INSERT INTO \"table_name\" (columns) VALUES "
-    );
-    assert_eq!(
-        get_insert_into_statement("unsupported", "table_name", "columns").unwrap_err(),
-        "Unsupported database driver"
     );
 
     assert_eq!(
-        get_insert_into_statement(SQLITE, "table_name", "").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::SQLite, "table_name", "").unwrap(),
         "INSERT INTO \"table_name\" () VALUES "
     );
     assert_eq!(
-        get_insert_into_statement(MYSQL, "table_name", "").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::MySQL, "table_name", "").unwrap(),
         "INSERT INTO `table_name` () VALUES "
     );
     assert_eq!(
-        get_insert_into_statement(POSTGRES, "table_name", "").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::Postgres, "table_name", "").unwrap(),
         "INSERT INTO \"table_name\" () VALUES "
     );
 
     assert_eq!(
-        get_insert_into_statement(SQLITE, "table_name", "header1, header2").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::SQLite, "table_name", "header1, header2")
+            .unwrap(),
         "INSERT INTO \"table_name\" (header1, header2) VALUES "
     );
     assert_eq!(
-        get_insert_into_statement(MYSQL, "table_name", "header1, header2").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::MySQL, "table_name", "header1, header2")
+            .unwrap(),
         "INSERT INTO `table_name` (header1, header2) VALUES "
     );
     assert_eq!(
-        get_insert_into_statement(POSTGRES, "table_name", "header1, header2").unwrap(),
+        get_insert_into_statement(&DatabaseEngine::Postgres, "table_name", "header1, header2")
+            .unwrap(),
         "INSERT INTO \"table_name\" (header1, header2) VALUES "
     );
 }
@@ -132,33 +129,29 @@ async fn test_get_insert_into_statement() {
 async fn test_get_create_statement() {
     let snake_case_headers: Vec<String> = vec!["header1".into(), "header2".into()];
     assert_eq!(
-        get_create_statement(SQLITE, "table_name", &snake_case_headers).unwrap(),
+        get_create_statement(&DatabaseEngine::SQLite, "table_name", &snake_case_headers).unwrap(),
         "CREATE TABLE \"table_name\" (header1 TEXT, header2 TEXT)"
     );
     assert_eq!(
-        get_create_statement(MYSQL, "table_name", &snake_case_headers).unwrap(),
+        get_create_statement(&DatabaseEngine::MySQL, "table_name", &snake_case_headers).unwrap(),
         "CREATE TABLE `table_name` (header1 TEXT, header2 TEXT)"
     );
     assert_eq!(
-        get_create_statement(POSTGRES, "table_name", &snake_case_headers).unwrap(),
+        get_create_statement(&DatabaseEngine::Postgres, "table_name", &snake_case_headers).unwrap(),
         "CREATE TABLE \"table_name\" (header1 TEXT, header2 TEXT)"
-    );
-    assert_eq!(
-        get_create_statement("unsupported", "table_name", &snake_case_headers).unwrap_err(),
-        "Unsupported database driver"
     );
 
     let snake_case_headers: Vec<String> = vec!["header1".into()];
     assert_eq!(
-        get_create_statement(SQLITE, "table_name", &snake_case_headers).unwrap(),
+        get_create_statement(&DatabaseEngine::SQLite, "table_name", &snake_case_headers).unwrap(),
         "CREATE TABLE \"table_name\" (header1 TEXT)"
     );
     assert_eq!(
-        get_create_statement(MYSQL, "table_name", &snake_case_headers).unwrap(),
+        get_create_statement(&DatabaseEngine::MySQL, "table_name", &snake_case_headers).unwrap(),
         "CREATE TABLE `table_name` (header1 TEXT)"
     );
     assert_eq!(
-        get_create_statement(POSTGRES, "table_name", &snake_case_headers).unwrap(),
+        get_create_statement(&DatabaseEngine::Postgres, "table_name", &snake_case_headers).unwrap(),
         "CREATE TABLE \"table_name\" (header1 TEXT)"
     );
 }
@@ -171,21 +164,21 @@ async fn test_get_create_statement_with_fixed_size() {
     let map_max_length: HashMap<&str, usize> =
         snake_case_headers.iter().map(|h| (h.as_str(), 0)).collect();
 
-    let mut db_driver: HashMap<&str, &str> = HashMap::new();
+    let mut db_driver: HashMap<&DatabaseEngine, &str> = HashMap::new();
     db_driver.insert(
-        POSTGRES,
+        &DatabaseEngine::Postgres,
         "CREATE TABLE \"test_table\" (\"header1\" VARCHAR(0), \"header2\" VARCHAR(0));",
     );
     db_driver.insert(
-        MYSQL,
+        &DatabaseEngine::MySQL,
         "CREATE TABLE `test_table` (`header1` VARCHAR(0), `header2` VARCHAR(0));",
     );
     db_driver.insert(
-        MARIADB,
+        &DatabaseEngine::MariaDB,
         "CREATE TABLE `test_table` (`header1` VARCHAR(0), `header2` VARCHAR(0));",
     );
     db_driver.insert(
-        SQLITE,
+        &DatabaseEngine::SQLite,
         "CREATE TABLE \"test_table\" (\"header1\" VARCHAR(0), \"header2\" VARCHAR(0));",
     );
 
@@ -205,21 +198,21 @@ async fn test_get_create_statement_with_fixed_size() {
         .iter()
         .map(|h| (h.as_str(), 10))
         .collect();
-    let mut db_driver: HashMap<&str, &str> = HashMap::new();
+    let mut db_driver: HashMap<&DatabaseEngine, &str> = HashMap::new();
     db_driver.insert(
-        POSTGRES,
+        &DatabaseEngine::Postgres,
         "CREATE TABLE \"test_table\" (\"header1\" VARCHAR(10), \"header2\" VARCHAR(10));",
     );
     db_driver.insert(
-        MYSQL,
+        &DatabaseEngine::MySQL,
         "CREATE TABLE `test_table` (`header1` VARCHAR(10), `header2` VARCHAR(10));",
     );
     db_driver.insert(
-        MARIADB,
+        &DatabaseEngine::MariaDB,
         "CREATE TABLE `test_table` (`header1` VARCHAR(10), `header2` VARCHAR(10));",
     );
     db_driver.insert(
-        SQLITE,
+        &DatabaseEngine::SQLite,
         "CREATE TABLE \"test_table\" (\"header1\" VARCHAR(10), \"header2\" VARCHAR(10));",
     );
 
@@ -238,87 +231,170 @@ async fn test_get_create_statement_with_fixed_size() {
 async fn test_get_formated_column_names() {
     let headers: Vec<String> = vec!["header 1".into(), " header2".into()];
     let formatted_headers: Vec<String> = get_formated_column_names(headers);
-    assert_eq!(
-        formatted_headers,
-        vec!["header_1".into(), "_header2".into()]
-    );
+    assert_eq!(formatted_headers, vec!["header_1", "_header2"]);
 
-    let headers: Vec<String> = vec![
-        "header    1".into(),
-        String::new(),
-        "header2".into(),
-    ];
+    let headers: Vec<String> = vec!["header    1".into(), String::new(), "header2".into()];
     let formatted_headers: Vec<String> = get_formated_column_names(headers);
     assert_eq!(
         formatted_headers,
-        vec![
-            "header____1".into(),
-            "column_2".into(),
-            "header2".into()
-        ]
+        vec!["header____1", "column_2", "header2"]
     );
 }
 
 #[tokio::test]
-async fn test_build_load_data_mysql() {
-    let file_path: String = generate_csv_file("test_build_load_data_mysql").unwrap();
-    let config = GenerateLoadData {
-        file_path,
-        db_driver: MYSQL.into(),
-        table_name: String::from("test_table"),
-    };
-    let separator: char = ',';
-    let columns: Vec<String> = vec!["header1".into(), "header2".into()];
+async fn test_query_many_with_result() {
+    let file_path: String = create_test_db("test_query_many_with_result");
+    let config: DbConfig = get_test_sqlite_config(file_path);
+    let conn: Result<Connection, Error> = Connection::connect(&config).await;
 
-    let expected_sql = format!(
-        "LOAD DATA INFILE '{}'\nINTO TABLE test_table\nCHARACTER SET utf8\nFIELDS TERMINATED BY '{}'\nENCLOSED BY '\"'\nLINES TERMINATED BY '\\n'\nIGNORE 1 ROWS (header1, header2);",
-        config.file_path, separator
-    );
+    assert!(conn.is_success(), "Failed to connect to the database");
+    assert!(conn.is_ok());
 
-    let result = build_load_data(config, separator, columns);
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap(), expected_sql);
+    let conn: Connection = conn.unwrap();
+
+    const SQL_ARRAY: [&str; 3] = [
+        "DROP TABLE IF EXISTS test_table",
+        "CREATE TABLE test_table (header1 VARCHAR(10), header2 VARCHAR(10))",
+        "INSERT INTO test_table (header1, header2) VALUES ('value1', 'value2')",
+    ];
+
+    for sql in SQL_ARRAY.iter() {
+        match conn.query(sql).await {
+            Ok(_) => {}
+            Err(e) => {
+                println!("Error: {:?} for query: {sql}", e);
+            }
+        }
+    }
+
+    let query_result: Result<QueryResult, Error> = conn
+        .query_many_with_result("SELECT * FROM test_table")
+        .await;
+    assert!(query_result.is_ok());
+
+    let query_result: QueryResult = query_result.unwrap();
+
+    if let QueryResult::SQLite(rows) = query_result {
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0].len(), 2);
+    }
+
+    remove_test_db("test_query_many_with_result").expect("Failed to remove test query");
 }
 
 #[tokio::test]
-async fn test_build_load_data_postgres() {
-    const SEPARATOR: char = ',';
+async fn test_build_query_all_tables() {
+    let test_cases: Vec<(&DatabaseEngine, String)> = vec![
+        (
+            &DatabaseEngine::MySQL,
+            "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'test';".into(),
+        ),
+        (
+            &DatabaseEngine::MariaDB,
+            "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'test';".into(),
+        ),
+        (
+            &DatabaseEngine::Postgres,
+            "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'public';"
+                .into(),
+        ),
+        (
+            &DatabaseEngine::SQLite,
+            "SELECT name FROM sqlite_master WHERE type='table';".into(),
+        ),
+    ];
 
-    let file_path: String = generate_csv_file("test_build_load_data_postgres").unwrap();
-
-    let config = GenerateLoadData {
-        file_path,
-        db_driver: String::from(POSTGRES),
-        table_name: String::from("test_table"),
-    };
-    let columns: Vec<String> = vec!["header1".into(), "header2".into()];
-
-    let expected_sql:String = format!(
-        "COPY test_table (header1, header2)\nFROM '{}'\nWITH (FORMAT csv, HEADER true, DELIMITER '{}', QUOTE '\"');",
-        config.file_path, SEPARATOR
-    );
-
-    let result = build_load_data(config, SEPARATOR, columns);
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap(), expected_sql);
+    for (driver, expected) in test_cases {
+        assert_eq!(
+            build_query_all_tables(driver, "test"),
+            expected,
+            "Failed for driver: {:?}",
+            driver
+        );
+    }
 }
 
 #[tokio::test]
-async fn test_build_load_data_invalid_driver() {
-    const SEPARATOR: char = ',';
+async fn test_download_table() {
+    let file_path: String = create_test_db("test_download_table");
+    let config: DbConfig = get_test_sqlite_config(file_path);
+    let conn: Result<Connection, Error> = Connection::connect(&config).await;
 
-    let file_path: String = generate_csv_file("test_build_load_data_invalid_driver").unwrap();
-    let config = GenerateLoadData {
-        file_path,
-        db_driver: "invalid_driver".into(),
-        table_name: String::from("test_table"),
+    assert!(conn.is_success(), "Failed to connect to the database");
+    assert!(conn.is_ok());
+
+    let conn: Connection = conn.unwrap();
+
+    const SQL_ARRAY: [&str; 4] = [
+        "DROP TABLE IF EXISTS test_table",
+        "CREATE TABLE test_table (header1 VARCHAR(10), header2 VARCHAR(10))",
+        "INSERT INTO test_table (header1, header2) VALUES ('value1', 'value2')",
+        "INSERT INTO test_table (header1, header2) VALUES ('value3', 'value4')",
+    ];
+
+    for sql in SQL_ARRAY.iter() {
+        if let Err(e) = conn.query(sql).await {
+            println!("Error: {:?} for query: {sql}", e);
+        }
+    }
+
+    let query_result: QueryResult = conn
+        .query_many_with_result("SELECT * FROM test_table")
+        .await
+        .unwrap();
+
+    if let QueryResult::SQLite(rows) = query_result {
+        assert_eq!(rows.len(), 2);
+        assert_eq!(rows[0].len(), 2);
+        assert_eq!(rows[1].len(), 2);
+    }
+
+    let download_config: DownloadConfig = DownloadConfig {
+        separator: SeparatorType::Semicolon,
+        table_name: "test_table".into(),
+        location: "./".into(),
     };
-    let columns: Vec<String> = vec!["header1".into(), "header2".into()];
 
-    let result = build_load_data(config, SEPARATOR, columns);
-    assert!(result.is_err());
+    let file_path: PathBuf = PathBuf::from(format!(
+        "{}/{}_export.csv",
+        download_config.location, download_config.table_name
+    ));
+
+    export_table(&conn, download_config)
+        .await
+        .expect("Failed to export table");
+
+    // check if file exists
+    assert!(std::path::Path::new(&file_path).exists());
+
+    // get the content of the file
+    let content: String = std::fs::read_to_string(&file_path).expect("Failed to read file");
     assert_eq!(
-        result.unwrap_err(),
-        "Unsupported database driver for this operation".into()
+        content, "header1;header2\nvalue1;value2\nvalue3;value4\n",
+        "Failed to export table"
     );
+
+    let download_config: DownloadConfig = DownloadConfig {
+        separator: SeparatorType::Comma,
+        table_name: "test_table".into(),
+        location: "./".into(),
+    };
+
+    export_table(&conn, download_config)
+        .await
+        .expect("Failed to export table");
+
+    // check if file exists
+    assert!(std::path::Path::new(&file_path).exists());
+
+    // get the content of the file
+    let content: String = std::fs::read_to_string(&file_path).expect("Failed to read file");
+    assert_eq!(
+        content, "header1,header2\nvalue1,value2\nvalue3,value4\n",
+        "Failed to export table"
+    );
+
+    // Clean up
+    std::fs::remove_file(&file_path).expect("Failed to remove file");
+    remove_test_db("test_download_table").expect("Failed to remove test table");
 }

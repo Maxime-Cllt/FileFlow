@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {invoke} from "@tauri-apps/api/core";
 import {Label} from "@/components/ui/label.tsx";
 import {ComboboxComponent} from "@/components/hooks/component/ComboboxComponent.tsx";
-import {log_error} from "@/components/hooks/utils.tsx";
+import {log_error, requestAllTablesFromConnection} from "@/components/hooks/utils.tsx";
 import {Select, SelectContent, SelectItem, SelectTrigger} from "@/components/ui/select.tsx";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import {toast} from "sonner";
@@ -38,22 +38,12 @@ const Download: React.FC = () => {
 
         const retrieveTables = async (): Promise<void> => {
             try {
-                console.log('Retrieving tables...');
-                const get_table_list_response: boolean | ComboItem[] = await invoke<Array<ComboItem> | boolean>('get_table_list');
 
-                if (typeof get_table_list_response === "boolean") {
-                    throw new Error('Failed to get table list');
+                let parsedData = await requestAllTablesFromConnection();
+
+                if (typeof parsedData === "boolean") {
+                    throw new Error("Failed to retrieve tables");
                 }
-
-
-                if (get_table_list_response.length === 0) {
-                    throw new Error('No tables found');
-                }
-
-                const parsedData: ComboItem[] = get_table_list_response.map(item => ({
-                    value: item.value,
-                    label: item.label
-                }));
 
                 setTables(parsedData);
             } catch (error) {
@@ -127,10 +117,12 @@ const Download: React.FC = () => {
                 <div className="container mx-auto pt-8 px-4 md:px-8 space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle
-                                className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
-                                Export Configuration
-                            </CardTitle>
+                            <div className="flex items-center justify-between border-b pb-4">
+                                <CardTitle
+                                    className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
+                                    Export Configuration
+                                </CardTitle>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-8">

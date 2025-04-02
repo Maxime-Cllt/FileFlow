@@ -7,7 +7,7 @@ interface SelectDatabaseProps {
     updateDbConfigField: (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => void;
 }
 
-const SelectDatabase: React.FC<SelectDatabaseProps> = (props: SelectDatabaseProps) => {
+const SelectDatabaseEngine: React.FC<SelectDatabaseProps> = (props: SelectDatabaseProps) => {
 
     const databaseOptions = {
         mysql: "MySQL",
@@ -40,4 +40,4 @@ const SelectDatabase: React.FC<SelectDatabaseProps> = (props: SelectDatabaseProp
     );
 };
 
-export default SelectDatabase;
+export default SelectDatabaseEngine;

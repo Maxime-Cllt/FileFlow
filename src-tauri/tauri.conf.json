@@ -18,6 +18,7 @@
   },
   "productName": "FileFlow",
   "mainBinaryName": "FileFlow",
+  "version" : "1.0.2",
   "identifier": "com.fileflow.app",
   "plugins": {},
   "app": {

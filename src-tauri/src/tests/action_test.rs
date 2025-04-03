@@ -1,4 +1,3 @@
-use crate::fileflow::action::insertion_mode::fast_insert;
 use crate::fileflow::database::connection::Connection;
 use crate::fileflow::enumeration::database_engine::DatabaseEngine;
 use crate::fileflow::stuct::db_config::DbConfig;
@@ -12,6 +11,7 @@ use csv::{Reader, ReaderBuilder};
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Pool, Row, Sqlite};
 use std::fs::File;
+use crate::fileflow::action::database_command::fast_insert;
 
 #[tokio::test]
 async fn test_fast_insert() {

@@ -5,6 +5,7 @@ import {invoke} from "@tauri-apps/api/core";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
 import {log_error} from "@/components/hooks/utils.tsx";
 import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
+import {InsertionModeEnum} from "@/components/fileflowui/load/insert/Insert.tsx";
 
 interface ButtonGroupProps {
     dbConfig: DatabaseConfig;
@@ -14,7 +15,7 @@ interface ButtonGroupProps {
     tableName: string;
     setTableName: (name: string) => void
     mode: string;
-    setMode: (mode: "fast" | "optimized") => void;
+    setMode: (mode: InsertionModeEnum) => void;
     showLoader: boolean;
     setShowLoader: (showLoader: boolean) => void;
 }
@@ -37,20 +38,24 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
 
             props.setShowLoader(true);
 
-            const insert_csv_data_response: string = await invoke<string>('insert_csv_data', {
-                csv: {
-                    table_name: props.tableName,
-                    files_path: props.filesPath,
-                    db_driver: props.dbConfig.db_driver.toLowerCase(),
-                    mode: props.mode,
-                },
-            });
+            const tableName: string[] = props.tableName.split(',').map((name) => name.trim());
 
-            if (insert_csv_data_response.startsWith("Error:")) {
-                throw new Error(insert_csv_data_response);
+            for (const [index, file] of props.filesPath.entries()) {
+                const insert_csv_data_response: string = await invoke<string>('insert_csv_data', {
+                    csv: {
+                        table_name: tableName[index],
+                        file_path: file,
+                        db_driver: props.dbConfig.db_driver.toLowerCase(),
+                        mode: props.mode,
+                    },
+                });
+
+                if (insert_csv_data_response.startsWith("Error:")) {
+                    log_error(insert_csv_data_response);
+                }
+                toast.success(insert_csv_data_response);
             }
 
-            toast.success(insert_csv_data_response);
         } catch (error) {
             log_error(error);
         }
@@ -66,7 +71,7 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
         props.updateDbConfigField('db_name', '');
         props.updateDbConfigField('sqlite_file_path', '');
 
-        props.setMode('fast');
+        props.setMode(InsertionModeEnum.Fast);
         props.setFilesPath([]);
         props.setTableName('');
         props.setShowLoader(false);

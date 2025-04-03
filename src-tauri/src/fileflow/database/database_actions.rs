@@ -1,12 +1,14 @@
-use std::collections::HashMap;
-use std::fs::File;
-use csv::{Writer, WriterBuilder};
-use sqlx::{Column, Row};
 use crate::fileflow::database::connection::{Connection, QueryResult};
-use crate::fileflow::database::sql_builder::{build_copy_table_sql, build_create_with_fixed_size_sql, build_drop_statement_sql};
+use crate::fileflow::database::sql_builder::{
+    build_copy_table_sql, build_create_with_fixed_size_sql, build_drop_statement_sql,
+};
 use crate::fileflow::enumeration::database_engine::DatabaseEngine;
 use crate::fileflow::enumeration::separator::SeparatorType;
 use crate::fileflow::stuct::download_config::DownloadConfig;
+use csv::{Writer, WriterBuilder};
+use sqlx::{Column, Row};
+use std::collections::HashMap;
+use std::fs::File;
 
 /// Exports a table’s data into a CSV file. It uses offset/LIMIT pagination to retrieve data in batches
 pub async fn export_table(
@@ -141,7 +143,7 @@ pub async fn drop_table_if_exists(
         drop_query,
         &format!("Failed to drop table '{table_name}'"),
     )
-        .await
+    .await
 }
 
 /// Helper function to execute a query and handle errors
@@ -190,7 +192,7 @@ pub async fn create_and_copy_final_table(
         &create_final_table_query,
         "Failed to create final table",
     )
-        .await?;
+    .await?;
 
     let copy_data_query: String =
         build_copy_table_sql(db_driver, temporary_table_name, final_table_name);
@@ -200,7 +202,21 @@ pub async fn create_and_copy_final_table(
         &copy_data_query,
         "Failed to copy data to final table",
     )
-        .await?;
+    .await?;
 
+    Ok(())
+}
+
+/// Drop a list of tables if they exist
+pub async fn drop_existing_tables(
+    connection: &Connection,
+    table_names: &[&str],
+    db_driver: &DatabaseEngine,
+) -> Result<(), String> {
+    for table_name in table_names.iter() {
+        if let Err(e) = drop_table_if_exists(connection, db_driver, table_name).await {
+            eprintln!("Error: {e}");
+        }
+    }
     Ok(())
 }

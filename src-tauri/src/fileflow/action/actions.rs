@@ -1,4 +1,4 @@
-use crate::fileflow::action::insertion_mode::{fast_insert, optimized_insert};
+use crate::fileflow::action::database_command::{fast_insert, optimized_insert};
 use crate::fileflow::database::connection::Connection;
 use crate::fileflow::enumeration::insertion_type::InsertionType;
 use crate::fileflow::stuct::insert_config::InsertConfig;
@@ -27,80 +27,68 @@ pub async fn insert_csv_data(
         return Err("Error: Connection is not established".into());
     }
 
-    let tables_names: Vec<String> = csv.table_name.split(',').map(|s| s.trim().into()).collect(); // Split the table names by comma
-    if tables_names.len() != csv.files_path.len() {
-        return Err("Error: The number of table names must match the number of files".into());
-    }
-
     let connection: &Connection = conn_guard.as_ref().unwrap();
-    let mut table_inserted: u16 = 0; // Counter for the number of tables inserted
     let mut total_lines: u64 = 0; // Counter for the total number of lines inserted
     let start: Instant = Instant::now(); // Timer for the insertion process
 
-    for (index, file_path) in csv.files_path.iter().enumerate() {
-        let file: File = File::open(file_path).expect("Failed to open file");
-        let first_line: String = read_first_line(file_path).expect("Failed to read first line"); // Read the first line of the file to detect the separator
-        let separator: char = find_separator(&first_line).expect("Failed to find separator"); // Separator detection of the file
+    let file: File = File::open(&csv.file_path).expect("Failed to open file");
+    let first_line: String = read_first_line(&csv.file_path).expect("Failed to read first line"); // Read the first line of the file to detect the separator
+    let separator: char = find_separator(&first_line).expect("Failed to find separator"); // Separator detection of the file
 
-        let final_columns_name: Vec<String> = get_formated_column_names(
-            &first_line
-                .split(separator)
-                .map(|s| sanitize_column(s))
-                .collect::<Vec<String>>(),
-        );
+    let final_columns_name: Vec<String> = get_formated_column_names(
+        &first_line
+            .split(separator)
+            .map(|s| sanitize_column(s))
+            .collect::<Vec<String>>(),
+    );
 
-        let mut reader: Reader<File> = ReaderBuilder::new()
-            .delimiter(u8::try_from(separator).unwrap())
-            .has_headers(true)
-            .from_reader(file);
+    let mut reader: Reader<File> = ReaderBuilder::new()
+        .delimiter(u8::try_from(separator).unwrap())
+        .has_headers(true)
+        .from_reader(file);
 
-        match csv.mode {
-            InsertionType::Fast => {
-                match fast_insert(
-                    connection,
-                    &mut reader,
-                    &final_columns_name,
-                    &tables_names[index],
-                    &csv.db_driver,
-                )
-                .await
-                {
-                    Ok(lines) => {
-                        total_lines += u64::from(lines);
-                        table_inserted += 1;
-                    }
-                    Err(_) => {
-                        eprint!("Error: Failed to insert data");
-                        continue;
-                    }
+    match csv.mode {
+        InsertionType::Fast => {
+            match fast_insert(
+                connection,
+                &mut reader,
+                &final_columns_name,
+                &csv.table_name,
+                &csv.db_driver,
+            )
+            .await
+            {
+                Ok(lines) => {
+                    total_lines += u64::from(lines);
+                }
+                Err(e) => {
+                    return Err(format!("Error: Failed to insert data: {}", e.to_string()));
                 }
             }
-            InsertionType::Optimized => {
-                match optimized_insert(
-                    connection,
-                    &mut reader,
-                    &final_columns_name,
-                    &tables_names[index],
-                    &csv.db_driver,
-                )
-                .await
-                {
-                    Ok(lines) => {
-                        total_lines += u64::from(lines);
-                        table_inserted += 1;
-                    }
-                    Err(_) => {
-                        eprint!("Error: Failed to insert data");
-                        continue;
-                    }
+        }
+        InsertionType::Optimized => {
+            match optimized_insert(
+                connection,
+                &mut reader,
+                &final_columns_name,
+                &csv.table_name,
+                &csv.db_driver,
+            )
+            .await
+            {
+                Ok(lines) => {
+                    total_lines += u64::from(lines);
+                }
+                Err(e) => {
+                    return Err(format!("Error: Failed to insert data: {}", e.to_string()));
                 }
             }
-        };
-    }
+        }
+    };
 
     Ok(format!(
-        "Inserted {table_inserted} out of {} for a total of {total_lines} lines in {:?} seconds",
-        csv.files_path.len(),
+        "Inserted {total_lines} lines into {} tables in {:?} seconds",
+        csv.table_name,
         start.elapsed(),
     ))
 }

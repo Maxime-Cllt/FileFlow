@@ -30,14 +30,14 @@ async fn test_db_config() {
 #[tokio::test]
 async fn test_insert_config() {
     let config = InsertConfig {
-        files_path: vec!["file_path".into()],
+        file_path: "file_path".into(),
         table_name: "table_name".into(),
         mode: InsertionType::Fast,
         db_driver: DatabaseEngine::Postgres,
     };
 
     assert_eq!(config.db_driver, DatabaseEngine::Postgres);
-    assert_eq!(config.files_path, vec!["file_path"]);
+    assert_eq!(config.file_path, "file_path");
     assert_eq!(config.table_name, "table_name");
     assert_eq!(config.mode, InsertionType::Fast);
 }

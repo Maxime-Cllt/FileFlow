@@ -10,6 +10,12 @@ import ConnectionForm from "@/components/hooks/database/ConnectionForm.tsx";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 
+
+export enum InsertionModeEnum {
+    Fast = "fast",
+    Optimized = "optimized",
+}
+
 const Insert: React.FC = () => {
 
     const [dbConfig, setDbConfig] = useState<DatabaseConfig>({
@@ -25,7 +31,7 @@ const Insert: React.FC = () => {
     });
 
     const [filesPath, setFilesPath] = useState<string[]>([]);
-    const [mode, setMode] = useState<"fast" | "optimized">("fast");
+    const [mode, setMode] = useState<InsertionModeEnum>(InsertionModeEnum.Fast);
     const [showLoader, setShowLoader] = useState<boolean>(false);
     const [tableName, setTableName] = useState<string>('');
 

@@ -1,5 +1,4 @@
 use crate::fileflow::enumeration::database_engine::DatabaseEngine;
-use sqlx::Row;
 use std::collections::HashMap;
 
 /// This function is used to generate the DROP TABLE statement for different database drivers.
@@ -20,14 +19,25 @@ pub fn build_drop_statement_sql(
 /// This function is used to generate the INSERT INTO statement for different database drivers.
 pub fn build_prepared_statement_sql(
     db_driver: &DatabaseEngine,
-    final_table_name: &str,
-    columns: &str,
+    table_name: &str,
+    columns: &[String],
 ) -> String {
     let quote: char = match db_driver {
         DatabaseEngine::SQLite | DatabaseEngine::Postgres => '\"',
         DatabaseEngine::MariaDB | DatabaseEngine::MySQL => '`',
     };
-    format!("INSERT INTO {quote}{final_table_name}{quote} ({columns}) VALUES ")
+    let mut query = format!("INSERT INTO {quote}{table_name}{quote} (");
+    for column in columns.iter() {
+        if column.is_empty() {
+            continue;
+        }
+        query.push_str(&format!("{quote}{column}{quote}"));
+        if column != columns.last().unwrap() {
+            query.push_str(", ");
+        }
+    }
+    query.push_str(") VALUES ");
+    query
 }
 
 /// This function is used to generate the COPY statement for different database drivers.
@@ -149,7 +159,7 @@ pub fn build_query_all_tables(driver: &DatabaseEngine, schema: &str) -> String {
 mod test {
     use crate::fileflow::database::sql_builder::{
         build_create_table_sql, build_create_with_fixed_size_sql, build_drop_statement_sql,
-        build_prepared_statement_sql,
+        build_prepared_statement_sql, build_query_all_tables,
     };
     use crate::fileflow::enumeration::database_engine::DatabaseEngine;
     use std::collections::HashMap;
@@ -185,46 +195,62 @@ mod test {
     #[tokio::test]
     async fn test_get_insert_into_statement() {
         assert_eq!(
-            build_prepared_statement_sql(&DatabaseEngine::SQLite, "table_name", "columns"),
-            "INSERT INTO \"table_name\" (columns) VALUES "
+            build_prepared_statement_sql(
+                &DatabaseEngine::SQLite,
+                "table_name",
+                &["columns".into()]
+            ),
+            "INSERT INTO \"table_name\" (\"columns\") VALUES "
         );
         assert_eq!(
-            build_prepared_statement_sql(&DatabaseEngine::MySQL, "table_name", "columns"),
-            "INSERT INTO `table_name` (columns) VALUES "
-        );
-        assert_eq!(
-            build_prepared_statement_sql(&DatabaseEngine::Postgres, "table_name", "columns"),
-            "INSERT INTO \"table_name\" (columns) VALUES "
-        );
-
-        assert_eq!(
-            build_prepared_statement_sql(&DatabaseEngine::SQLite, "table_name", ""),
-            "INSERT INTO \"table_name\" () VALUES "
-        );
-        assert_eq!(
-            build_prepared_statement_sql(&DatabaseEngine::MySQL, "table_name", ""),
-            "INSERT INTO `table_name` () VALUES "
-        );
-        assert_eq!(
-            build_prepared_statement_sql(&DatabaseEngine::Postgres, "table_name", ""),
-            "INSERT INTO \"table_name\" () VALUES "
-        );
-
-        assert_eq!(
-            build_prepared_statement_sql(&DatabaseEngine::SQLite, "table_name", "header1, header2"),
-            "INSERT INTO \"table_name\" (header1, header2) VALUES "
-        );
-        assert_eq!(
-            build_prepared_statement_sql(&DatabaseEngine::MySQL, "table_name", "header1, header2"),
-            "INSERT INTO `table_name` (`header1`, header2) VALUES "
+            build_prepared_statement_sql(&DatabaseEngine::MySQL, "table_name", &["columns".into()]),
+            "INSERT INTO `table_name` (`columns`) VALUES "
         );
         assert_eq!(
             build_prepared_statement_sql(
                 &DatabaseEngine::Postgres,
                 "table_name",
-                "header1, header2"
+                &["columns".into()]
             ),
-            "INSERT INTO \"table_name\" (header1, header2) VALUES "
+            "INSERT INTO \"table_name\" (\"columns\") VALUES "
+        );
+
+        assert_eq!(
+            build_prepared_statement_sql(&DatabaseEngine::SQLite, "table_name", &["".into()]),
+            "INSERT INTO \"table_name\" () VALUES "
+        );
+        assert_eq!(
+            build_prepared_statement_sql(&DatabaseEngine::MySQL, "table_name", &["".into()]),
+            "INSERT INTO `table_name` () VALUES "
+        );
+        assert_eq!(
+            build_prepared_statement_sql(&DatabaseEngine::Postgres, "table_name", &["".into()]),
+            "INSERT INTO \"table_name\" () VALUES "
+        );
+
+        assert_eq!(
+            build_prepared_statement_sql(
+                &DatabaseEngine::SQLite,
+                "table_name",
+                &["header1".into(), "header2".into()]
+            ),
+            "INSERT INTO \"table_name\" (\"header1\", \"header2\") VALUES "
+        );
+        assert_eq!(
+            build_prepared_statement_sql(
+                &DatabaseEngine::MySQL,
+                "table_name",
+                &["header1".into(), "header2".into()]
+            ),
+            "INSERT INTO `table_name` (`header1`, `header2`) VALUES "
+        );
+        assert_eq!(
+            build_prepared_statement_sql(
+                &DatabaseEngine::Postgres,
+                "table_name",
+                &["header1".into(), "header2".into()]
+            ),
+            "INSERT INTO \"table_name\" (\"header1\", \"header2\") VALUES "
         );
     }
 
@@ -327,6 +353,40 @@ mod test {
                 &final_columns,
             );
             assert_eq!(result, expected);
+        }
+    }
+
+    #[tokio::test]
+    async fn test_build_query_all_tables() {
+        let test_cases: Vec<(&DatabaseEngine, String)> = vec![
+            (
+                &DatabaseEngine::MySQL,
+                "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'test';"
+                    .into(),
+            ),
+            (
+                &DatabaseEngine::MariaDB,
+                "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'test';"
+                    .into(),
+            ),
+            (
+                &DatabaseEngine::Postgres,
+                "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = 'public';"
+                    .into(),
+            ),
+            (
+                &DatabaseEngine::SQLite,
+                "SELECT name FROM sqlite_master WHERE type='table';".into(),
+            ),
+        ];
+
+        for (driver, expected) in test_cases {
+            assert_eq!(
+                build_query_all_tables(driver, "test"),
+                expected,
+                "Failed for driver: {:?}",
+                driver
+            );
         }
     }
 }

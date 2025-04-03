@@ -21,7 +21,7 @@ pub struct Connection {
 
 impl Connection {
     pub async fn connect(config: &DbConfig) -> Result<Self, Error> {
-        let connection_str: String = Self::get_connection_url(config)?;
+        let connection_str: String = Self::get_connection_url(config);
 
         let connection_enum: ConnectionEnum = match config.db_driver {
             DatabaseEngine::Postgres => {
@@ -81,9 +81,9 @@ impl Connection {
         Ok(())
     }
 
-    pub(crate) fn get_connection_url(config: &DbConfig) -> Result<String, Error> {
+    pub(crate) fn get_connection_url(config: &DbConfig) -> String {
         match config.db_driver {
-            DatabaseEngine::Postgres => Ok(format!(
+            DatabaseEngine::Postgres => format!(
                 "postgres://{}{}@{}:{}/{}",
                 config.username,
                 if config.password.is_empty() {
@@ -94,8 +94,8 @@ impl Connection {
                 config.db_host,
                 config.port,
                 config.db_name
-            )),
-            DatabaseEngine::MySQL | DatabaseEngine::MariaDB => Ok(format!(
+            ),
+            DatabaseEngine::MySQL | DatabaseEngine::MariaDB => format!(
                 "mysql://{}{}@{}:{}/{}",
                 config.username,
                 if config.password.is_empty() {
@@ -106,8 +106,8 @@ impl Connection {
                 config.db_host,
                 config.port,
                 config.db_name
-            )),
-            DatabaseEngine::SQLite => Ok(config.sqlite_file_path.clone()),
+            ),
+            DatabaseEngine::SQLite => config.sqlite_file_path.clone(),
         }
     }
 

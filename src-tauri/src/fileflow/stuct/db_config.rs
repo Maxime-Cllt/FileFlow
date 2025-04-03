@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::fileflow::enumeration::database_engine::DatabaseEngine;
+use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Clone, Serialize)]
 pub struct DbConfig {

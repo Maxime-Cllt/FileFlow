@@ -1,12 +1,12 @@
 use crate::fileflow::utils::string_formater::{
-    escaped_values, get_formated_column_names, sanitize_column, sanitize_value,
+    escaped_record, get_formated_column_names, sanitize_column, sanitize_value,
 };
 use csv::StringRecord;
 
 #[tokio::test]
 async fn test_escape_values() {
     let record: StringRecord = StringRecord::from(vec!["value1", "value2"]);
-    let values: String = escaped_values(record);
+    let values: String = escaped_record(record);
     assert_eq!(values, "'value1', 'value2'");
 
     let record: StringRecord = StringRecord::from(vec![
@@ -15,7 +15,7 @@ async fn test_escape_values() {
         "DELETE FROM test_table WHERE column1 = 1;",
         "SELECT * FROM test_table;",
     ]);
-    let values: String = escaped_values(record);
+    let values: String = escaped_record(record);
     assert_eq!(values, "'INSERT INTO test_table VALUES (1,2);', 'UPDATE test_table SET column1 = 1;', 'DELETE FROM test_table WHERE column1 = 1;', 'SELECT * FROM test_table;'");
 }
 
@@ -33,7 +33,7 @@ async fn test_sanitize_column() {
     assert_eq!(sanitize_column("column1"), "column1");
     assert_eq!(sanitize_column("'column1'"), "column1");
     assert_eq!(sanitize_column("column1'"), "column1");
-    assert_eq!(sanitize_column("column1\\column2"), "column1_column2");
+    assert_eq!(sanitize_column("column1\\column2"), "column1column2");
     assert_eq!(sanitize_column("column1\"column2"), "column1column2");
     assert_eq!(sanitize_column("column 1"), "column_1");
     assert_eq!(sanitize_column("column 1'"), "column_1");
@@ -46,8 +46,8 @@ async fn test_get_formated_column_names() {
         vec!["header_1", "header2"]
     );
     assert_eq!(
-        get_formated_column_names(&vec!["header    1".into(), String::new(), "header2".into()]),
-        vec!["header____1", "column_2", "header2"]
+        get_formated_column_names(&vec!["header    1".into(), String::new(), "header2".into(), "".into()]),
+        vec!["header____1", "column_2", "header2", "column_4"]
     );
     assert_eq!(
         get_formated_column_names(&vec!["header'\" 1".into(), "header 2''\\".into()]),

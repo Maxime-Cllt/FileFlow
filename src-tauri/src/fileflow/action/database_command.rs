@@ -3,7 +3,7 @@ use crate::fileflow::database::connection::{Connection, QueryResult};
 use crate::fileflow::stuct::combo_item::ComboItem;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::download_config::DownloadConfig;
-use crate::fileflow::utils::sql::{build_query_all_tables, export_table};
+use crate::fileflow::database::sql_builder::{build_query_all_tables, export_table};
 use serde_json::{json, Value};
 use sqlx::Row;
 use std::sync::Arc;

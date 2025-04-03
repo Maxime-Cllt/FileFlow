@@ -1,10 +1,12 @@
 use crate::fileflow::database::connection::Connection;
-use crate::fileflow::enumeration::database_engine::DatabaseEngine;
-use crate::fileflow::utils::fileflowlib::{escaped_values, sanitize_value};
-use crate::fileflow::utils::sql::{
+use crate::fileflow::database::database_actions::{
     batch_insert, create_and_copy_final_table, drop_table_if_exists, execute_query,
-    get_create_statement, get_insert_into_statement,
 };
+use crate::fileflow::database::sql_builder::{
+    build_create_table_sql, build_prepared_statement_sql,
+};
+use crate::fileflow::enumeration::database_engine::DatabaseEngine;
+use crate::fileflow::utils::string_formater::{escaped_values, sanitize_value};
 use csv::{Reader, StringRecord};
 use std::collections::HashMap;
 use std::fs::File;
@@ -30,8 +32,7 @@ pub async fn optimized_insert(
 
     // Create the temporary table
     let create_temp_table_query: String =
-        get_create_statement(db_driver, temporary_table_name, final_columns_name)
-            .expect("Failed to create temporary table query");
+        build_create_table_sql(db_driver, temporary_table_name, final_columns_name);
 
     execute_query(
         connection,
@@ -43,15 +44,14 @@ pub async fn optimized_insert(
 
     // Initialize variables
     const MAX_BATCH_SIZE: usize = 4000;
-    let mut batch: Vec<String> = Vec::with_capacity(MAX_BATCH_SIZE);
-    let mut columns_size_map: HashMap<&str, usize> =
-        initialize_columns_size_map(final_columns_name);
-    let insert_query_base: String = get_insert_into_statement(
+    let insert_query_base: String = build_prepared_statement_sql(
         db_driver,
         temporary_table_name,
         &final_columns_name.join(", "),
-    )
-    .expect("Failed to insert into temporary table");
+    );
+    let mut batch: Vec<String> = Vec::with_capacity(MAX_BATCH_SIZE);
+    let mut columns_size_map: HashMap<&str, usize> =
+        initialize_columns_size_map(final_columns_name);
     let mut line_count: u32 = 0;
 
     // Read and process records from the CSV
@@ -172,11 +172,14 @@ pub async fn fast_insert(
         return Err(err);
     }
 
+    let build_create_table_statement: String =
+        build_create_table_sql(db_driver, final_table_name, final_columns_name);
+
     // Create the table
     if let Err(err) = execute_query(
         connection,
-        get_create_statement(db_driver, final_table_name, final_columns_name)?.as_str(),
-        "Failed to create table {final_table_name}",
+        &build_create_table_statement,
+        "Failed to create table",
     )
     .await
     {
@@ -190,8 +193,8 @@ pub async fn fast_insert(
     let mut batch: Vec<String> = Vec::with_capacity(MAX_BATCH_SIZE);
 
     // Prepare the insert query
-    let insert_query_base: &str = &get_insert_into_statement(db_driver, final_table_name, columns)
-        .expect("Failed to insert batch data");
+    let insert_query_base: &str =
+        &build_prepared_statement_sql(db_driver, final_table_name, columns);
 
     for result in reader.records() {
         let record: StringRecord = result.unwrap();

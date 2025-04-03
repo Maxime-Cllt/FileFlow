@@ -9,8 +9,8 @@ import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 interface ButtonGroupProps {
     dbConfig: DatabaseConfig;
     updateDbConfigField: (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => void;
-    filePath: string;
-    setFilePath: (path: string) => void;
+    filesPath: string[];
+    setFilesPath: (path: string[]) => void;
     tableName: string;
     setTableName: (name: string) => void
     mode: string;
@@ -24,7 +24,7 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
     const handleInsert = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            if (!props.filePath) {
+            if (!props.filesPath) {
                 toast.warning('Please select a file');
                 return;
             }
@@ -34,19 +34,20 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
                 return;
             }
 
+
             props.setShowLoader(true);
 
-            const insert_csv_data_response: string | boolean = await invoke<string | boolean>('insert_csv_data', {
+            const insert_csv_data_response: string = await invoke<string>('insert_csv_data', {
                 csv: {
                     table_name: props.tableName,
-                    file_path: props.filePath,
+                    files_path: props.filesPath,
                     db_driver: props.dbConfig.db_driver.toLowerCase(),
                     mode: props.mode,
                 },
             });
 
-            if (typeof insert_csv_data_response !== "string") {
-                throw new Error('Error inserting data');
+            if (insert_csv_data_response.startsWith("Error:")) {
+                throw new Error(insert_csv_data_response);
             }
 
             toast.success(insert_csv_data_response);
@@ -66,12 +67,12 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
         props.updateDbConfigField('sqlite_file_path', '');
 
         props.setMode('fast');
-        props.setFilePath('');
+        props.setFilesPath([]);
         props.setTableName('');
         props.setShowLoader(false);
     };
 
-    const insertOk: boolean = props.filePath !== "" && props.dbConfig.is_connected;
+    const insertOk: boolean = props.filesPath.length > 0 && props.dbConfig.is_connected;
 
     return (
         <div className="flex items-center justify-center gap-x-6 mt-4 p-4">

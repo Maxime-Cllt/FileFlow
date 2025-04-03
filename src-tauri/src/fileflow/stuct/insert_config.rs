@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct InsertConfig {
-    pub file_path: String,
+    pub files_path: Vec<String>,
     pub table_name: String,
     pub mode: InsertionType,
     pub db_driver: DatabaseEngine,

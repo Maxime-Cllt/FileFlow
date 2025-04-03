@@ -3,7 +3,7 @@ use crate::fileflow::database::connection::{Connection, QueryResult};
 use crate::fileflow::stuct::combo_item::ComboItem;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::download_config::DownloadConfig;
-use crate::fileflow::utils::sql::{export_table, build_query_all_tables};
+use crate::fileflow::utils::sql::{build_query_all_tables, export_table};
 use serde_json::{json, Value};
 use sqlx::Row;
 use std::sync::Arc;
@@ -134,7 +134,7 @@ pub async fn download_table(
         return Err("No active database connection.".into());
     }
 
-    if config.table_name.is_empty() || config.location.is_empty() {
+    if config.table_name_list.is_empty() || config.location.is_empty() {
         return Err("Some required fields are missing.".into());
     }
 
@@ -143,12 +143,24 @@ pub async fn download_table(
         None => return Err("No active database connection.".into()),
     };
 
-    if let Err(err) = export_table(connection, config).await {
-        return Err(format!("Failed to export table: {err}"));
+    let mut exported_table: u32 = 0;
+    for table_name in &config.table_name_list {
+        if let Err(err) = export_table(connection, &config, table_name).await {
+            println!("{err}");
+            continue;
+        }
+        exported_table += 1;
     }
 
-    Ok(format!(
-        "Table downloaded successfully in {:?} seconds.",
-        start.elapsed()
-    ))
+    let response: String = if exported_table == 0 {
+        "No tables were exported.".into()
+    } else {
+        format!(
+            "Exported {exported_table} out of {} tables successfully in {:?} seconds.",
+            config.table_name_list.len(),
+            start.elapsed()
+        )
+    };
+
+    Ok(response)
 }

@@ -232,15 +232,13 @@ pub fn build_query_all_tables(driver: &DatabaseEngine, schema: &str) -> String {
 /// Exports a table’s data into a CSV file. It uses offset/LIMIT pagination to retrieve data in batches
 pub async fn export_table(
     connection: &Connection,
-    download_config: DownloadConfig,
+    download_config: &DownloadConfig,
+    table_name: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     const LIMIT: i32 = 5000;
     let mut offset: i32 = 0;
     let mut header_written: bool = false;
-    let file_path: String = format!(
-        "{}/{}_export.csv",
-        download_config.location, download_config.table_name
-    );
+    let file_path: String = format!("{}/{table_name}_export.csv", download_config.location);
 
     let separator: u8 = match download_config.separator {
         SeparatorType::Comma => b',',
@@ -254,10 +252,10 @@ pub async fn export_table(
         .from_path(&file_path)
         .expect("Failed to create CSV writer");
 
-    let base_sql: String = format!("SELECT * FROM {}", download_config.table_name);
+    let base_sql: String = format!("SELECT * FROM {table_name}");
 
     loop {
-        let sql_query: String = format!("{} LIMIT {} OFFSET {}", base_sql, LIMIT, offset);
+        let sql_query: String = format!("{base_sql} LIMIT {LIMIT} OFFSET {offset}");
         let query_result: QueryResult = connection.query_many_with_result(&sql_query).await?;
 
         let (columns, rows): (Vec<String>, Vec<Vec<String>>) = match query_result {

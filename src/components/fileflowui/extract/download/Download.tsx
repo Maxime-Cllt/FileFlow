@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {invoke} from "@tauri-apps/api/core";
 import {Label} from "@/components/ui/label.tsx";
-import {ComboboxComponent} from "@/components/hooks/component/ComboboxComponent.tsx";
 import {log_error, requestAllTablesFromConnection} from "@/components/hooks/utils.tsx";
 import {Select, SelectContent, SelectItem, SelectTrigger} from "@/components/ui/select.tsx";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
@@ -11,6 +10,7 @@ import Loader from "@/components/hooks/Loader.tsx";
 import ConnectionForm from "@/components/hooks/database/ConnectionForm.tsx";
 import {AnimatePresence, motion} from 'framer-motion';
 import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
+import {CheckBoxCombo} from "@/components/hooks/component/CheckBoxCombo.tsx";
 
 const Download: React.FC = () => {
 
@@ -27,7 +27,7 @@ const Download: React.FC = () => {
         });
 
         const [tables, setTables] = useState<Array<ComboItem>>([]);
-        const [selectedTable, setSelectedTable] = useState<string | null>(null);
+        const [selectedTables, setSelectedTables] = useState<string[]>([]);
         const [separator, setSeparator] = useState<',' | ';' | ' ' | '|'>(',');
         const [absolutePath, setAbsolutePath] = useState<string>('');
         const [showLoader, setShowLoader] = useState<boolean>(false);
@@ -39,7 +39,7 @@ const Download: React.FC = () => {
         const retrieveTables = async (): Promise<void> => {
             try {
 
-                let parsedData = await requestAllTablesFromConnection();
+                const parsedData: ComboItem[] | boolean = await requestAllTablesFromConnection();
 
                 if (typeof parsedData === "boolean") {
                     throw new Error("Failed to retrieve tables");
@@ -54,15 +54,20 @@ const Download: React.FC = () => {
         const handleDownload = async () => {
             try {
 
-                if (!selectedTable && absolutePath === "") {
+                if (!selectedTables && absolutePath === "") {
                     throw new Error('Please fill in all required fields');
                 }
+
+                selectedTables.forEach((table) => {
+                        console.log(`Selected table: ${table}`);
+                    }
+                );
 
                 setShowLoader(true);
 
                 const download_table_response: string = await invoke<string>('download_table', {
                     config: {
-                        table_name: selectedTable,
+                        table_name_list: selectedTables,
                         location: absolutePath,
                         separator: getSeparatorName(separator).toLocaleLowerCase()
                     }
@@ -139,7 +144,7 @@ const Download: React.FC = () => {
                                                 Tables available ({tables.length})
                                             </h2>
                                             <div className="flex justify-center">
-                                                <ComboboxComponent lists={tables} setSelectedValue={setSelectedTable}/>
+                                                <CheckBoxCombo lists={tables} setSelectedValue={setSelectedTables}/>
                                             </div>
                                         </motion.section>
                                     )}

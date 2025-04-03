@@ -4,45 +4,52 @@ import {Button} from "@/components/ui/button.tsx";
 import {FileArchive} from "lucide-react";
 import {invoke} from "@tauri-apps/api/core";
 import * as dialog from "@tauri-apps/plugin-dialog"
-import {toast} from "sonner";
-import {getFileNameFromPath} from "@/components/hooks/utils.tsx";
+import {getFileNameFromPath, log_error} from "@/components/hooks/utils.tsx";
 
 interface FileUploadProps {
-    filePath: string;
-    setFilePath: (path: string) => void;
+    filesPath: string[];
+    setFilePath: (path: string[]) => void
+    multiple?: boolean;
 }
 
 const FileUpload: React.FC<FileUploadProps> = (props: FileUploadProps) => {
 
-    const [fileSize, setFileSize] = React.useState<string>('');
+    const [message, setMessage] = React.useState<string>('');
 
-    const [fileName, setFileName] = React.useState<string>('');
-
-    const openFileDialog = async () => {
+    const openFileDialog = async (): Promise<void> => {
         try {
-            const selectedFilePath = await dialog.open({
+            const selectedFilePath: string | null = await dialog.open({
                 filters: [{name: 'CSV Files', extensions: ['csv']}],
-                multiple: false,
+                multiple: props.multiple || false,
                 directory: false,
             });
 
-            setFileName(getFileNameFromPath(selectedFilePath?.toString() || ''));
+            if (!selectedFilePath) {
+                return;
+            }
 
-            if (selectedFilePath && selectedFilePath !== fileName) {
-                const path: string = selectedFilePath?.toString();
+            if (Array.isArray(selectedFilePath)) {
+                let message: string = '';
+                for (const filePath of selectedFilePath) {
 
-                props.setFilePath(path)
+                    const fileName: string = getFileNameFromPath(filePath?.toString() || '');
+                    const fileSize: string = await invoke<string>('get_size_of_file', {filePath: filePath?.toString() || ''});
+                    message += `${fileName} (${fileSize})`;
 
-                const response = await invoke<string | boolean>('get_size_of_file', {filePath: path});
-
-                if (typeof response !== 'string') {
-                    throw new Error('Error getting file size');
+                    if (filePath !== selectedFilePath[selectedFilePath.length - 1]) {
+                        message += ', ';
+                    }
                 }
-
-                setFileSize(response);
+                setMessage(message);
+                props.setFilePath(selectedFilePath);
+            } else {
+                const fileName: string = getFileNameFromPath(selectedFilePath);
+                const fileSize: string = await invoke<string>('get_size_of_file', {filePath: selectedFilePath});
+                setMessage(`${fileName} (${fileSize})`);
+                props.setFilePath([selectedFilePath]);
             }
         } catch (error) {
-            toast.error(`Error opening file`);
+            log_error(error);
         }
     };
 
@@ -62,7 +69,7 @@ const FileUpload: React.FC<FileUploadProps> = (props: FileUploadProps) => {
             <div className="flex-1 ml-4">
                 <Input
                     type="text"
-                    value={fileName ? `${fileName} (${fileSize})` : ''}
+                    value={message}
                     placeholder={'Select a CSV file'}
                     disabled
                     className="w-full bg-gray-100 border border-gray-300 rounded-md p-3 text-gray-700"

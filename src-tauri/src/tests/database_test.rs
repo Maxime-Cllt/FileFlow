@@ -5,8 +5,8 @@ use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::download_config::DownloadConfig;
 use crate::fileflow::utils::fileflowlib::get_formated_column_names;
 use crate::fileflow::utils::sql::{
-    export_table, build_query_all_tables, get_create_statement, get_create_statement_with_fixed_size,
-    get_drop_statement, get_insert_into_statement,
+    build_query_all_tables, export_table, get_create_statement,
+    get_create_statement_with_fixed_size, get_drop_statement, get_insert_into_statement,
 };
 use crate::tests::utils::{
     create_test_db, get_test_maridb_config, get_test_mysql_config, get_test_pg_config,
@@ -49,6 +49,7 @@ async fn test_sqlite_connection() {
     let conn = Connection::connect(&config).await;
     assert!(conn.is_success(), "Failed to connect to the database");
     assert!(conn.is_ok());
+    drop(conn);
     remove_test_db("sqlite_connection").expect("Failed to remove test table");
 }
 
@@ -259,11 +260,8 @@ async fn test_query_many_with_result() {
     ];
 
     for sql in SQL_ARRAY.iter() {
-        match conn.query(sql).await {
-            Ok(_) => {}
-            Err(e) => {
-                println!("Error: {:?} for query: {sql}", e);
-            }
+        if let Err(e) = conn.query(sql).await {
+            println!("Error: {:?} for query: {sql}", e);
         }
     }
 
@@ -271,6 +269,8 @@ async fn test_query_many_with_result() {
         .query_many_with_result("SELECT * FROM test_table")
         .await;
     assert!(query_result.is_ok());
+
+    drop(conn);
 
     let query_result: QueryResult = query_result.unwrap();
 
@@ -351,16 +351,16 @@ async fn test_download_table() {
 
     let download_config: DownloadConfig = DownloadConfig {
         separator: SeparatorType::Semicolon,
-        table_name: "test_table".into(),
+        table_name_list: vec!["test_table".into()],
         location: "./".into(),
     };
 
     let file_path: PathBuf = PathBuf::from(format!(
         "{}/{}_export.csv",
-        download_config.location, download_config.table_name
+        download_config.location, download_config.table_name_list[0]
     ));
 
-    export_table(&conn, download_config)
+    export_table(&conn, &download_config, &download_config.table_name_list[0])
         .await
         .expect("Failed to export table");
 
@@ -376,11 +376,11 @@ async fn test_download_table() {
 
     let download_config: DownloadConfig = DownloadConfig {
         separator: SeparatorType::Comma,
-        table_name: "test_table".into(),
+        table_name_list: vec!["test_table".into()],
         location: "./".into(),
     };
 
-    export_table(&conn, download_config)
+    export_table(&conn, &download_config, &download_config.table_name_list[0])
         .await
         .expect("Failed to export table");
 
@@ -395,6 +395,7 @@ async fn test_download_table() {
     );
 
     // Clean up
+    drop(conn);
     std::fs::remove_file(&file_path).expect("Failed to remove file");
     remove_test_db("test_download_table").expect("Failed to remove test table");
 }

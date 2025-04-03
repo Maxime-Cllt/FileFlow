@@ -67,12 +67,14 @@ async fn test_save_config() {
 #[tokio::test]
 async fn test_downlopad_config() {
     let config = DownloadConfig {
-        table_name: "table_name".into(),
+        table_name_list: vec!["table1".into(), "table2".into()],
         location: "location".into(),
         separator: SeparatorType::Comma,
     };
 
-    assert_eq!(config.table_name, "table_name");
+    assert_eq!(config.table_name_list.len(), 2);
+    assert_eq!(config.table_name_list[0], "table1");
+    assert_eq!(config.table_name_list[1], "table2");
     assert_eq!(config.location, "location");
     assert_eq!(config.separator, SeparatorType::Comma);
 }

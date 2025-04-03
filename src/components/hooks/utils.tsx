@@ -2,7 +2,16 @@
 import {invoke} from "@tauri-apps/api/core";
 import {toast} from "sonner";
 
-export const getFileNameFromPath = (path: string) => path.split("\\").toString().split('/').pop() || '';
+export const getFileNameFromPath = (path: string) => {
+    if (!path) return '';
+    if (path.includes('/')) {
+        return path.split('/').pop() || '';
+    }
+    if (path.includes('\\')) {
+        return path.split('\\').pop() || '';
+    }
+    return path;
+};
 
 
 // Return the normalized table name from a path

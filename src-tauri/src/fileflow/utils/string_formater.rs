@@ -18,7 +18,7 @@ pub fn get_formated_column_names(headers: &[String]) -> Vec<String> {
 
 /// Sanitize a value for safe insertion into the database
 pub fn sanitize_value(value: &str) -> String {
-    let mut sanitized:String = String::with_capacity(value.len());
+    let mut sanitized: String = String::with_capacity(value.len());
 
     for c in value.trim().chars() {
         match c {
@@ -39,9 +39,9 @@ pub fn sanitize_column(value: &str) -> String {
         .trim()
         .chars()
         .filter_map(|c| match c {
-            '\'' | '\\' | '\"' => None, // Remove these characters
-            ' ' => Some('_'),           // Replace spaces with underscores
-            _ => Some(c),               // Keep everything else
+            '\'' | '\\' | '\"' => None,        // Remove these characters
+            ' ' => Some('_'),                  // Replace spaces with underscores
+            _ => Some(c.to_ascii_lowercase()), // to lowercase
         })
         .collect()
 }

@@ -37,6 +37,7 @@ async fn test_sanitize_column() {
     assert_eq!(sanitize_column("column1\"column2"), "column1column2");
     assert_eq!(sanitize_column("column 1"), "column_1");
     assert_eq!(sanitize_column("column 1'"), "column_1");
+    assert_eq!(sanitize_column("COlUMn 1'"), "column_1");
 }
 
 #[tokio::test]

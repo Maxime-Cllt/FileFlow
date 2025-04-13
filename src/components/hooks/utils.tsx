@@ -2,7 +2,16 @@
 import {invoke} from "@tauri-apps/api/core";
 import {toast} from "sonner";
 
-export const getFileNameFromPath = (path: string) => path.split("\\").toString().split('/').pop() || '';
+export const getFileNameFromPath = (path: string) => {
+    if (!path) return '';
+    if (path.includes('/')) {
+        return path.split('/').pop() || '';
+    }
+    if (path.includes('\\')) {
+        return path.split('\\').pop() || '';
+    }
+    return path;
+};
 
 
 // Return the normalized table name from a path
@@ -135,3 +144,28 @@ export const log_error = (error: any) => {
     }
 }
 
+// Request all tables from the current database connection
+export const requestAllTablesFromConnection = async (): Promise<ComboItem[] | boolean> => {
+    try {
+        const get_table_list_response: boolean | ComboItem[] = await invoke<Array<ComboItem> | boolean>('get_table_list');
+
+        if (typeof get_table_list_response === "boolean") {
+            throw new Error('Failed to get table list');
+        }
+
+
+        if (get_table_list_response.length === 0) {
+            throw new Error('No tables found');
+        }
+
+        return get_table_list_response.map(item => ({
+            value: item.value,
+            label: item.label
+        }));
+
+
+    } catch (error) {
+        log_error(error)
+        return false;
+    }
+}

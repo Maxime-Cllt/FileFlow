@@ -2,7 +2,7 @@ import React from 'react';
 import {Input} from "@/components/ui/input.tsx";
 import {Button} from "@/components/ui/button.tsx";
 import {HardDrive} from "lucide-react";
-import SelectDBMS from "@/components/hooks/database/SelectDatabase.tsx";
+import SelectDBMS from "@/components/hooks/database/SelectDatabaseEngine.tsx";
 import * as dialog from "@tauri-apps/plugin-dialog";
 import {toast} from "sonner";
 import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";

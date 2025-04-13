@@ -1,10 +1,9 @@
-use crate::fileflow::action::insertion_mode::fast_insert;
 use crate::fileflow::database::connection::Connection;
 use crate::fileflow::enumeration::database_engine::DatabaseEngine;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::save_config::SaveConfig;
 use crate::fileflow::utils::fileflowlib::{get_all_saved_configs, save_config};
-use crate::tests::utils::{
+use crate::tests::utils_tests::{
     create_test_db, delete_config_file, generate_csv_file, get_test_save_config,
     get_test_sqlite_config, remove_csv_file, remove_test_db,
 };
@@ -12,6 +11,7 @@ use csv::{Reader, ReaderBuilder};
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Pool, Row, Sqlite};
 use std::fs::File;
+use crate::fileflow::action::database_command::fast_insert;
 
 #[tokio::test]
 async fn test_fast_insert() {
@@ -76,6 +76,8 @@ async fn test_fast_insert() {
 
     assert_ne!(value1, "value3");
     assert_ne!(value2, "value4");
+
+    drop(conn);
 
     remove_test_db("fast_insert").expect("Failed to remove test table");
     remove_csv_file("test_fast_insert").expect("Failed to remove CSV file");

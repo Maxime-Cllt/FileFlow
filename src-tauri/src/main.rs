@@ -6,9 +6,9 @@ mod fileflow;
 #[cfg(test)]
 mod tests;
 
-use crate::fileflow::action::database_actions::get_table_list;
+use crate::fileflow::action::database_command::get_table_list;
 use fileflow::action::actions::*;
-use fileflow::action::database_actions::*;
+use fileflow::action::database_command::*;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 

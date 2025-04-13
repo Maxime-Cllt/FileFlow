@@ -10,6 +10,12 @@ import ConnectionForm from "@/components/hooks/database/ConnectionForm.tsx";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 
+
+export enum InsertionModeEnum {
+    Fast = "fast",
+    Optimized = "optimized",
+}
+
 const Insert: React.FC = () => {
 
     const [dbConfig, setDbConfig] = useState<DatabaseConfig>({
@@ -24,8 +30,8 @@ const Insert: React.FC = () => {
         is_connected: false
     });
 
-    const [filePath, setFilePath] = useState<string>('');
-    const [mode, setMode] = useState<"fast" | "optimized">("fast");
+    const [filesPath, setFilesPath] = useState<string[]>([]);
+    const [mode, setMode] = useState<InsertionModeEnum>(InsertionModeEnum.Fast);
     const [showLoader, setShowLoader] = useState<boolean>(false);
     const [tableName, setTableName] = useState<string>('');
 
@@ -37,11 +43,22 @@ const Insert: React.FC = () => {
     );
 
     useEffect(() => {
-        if (filePath && filePath !== "") {
-            setTableName(getNormalizedTableName(filePath));
-        }
+        updateTablesName();
+    }, [filesPath]);
 
-    }, [filePath]);
+
+    const updateTablesName = (): void => {
+        let tableMessage: string = '';
+        for (const file of filesPath) {
+            const tableName: string = getNormalizedTableName(file);
+            if (file !== filesPath[filesPath.length - 1]) {
+                tableMessage += `${tableName}, `;
+            } else {
+                tableMessage += `${tableName}`;
+            }
+        }
+        setTableName(tableMessage);
+    }
 
     return (
         <div className="h-full w-full">
@@ -72,8 +89,9 @@ const Insert: React.FC = () => {
                     </CardHeader>
 
                     <CardContent>
+
                         {/* File Upload */}
-                        <FileUpload filePath={filePath} setFilePath={setFilePath}/>
+                        <FileUpload filesPath={filesPath} setFilePath={setFilesPath} multiple={true}/>
 
                         {/* Table Name Input */}
 
@@ -96,8 +114,8 @@ const Insert: React.FC = () => {
                         <ButtonGroupAction
                             dbConfig={dbConfig}
                             updateDbConfigField={updateDbConfigField}
-                            filePath={filePath}
-                            setFilePath={setFilePath}
+                            filesPath={filesPath}
+                            setFilesPath={setFilesPath}
                             tableName={tableName}
                             setTableName={setTableName}
                             mode={mode}

@@ -5,16 +5,17 @@ import {invoke} from "@tauri-apps/api/core";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
 import {log_error} from "@/components/hooks/utils.tsx";
 import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
+import {InsertionModeEnum} from "@/components/fileflowui/load/insert/Insert.tsx";
 
 interface ButtonGroupProps {
     dbConfig: DatabaseConfig;
     updateDbConfigField: (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => void;
-    filePath: string;
-    setFilePath: (path: string) => void;
+    filesPath: string[];
+    setFilesPath: (path: string[]) => void;
     tableName: string;
     setTableName: (name: string) => void
     mode: string;
-    setMode: (mode: "fast" | "optimized") => void;
+    setMode: (mode: InsertionModeEnum) => void;
     showLoader: boolean;
     setShowLoader: (showLoader: boolean) => void;
 }
@@ -24,7 +25,7 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
     const handleInsert = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            if (!props.filePath) {
+            if (!props.filesPath) {
                 toast.warning('Please select a file');
                 return;
             }
@@ -34,22 +35,27 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
                 return;
             }
 
+
             props.setShowLoader(true);
 
-            const insert_csv_data_response: string | boolean = await invoke<string | boolean>('insert_csv_data', {
-                csv: {
-                    table_name: props.tableName,
-                    file_path: props.filePath,
-                    db_driver: props.dbConfig.db_driver.toLowerCase(),
-                    mode: props.mode,
-                },
-            });
+            const tableName: string[] = props.tableName.split(',').map((name) => name.trim());
 
-            if (typeof insert_csv_data_response !== "string") {
-                throw new Error('Error inserting data');
+            for (const [index, file] of props.filesPath.entries()) {
+                const insert_csv_data_response: string = await invoke<string>('insert_csv_data', {
+                    csv: {
+                        table_name: tableName[index],
+                        file_path: file,
+                        db_driver: props.dbConfig.db_driver.toLowerCase(),
+                        mode: props.mode,
+                    },
+                });
+
+                if (insert_csv_data_response.startsWith("Error:")) {
+                    log_error(insert_csv_data_response);
+                }
+                toast.success(insert_csv_data_response);
             }
 
-            toast.success(insert_csv_data_response);
         } catch (error) {
             log_error(error);
         }
@@ -65,13 +71,13 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
         props.updateDbConfigField('db_name', '');
         props.updateDbConfigField('sqlite_file_path', '');
 
-        props.setMode('fast');
-        props.setFilePath('');
+        props.setMode(InsertionModeEnum.Fast);
+        props.setFilesPath([]);
         props.setTableName('');
         props.setShowLoader(false);
     };
 
-    const insertOk: boolean = props.filePath !== "" && props.dbConfig.is_connected;
+    const insertOk: boolean = props.filesPath.length > 0 && props.dbConfig.is_connected;
 
     return (
         <div className="flex items-center justify-center gap-x-6 mt-4 p-4">

@@ -116,9 +116,10 @@ pub fn remove_test_db(db_name: &str) -> Result<(), Box<dyn Error>> {
 
     if !std::path::Path::new(&file_path).exists() {
         println!("File does not exist");
-        Err("Failed to create SQLite file")?;
+        return Ok(());
     }
-    std::fs::remove_file(&file_path).expect("Failed to remove SQLite file");
+
+    std::fs::remove_file(file_path).expect("Failed to remove SQLite file");
     Ok(())
 }
 

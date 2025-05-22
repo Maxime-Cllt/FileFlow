@@ -8,9 +8,9 @@ use crate::fileflow::database::sql_builder::{
     build_create_table_sql, build_prepared_statement_sql, build_query_all_tables,
 };
 use crate::fileflow::enumeration::database_engine::DatabaseEngine;
-use crate::fileflow::stuct::combo_item::ComboItem;
-use crate::fileflow::stuct::db_config::DbConfig;
-use crate::fileflow::stuct::download_config::DownloadConfig;
+use crate::fileflow::struct::combo_item::ComboItem;
+use crate::fileflow::struct::db_config::DbConfig;
+use crate::fileflow::struct::download_config::DownloadConfig;
 use crate::fileflow::utils::string_formater::{escaped_record, sanitize_value};
 use csv::{Reader, StringRecord};
 use serde_json::{json, Value};

@@ -1,16 +1,16 @@
 import React, {useEffect, useState} from 'react';
 import {invoke} from "@tauri-apps/api/core";
 import {Label} from "@/components/ui/label.tsx";
-import {log_error, requestAllTablesFromConnection} from "@/components/hooks/utils.tsx";
+import {log_error, requestAllTablesFromConnection} from "@/hooks/common/utils.tsx";
 import {Select, SelectContent, SelectItem, SelectTrigger} from "@/components/ui/select.tsx";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import {toast} from "sonner";
-import DirectoryUpload from "@/components/hooks/file/DirectoryUpload.tsx";
-import Loader from "@/components/hooks/Loader.tsx";
-import ConnectionForm from "@/components/hooks/database/ConnectionForm.tsx";
+import DirectoryUpload from "@/hooks/data/DirectoryUpload.tsx";
+import Loader from "@/hooks/common/Loader.tsx";
+import ConnectionForm from "@/hooks/data/ConnectionForm.tsx";
 import {AnimatePresence, motion} from 'framer-motion';
 import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
-import {CheckBoxCombo} from "@/components/hooks/component/CheckBoxCombo.tsx";
+import {CheckBoxCombo} from "@/hooks/ui/CheckBoxCombo.tsx";
 
 const Download: React.FC = () => {
 

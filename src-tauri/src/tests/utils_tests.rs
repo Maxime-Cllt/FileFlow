@@ -1,6 +1,6 @@
 use crate::fileflow::enumeration::database_engine::DatabaseEngine;
-use crate::fileflow::stuct::db_config::DbConfig;
-use crate::fileflow::stuct::save_config::SaveConfig;
+use crate::fileflow::struct::db_config::DbConfig;
+use crate::fileflow::struct::save_config::SaveConfig;
 use csv::Writer;
 use std::error::Error;
 use std::fs::File;

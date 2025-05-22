@@ -1,7 +1,7 @@
 import React from 'react';
-import SelectDBMS from "@/components/hooks/database/SelectDatabaseEngine.tsx";
+import SelectDBMS from "@/hooks/data/SelectDatabaseEngine.tsx";
 import {Input} from "@/components/ui/input.tsx";
-import SqliteForm from "@/components/hooks/database/SqliteForm.tsx";
+import SqliteForm from "@/hooks/data/SqliteForm.tsx";
 import {DatabaseFormProps} from "@/interfaces/DatabaseFormProps.tsx";
 
 

@@ -1,5 +1,5 @@
 import {Outlet} from "react-router-dom";
-import Menu from "@/components/hooks/Menu.tsx";
+import Menu from "@/hooks/common/Menu.tsx";
 
 const Layout = () => {
     return (

@@ -3,7 +3,7 @@ import {Eraser, Upload} from "lucide-react";
 import {toast} from "sonner";
 import {invoke} from "@tauri-apps/api/core";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
-import {log_error} from "@/components/hooks/utils.tsx";
+import {log_error} from "@/hooks/common/utils.tsx";
 import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 import {InsertionModeEnum} from "@/components/fileflowui/load/insert/Insert.tsx";
 

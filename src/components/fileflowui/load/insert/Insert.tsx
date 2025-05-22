@@ -1,12 +1,12 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import '../../../../Loader.css';
-import Loader from "@/components/hooks/Loader.tsx";
+import Loader from "@/hooks/common/Loader.tsx";
 import ModeSelection from "@/components/fileflowui/load/insert/ModeSelection.tsx";
 import ButtonGroupAction from "@/components/fileflowui/load/insert/ButtonGroupAction.tsx";
-import FileUpload from "@/components/hooks/file/FileUpload.tsx";
+import FileUpload from "@/hooks/data/FileUpload.tsx";
 import {Input} from "@/components/ui/input.tsx";
-import {getNormalizedTableName} from "@/components/hooks/utils.tsx";
-import ConnectionForm from "@/components/hooks/database/ConnectionForm.tsx";
+import {getNormalizedTableName} from "@/hooks/common/utils.tsx";
+import ConnectionForm from "@/hooks/data/ConnectionForm.tsx";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 

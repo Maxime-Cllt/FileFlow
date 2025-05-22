@@ -4,7 +4,7 @@ import {Button} from "@/components/ui/button.tsx";
 import {FileArchive} from "lucide-react";
 import {invoke} from "@tauri-apps/api/core";
 import * as dialog from "@tauri-apps/plugin-dialog"
-import {getFileNameFromPath, log_error} from "@/components/hooks/utils.tsx";
+import {getFileNameFromPath, log_error} from "@/hooks/common/utils.tsx";
 
 interface FileUploadProps {
     filesPath: string[];

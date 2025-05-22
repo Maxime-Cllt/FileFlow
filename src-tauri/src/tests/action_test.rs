@@ -1,7 +1,7 @@
 use crate::fileflow::database::connection::Connection;
 use crate::fileflow::enumeration::database_engine::DatabaseEngine;
-use crate::fileflow::stuct::db_config::DbConfig;
-use crate::fileflow::stuct::save_config::SaveConfig;
+use crate::fileflow::struct::db_config::DbConfig;
+use crate::fileflow::struct::save_config::SaveConfig;
 use crate::fileflow::utils::fileflowlib::{get_all_saved_configs, save_config};
 use crate::tests::utils_tests::{
     create_test_db, delete_config_file, generate_csv_file, get_test_save_config,

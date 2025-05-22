@@ -1,13 +1,13 @@
 import React, {useEffect, useState} from 'react';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
-import SelectDatabaseConfig from "@/components/hooks/database/SelectDatabaseConfig.tsx";
+import SelectDatabaseConfig from "@/hooks/data/SelectDatabaseConfig.tsx";
 import {
     connect_to_database,
     disconnect_from_database,
     getAllConfigs,
     is_connected,
     log_error
-} from "@/components/hooks/utils.tsx";
+} from "@/hooks/common/utils.tsx";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs.tsx";
 import ButtonConfigComponent from "@/components/fileflowui/load/insert/ButtonConfig.tsx";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
@@ -19,7 +19,7 @@ import {
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu.tsx";
 import {DatabaseFormProps} from '@/interfaces/DatabaseFormProps';
-import DatabaseForm from "@/components/hooks/database/DatabaseForm.tsx";
+import DatabaseForm from "@/hooks/data/DatabaseForm.tsx";
 
 const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) => {
 

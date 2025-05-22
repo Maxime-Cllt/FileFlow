@@ -1,8 +1,8 @@
 use crate::fileflow::database::connection::{Connection, QueryResult};
 use crate::fileflow::database::database_actions::export_table;
 use crate::fileflow::enumeration::separator::SeparatorType;
-use crate::fileflow::stuct::db_config::DbConfig;
-use crate::fileflow::stuct::download_config::DownloadConfig;
+use crate::fileflow::struct::db_config::DbConfig;
+use crate::fileflow::struct::download_config::DownloadConfig;
 use crate::tests::utils_tests::{
     create_test_db, get_test_maridb_config, get_test_mysql_config, get_test_pg_config,
     get_test_sqlite_config, remove_test_db,

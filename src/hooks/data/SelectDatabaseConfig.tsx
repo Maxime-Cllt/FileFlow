@@ -2,7 +2,7 @@ import React from "react";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select.tsx";
 import {Label} from "@/components/ui/label.tsx";
 import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
-import {loadConfig, log_error} from "@/components/hooks/utils.tsx";
+import {loadConfig, log_error} from "@/hooks/common/utils.tsx";
 
 
 interface SelectDatabaseDialogProps {

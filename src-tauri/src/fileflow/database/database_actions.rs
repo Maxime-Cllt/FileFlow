@@ -4,7 +4,7 @@ use crate::fileflow::database::sql_builder::{
 };
 use crate::fileflow::enumeration::database_engine::DatabaseEngine;
 use crate::fileflow::enumeration::separator::SeparatorType;
-use crate::fileflow::stuct::download_config::DownloadConfig;
+use crate::fileflow::struct::download_config::DownloadConfig;
 use csv::{Writer, WriterBuilder};
 use sqlx::{Column, Row};
 use std::collections::HashMap;

@@ -1,8 +1,8 @@
 use crate::fileflow::action::database_command::{fast_insert, optimized_insert};
 use crate::fileflow::database::connection::Connection;
 use crate::fileflow::enumeration::insertion_type::InsertionType;
-use crate::fileflow::stuct::insert_config::InsertConfig;
-use crate::fileflow::stuct::save_config::SaveConfig;
+use crate::fileflow::struct::insert_config::InsertConfig;
+use crate::fileflow::struct::save_config::SaveConfig;
 use crate::fileflow::utils::constants::DATABASE_CONFIG_FILE;
 use crate::fileflow::utils::csv_utils::{find_separator, read_first_line};
 use crate::fileflow::utils::fileflowlib::{get_all_saved_configs, save_config};

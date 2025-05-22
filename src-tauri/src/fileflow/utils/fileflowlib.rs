@@ -1,4 +1,4 @@
-use crate::fileflow::stuct::save_config::SaveConfig;
+use crate::fileflow::struct::save_config::SaveConfig;
 use std::fs::{File, OpenOptions};
 use std::io;
 use std::path::PathBuf;

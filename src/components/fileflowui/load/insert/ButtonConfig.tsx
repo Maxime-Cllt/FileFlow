@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {invoke} from "@tauri-apps/api/core";
 import {toast} from "sonner";
-import InputTextDialog from "@/components/hooks/file/InputTextDialog.tsx";
+import InputTextDialog from "@/hooks/data/InputTextDialog.tsx";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -10,8 +10,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {DropdownMenuTrigger} from "@/components/ui/dropdown-menu.tsx";
 import {Settings} from "lucide-react";
-import {getAllConfigs, log_error} from "@/components/hooks/utils.tsx";
-import ConfigItemList from "@/components/hooks/component/ConfigItemList.tsx";
+import {getAllConfigs, log_error} from "@/hooks/common/utils.tsx";
+import ConfigItemList from "@/hooks/ui/ConfigItemList.tsx";
 import { DatabaseFormProps } from '@/interfaces/DatabaseFormProps';
 
 

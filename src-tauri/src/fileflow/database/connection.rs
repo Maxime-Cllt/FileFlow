@@ -1,5 +1,5 @@
 use crate::fileflow::enumeration::database_engine::DatabaseEngine;
-use crate::fileflow::stuct::db_config::DbConfig;
+use crate::fileflow::struct::db_config::DbConfig;
 use sqlx::{Error, MySql, MySqlPool, PgPool, Pool, Postgres, Sqlite, SqlitePool};
 
 pub enum ConnectionEnum {

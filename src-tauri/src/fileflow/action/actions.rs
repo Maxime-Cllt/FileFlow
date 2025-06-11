@@ -3,10 +3,10 @@ use crate::fileflow::database::connection::Connection;
 use crate::fileflow::enumeration::insertion_type::InsertionType;
 use crate::fileflow::stuct::insert_config::InsertConfig;
 use crate::fileflow::stuct::save_config::SaveConfig;
+use crate::fileflow::stuct::string_formater::StringFormatter;
 use crate::fileflow::utils::constants::DATABASE_CONFIG_FILE;
 use crate::fileflow::utils::csv_utils::{find_separator, read_first_line};
 use crate::fileflow::utils::fileflowlib::{get_all_saved_configs, save_config};
-use crate::fileflow::utils::string_formater::{get_formated_column_names, sanitize_column};
 use csv::{Reader, ReaderBuilder};
 use std::fs::{File, Metadata};
 use std::sync::Arc;
@@ -35,10 +35,10 @@ pub async fn insert_csv_data(
     let first_line: String = read_first_line(&csv.file_path).expect("Failed to read first line"); // Read the first line of the file to detect the separator
     let separator: char = find_separator(&first_line).expect("Failed to find separator"); // Separator detection of the file
 
-    let final_columns_name: Vec<String> = get_formated_column_names(
+    let final_columns_name: Vec<String> = StringFormatter::get_formated_column_names(
         &first_line
             .split(separator)
-            .map(|s| sanitize_column(s))
+            .map(|s| StringFormatter::sanitize_column(s))
             .collect::<Vec<String>>(),
     );
 

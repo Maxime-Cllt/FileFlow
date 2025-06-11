@@ -5,7 +5,7 @@ import {invoke} from "@tauri-apps/api/core";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
 import {log_error} from "@/components/hooks/utils.tsx";
 import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
-import {InsertionModeEnum} from "@/components/fileflowui/load/insert/Insert.tsx";
+import {InsertionType} from "@/components/fileflowui/load/insert/Insert.tsx";
 
 interface ButtonGroupProps {
     dbConfig: DatabaseConfig;
@@ -15,7 +15,7 @@ interface ButtonGroupProps {
     tableName: string;
     setTableName: (name: string) => void
     mode: string;
-    setMode: (mode: InsertionModeEnum) => void;
+    setMode: (mode: InsertionType) => void;
     showLoader: boolean;
     setShowLoader: (showLoader: boolean) => void;
 }
@@ -71,7 +71,7 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
         props.updateDbConfigField('db_name', '');
         props.updateDbConfigField('sqlite_file_path', '');
 
-        props.setMode(InsertionModeEnum.Fast);
+        props.setMode(InsertionType.Fast);
         props.setFilesPath([]);
         props.setTableName('');
         props.setShowLoader(false);

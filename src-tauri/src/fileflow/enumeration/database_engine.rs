@@ -8,14 +8,3 @@ pub enum DatabaseEngine {
     Postgres,
     SQLite,
 }
-
-// impl DatabaseEngine {
-// pub fn as_str(&self) -> &'static str {
-//     match self {
-//         DatabaseEngine::MariaDB => "mariadb",
-//         DatabaseEngine::MySQL => "mysql",
-//         DatabaseEngine::Postgres => "postgres",
-//         DatabaseEngine::SQLite => "sqlite",
-//     }
-// }
-// }

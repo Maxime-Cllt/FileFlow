@@ -54,7 +54,18 @@ const ButtonConfigComponent: React.FC<DatabaseFormProps> = (props: DatabaseFormP
     };
 
     const deleteConfig = async (item: Item) => {
-        toast.info(`Deleting config "${item.id}"`);
+        try {
+            const response: boolean = await invoke<boolean>('delete_database_config', {
+                name: item.id,
+            });
+            if (!response) {
+                throw new Error('Error deleting config');
+            }
+            toast.success(`Config "${item.id}" deleted successfully`);
+            setHasChanged(prev => !prev);
+        } catch (error) {
+            log_error(error);
+        }
     }
 
 

@@ -104,10 +104,11 @@ const ConfigItemList: React.FC<ConfigItemListProps> = (props: ConfigItemListProp
                     </div>
 
                     {/* Dialog Footer */}
-                    <DialogFooter className="flex justify-end gap-4 mt-4">
+                    <DialogFooter className="flex justify-end gap-4 mt-6 pt-4 border-t border-gray-100">
                         <DialogClose asChild>
                             <Button
-                                className="bg-gray-300 hover:bg-gray-400 text-gray-800"
+                                variant="outline"
+                                className="px-8 py-2.5 border border-slate-200 text-slate-600 hover:text-slate-800 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200 font-medium rounded-lg shadow-sm"
                                 type="button"
                             >
                                 Close

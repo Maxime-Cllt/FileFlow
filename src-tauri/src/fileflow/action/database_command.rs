@@ -11,7 +11,6 @@ use crate::fileflow::enumeration::database_engine::DatabaseEngine;
 use crate::fileflow::stuct::combo_item::ComboItem;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::download_config::DownloadConfig;
-use crate::fileflow::utils::string_formater::{escaped_record, sanitize_value};
 use csv::{Reader, StringRecord};
 use serde_json::{json, Value};
 use sqlx::Row;
@@ -20,6 +19,7 @@ use std::fs::File;
 use std::sync::Arc;
 use std::time::Instant;
 use tauri::{command, State};
+use crate::fileflow::stuct::string_formater::StringFormatter;
 
 #[command]
 pub async fn connect_to_database(
@@ -215,7 +215,7 @@ pub async fn fast_insert(
 
     for result in reader.records() {
         let values: String = match result {
-            Ok(record) => escaped_record(record),
+            Ok(record) => StringFormatter::escaped_record(record),
             Err(_) => continue,
         };
 
@@ -284,7 +284,7 @@ pub async fn optimized_insert(
         let mut values: Vec<String> = Vec::with_capacity(record.len());
 
         for (i, value) in record.iter().enumerate() {
-            let sanitized_value: String = sanitize_value(value);
+            let sanitized_value: String = StringFormatter::sanitize_value(value);
             let max_length: &mut usize = columns_size_map
                 .get_mut(final_columns_name[i].as_str())
                 .ok_or("Column name mismatch")

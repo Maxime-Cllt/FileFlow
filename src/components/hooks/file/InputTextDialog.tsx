@@ -1,7 +1,6 @@
-import React from "react";
+import React, {useState} from "react";
 import {
     Dialog,
-    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
@@ -11,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import {Button} from "@/components/ui/button";
 import {SaveAll} from "lucide-react";
+import {log_error} from "@/components/hooks/utils.tsx";
 
 interface SaveConfigDialogProps {
     fonction: (e: React.FormEvent) => void;
@@ -19,13 +19,20 @@ interface SaveConfigDialogProps {
 }
 
 const InputTextDialog: React.FC<SaveConfigDialogProps> = (props: SaveConfigDialogProps) => {
+    const [open, setOpen] = useState(false);
+
     const executeFunction = (e: React.MouseEvent) => {
         e.preventDefault();
-        props.fonction(e);
+        try {
+            props.fonction(e);
+            setOpen(false);
+        } catch (error) {
+            log_error(error);
+        }
     };
 
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
             {/* Trigger Button */}
             <DialogTrigger asChild>
                 <button
@@ -62,25 +69,21 @@ const InputTextDialog: React.FC<SaveConfigDialogProps> = (props: SaveConfigDialo
 
                 {/* Dialog Footer */}
                 <DialogFooter className="flex justify-end mt-6 space-x-4">
-                    <DialogClose asChild>
-                        <Button
-                            variant="outline"
-                            className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white"
-                            type="button"
-                        >
-                            Cancel
-                        </Button>
-                    </DialogClose>
-                    <DialogClose asChild key="save">
-                        <div onClick={executeFunction}>
-                            <Button
-                                className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white"
-                                type="button"
-                            >
-                                Save
-                            </Button>
-                        </div>
-                    </DialogClose>
+                    <Button
+                        variant="outline"
+                        className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white hover:text-white"
+                        type="button"
+                        onClick={() => setOpen(false)}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white"
+                        type="button"
+                        onClick={executeFunction}
+                    >
+                        Save
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

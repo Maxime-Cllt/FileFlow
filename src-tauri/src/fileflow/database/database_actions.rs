@@ -3,7 +3,6 @@ use crate::fileflow::database::sql_builder::{
     build_copy_table_sql, build_create_with_fixed_size_sql, build_drop_statement_sql,
 };
 use crate::fileflow::enumeration::database_engine::DatabaseEngine;
-use crate::fileflow::enumeration::separator::SeparatorType;
 use crate::fileflow::stuct::download_config::DownloadConfig;
 use csv::{Writer, WriterBuilder};
 use sqlx::{Column, Row};
@@ -16,20 +15,13 @@ pub async fn export_table(
     download_config: &DownloadConfig,
     table_name: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    const LIMIT: i32 = 5000;
+    const LIMIT: i32 = 5_000;
     let mut offset: i32 = 0;
     let mut header_written: bool = false;
     let file_path: String = format!("{}/{table_name}_export.csv", download_config.location);
 
-    let separator: u8 = match download_config.separator {
-        SeparatorType::Comma => b',',
-        SeparatorType::Semicolon => b';',
-        SeparatorType::Pipe => b'|',
-        SeparatorType::Space => b' ',
-    };
-
     let mut wtr: Writer<File> = WriterBuilder::new()
-        .delimiter(separator)
+        .delimiter(download_config.separator.as_u8())
         .from_path(&file_path)
         .expect("Failed to create CSV writer");
 

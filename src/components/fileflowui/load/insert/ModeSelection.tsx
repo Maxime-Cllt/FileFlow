@@ -2,10 +2,10 @@ import React from 'react';
 import {RadioGroup, RadioGroupItem} from "@/components/ui/radio-group.tsx";
 import {Label} from "@/components/ui/label.tsx";
 import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from "@/components/ui/tooltip.tsx";
-import {InsertionModeEnum} from "@/components/fileflowui/load/insert/Insert.tsx";
+import {InsertionType} from "@/components/fileflowui/load/insert/Insert.tsx";
 
 interface ModeSelectionProps {
-    setMode: (mode: InsertionModeEnum) => void;
+    setMode: (mode: InsertionType) => void;
 }
 
 const ModeSelection: React.FC<ModeSelectionProps> = (props: ModeSelectionProps) => {
@@ -13,7 +13,7 @@ const ModeSelection: React.FC<ModeSelectionProps> = (props: ModeSelectionProps) 
         <div className="flex justify-center mt-10">
             <RadioGroup defaultValue="fast" className="flex justify-center gap-10"
                         onValueChange={(e: string): void => {
-                            if (e === InsertionModeEnum.Fast || e === InsertionModeEnum.Optimized) {
+                            if (e === InsertionType.Fast || e === InsertionType.Optimized) {
                                 props.setMode(e);
                             }
                         }
@@ -22,7 +22,7 @@ const ModeSelection: React.FC<ModeSelectionProps> = (props: ModeSelectionProps) 
                     <Tooltip>
                         <TooltipTrigger>
                             <div className="space-x-2">
-                                <RadioGroupItem value={InsertionModeEnum.Fast} id="r1"/>
+                                <RadioGroupItem value={InsertionType.Fast} id="r1"/>
                                 <Label htmlFor="r1">Fast Insertion</Label>
                             </div>
                         </TooltipTrigger>
@@ -37,7 +37,7 @@ const ModeSelection: React.FC<ModeSelectionProps> = (props: ModeSelectionProps) 
                     <Tooltip>
                         <TooltipTrigger>
                             <div className="space-x-2">
-                                <RadioGroupItem value={InsertionModeEnum.Optimized} id="r2"/>
+                                <RadioGroupItem value={InsertionType.Optimized} id="r2"/>
                                 <Label htmlFor="r2">Optimized Insertion</Label>
                             </div>
                         </TooltipTrigger>

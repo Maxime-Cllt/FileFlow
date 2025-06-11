@@ -9,3 +9,16 @@ pub enum SeparatorType {
     Space,
     Pipe,
 }
+
+impl SeparatorType {
+    
+    /// Returns the separator as a u8.
+    pub const fn as_u8(&self) -> u8 {
+        match self {
+            SeparatorType::Comma => b',',
+            SeparatorType::Semicolon => b';',
+            SeparatorType::Space => b' ',
+            SeparatorType::Pipe => b'|',
+        }
+    }
+}

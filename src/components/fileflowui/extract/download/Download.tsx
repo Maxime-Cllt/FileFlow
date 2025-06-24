@@ -151,7 +151,7 @@ const Download: React.FC = () => {
                                 </AnimatePresence>
 
                                 {/* Export Configuration Section */}
-                                <div className="border-t pt-6 space-y-4">
+                                <div className="pt-6 space-y-4">
 
                                     <div className="flex justify-center gap-6 align-middle">
 

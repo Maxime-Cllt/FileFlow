@@ -1,8 +1,8 @@
-use crate::fileflow::database::connection::Connection;
-use crate::fileflow::enumeration::database_engine::DatabaseEngine;
-use crate::fileflow::stuct::db_config::DbConfig;
-use crate::fileflow::stuct::save_config::SaveConfig;
-use crate::fileflow::utils::fileflowlib::{get_all_saved_configs, save_config};
+use fileflow::fileflow::database::connection::Connection;
+use fileflow::fileflow::enumeration::database_engine::DatabaseEngine;
+use fileflow::fileflow::stuct::db_config::DbConfig;
+use fileflow::fileflow::stuct::save_config::SaveConfig;
+use fileflow::fileflow::utils::fileflowlib::{get_all_saved_configs, save_config};
 use crate::tests::utils_tests::{
     create_test_db, delete_config_file, generate_csv_file, get_test_save_config,
     get_test_sqlite_config, remove_csv_file, remove_test_db,
@@ -11,7 +11,7 @@ use csv::{Reader, ReaderBuilder};
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Pool, Row, Sqlite};
 use std::fs::File;
-use crate::fileflow::action::database_command::fast_insert;
+use fileflow::fileflow::action::database_command::fast_insert;
 
 #[tokio::test]
 async fn test_fast_insert() {

@@ -85,7 +85,7 @@ impl StringFormatter {
         }
 
         // Estimate capacity: each value + 2 quotes + 2 chars for ", "
-        let estimated_capacity = values.iter().map(|v| v.len() + 4).sum::<usize>();
+        let estimated_capacity: usize = values.iter().map(|v| v.len() + 4).sum::<usize>();
 
         let mut result: String = String::with_capacity(estimated_capacity);
 

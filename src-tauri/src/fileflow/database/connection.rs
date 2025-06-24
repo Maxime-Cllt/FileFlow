@@ -81,7 +81,7 @@ impl Connection {
         Ok(())
     }
 
-    pub(crate) fn get_connection_url(config: &DbConfig) -> String {
+    pub fn get_connection_url(config: &DbConfig) -> String {
         match config.db_driver {
             DatabaseEngine::Postgres => format!(
                 "postgres://{}{}@{}:{}/{}",

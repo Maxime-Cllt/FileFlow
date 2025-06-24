@@ -1,10 +1,10 @@
-use crate::fileflow::enumeration::database_engine::DatabaseEngine;
-use crate::fileflow::enumeration::insertion_type::InsertionType;
-use crate::fileflow::enumeration::separator::SeparatorType;
-use crate::fileflow::stuct::db_config::DbConfig;
-use crate::fileflow::stuct::download_config::DownloadConfig;
-use crate::fileflow::stuct::insert_config::InsertConfig;
-use crate::fileflow::stuct::save_config::SaveConfig;
+use fileflow::fileflow::enumeration::database_engine::DatabaseEngine;
+use fileflow::fileflow::enumeration::insertion_type::InsertionType;
+use fileflow::fileflow::enumeration::separator::SeparatorType;
+use fileflow::fileflow::stuct::db_config::DbConfig;
+use fileflow::fileflow::stuct::download_config::DownloadConfig;
+use fileflow::fileflow::stuct::insert_config::InsertConfig;
+use fileflow::fileflow::stuct::save_config::SaveConfig;
 
 #[tokio::test]
 async fn test_db_config() {

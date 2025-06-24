@@ -190,8 +190,9 @@ pub async fn fast_insert(
         return Err(err);
     }
 
-    let build_create_table_statement: String =
-        build_create_table_sql(db_driver, final_table_name, final_columns_name);
+    let build_create_table_statement: String = build_create_table_sql(db_driver, final_table_name, final_columns_name);
+    
+    println!("Create table query: {build_create_table_statement}");
 
     // Create the table
     if let Err(err) = execute_query(
@@ -212,10 +213,12 @@ pub async fn fast_insert(
     // Prepare the insert query
     let insert_query_base: &str =
         &build_prepared_statement_sql(db_driver, final_table_name, &final_columns_name);
+    
+    println!("Insert query base: {insert_query_base}");
 
     for result in reader.records() {
         let values: String = match result {
-            Ok(record) => StringFormatter::escaped_record(record),
+            Ok(record) => StringFormatter::escape_record(record),
             Err(_) => continue,
         };
 

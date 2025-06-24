@@ -4,7 +4,7 @@ use csv::StringRecord;
 #[tokio::test]
 async fn test_escape_values() {
     let record: StringRecord = StringRecord::from(vec!["value1", "value2"]);
-    let values: String = StringFormatter::escaped_record(record);
+    let values: String = StringFormatter::escape_record(record);
     assert_eq!(values, "'value1', 'value2'");
 
     let record: StringRecord = StringRecord::from(vec![
@@ -13,7 +13,7 @@ async fn test_escape_values() {
         "DELETE FROM test_table WHERE column1 = 1;",
         "SELECT * FROM test_table;",
     ]);
-    let values: String = StringFormatter::escaped_record(record);
+    let values: String = StringFormatter::escape_record(record);
     assert_eq!(values, "'INSERT INTO test_table VALUES (1,2);', 'UPDATE test_table SET column1 = 1;', 'DELETE FROM test_table WHERE column1 = 1;', 'SELECT * FROM test_table;'");
 }
 
@@ -37,8 +37,9 @@ async fn test_sanitize_column() {
     assert_eq!(StringFormatter::sanitize_column("column 1"), "column_1");
     assert_eq!(StringFormatter::sanitize_column("column 1'"), "column_1");
     assert_eq!(StringFormatter::sanitize_column("COlUMn 1'"), "column_1");
-    assert_eq!(StringFormatter::sanitize_column("CoDE_DEP"), "code_dep");
     assert_eq!(StringFormatter::sanitize_column("  CoDE_DEP  "), "code_dep");
+    assert_eq!(StringFormatter::sanitize_column("  column\\1  "), "column1");
+    assert_eq!(StringFormatter::sanitize_column(" COlu.Mn/1"), "column1");
 
     // Non-printable characters
     assert_eq!(StringFormatter::sanitize_column("\u{feff}code_departement"), "code_departement"); // BOM

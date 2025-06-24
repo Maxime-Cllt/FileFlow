@@ -123,18 +123,20 @@ pub fn build_create_table_sql(
 ) -> String {
     match driver {
         DatabaseEngine::SQLite | DatabaseEngine::Postgres => format!(
-            "CREATE TABLE \"{final_table_name}\" ({})",
+            "CREATE TABLE \"{}\" ({})",
+            final_table_name,
             snake_case_headers
                 .iter()
-                .map(|h| format!("{h} TEXT"))
+                .map(|h| format!("\"{}\" TEXT", h))
                 .collect::<Vec<String>>()
                 .join(", ")
         ),
         DatabaseEngine::MariaDB | DatabaseEngine::MySQL => format!(
-            "CREATE TABLE `{final_table_name}` ({})",
+            "CREATE TABLE `{}` ({})",
+            final_table_name,
             snake_case_headers
                 .iter()
-                .map(|h| format!("`{h}` TEXT"))
+                .map(|h| format!("`{}` TEXT", h))
                 .collect::<Vec<String>>()
                 .join(", ")
         ),

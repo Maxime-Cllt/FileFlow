@@ -31,9 +31,14 @@ pub async fn insert_csv_data(
     let mut total_lines: u64 = 0; // Counter for the total number of lines inserted
     let start: Instant = Instant::now(); // Timer for the insertion process
 
-    let file: File = File::open(&csv.file_path).expect("Failed to open file");
-    let first_line: String = read_first_line(&csv.file_path).expect("Failed to read first line"); // Read the first line of the file to detect the separator
-    let separator: char = find_separator(&first_line).expect("Failed to find separator"); // Separator detection of the file
+    let file: File = match File::open(&csv.file_path) {
+        Ok(file) => file,
+        Err(e) => return Err(format!("Error: Failed to open file: {}", e.to_string())),
+    };
+
+    let first_line: String = read_first_line(&csv.file_path).map_err(|e| format!("Error: Failed to read first line: {}", e.to_string()))?;
+
+    let separator: char = find_separator(&first_line)?;
 
     let final_columns_name: Vec<String> = StringFormatter::get_formated_column_names(
         &first_line

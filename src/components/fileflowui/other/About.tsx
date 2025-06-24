@@ -1,4 +1,14 @@
+import {useEffect, useState} from "react";
+import {get_app_version} from "@/components/hooks/utils.tsx";
+
 const AboutPage = () => {
+
+    const [appVersion, setAppVersion] = useState<string>('');
+
+    useEffect(() => {
+        get_app_version().then(r =>
+            setAppVersion(r));
+    });
 
     return (
         <div className="h-full w-full">
@@ -11,7 +21,7 @@ const AboutPage = () => {
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">
                         About FileFlow
                     </h1>
-                    <p className="mt-4 text-lg text-gray-600">Version: 1.0.1</p>
+                    <p className="mt-4 text-lg text-gray-600">Version: {appVersion}</p>
                 </div>
 
                 {/* Features & Roadmap Section */}

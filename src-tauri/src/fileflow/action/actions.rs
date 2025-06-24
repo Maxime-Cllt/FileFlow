@@ -177,3 +177,8 @@ pub async fn get_size_of_file(file_path: String) -> Result<String, bool> {
     let size: f64 = metadata.len() as f64 / 1024.0 / 1024.0;
     Ok(format!("{size:.2} MB"))
 }
+
+#[command]
+pub async fn get_app_version() -> String {
+    env!("CARGO_PKG_VERSION").to_string()
+}

@@ -169,3 +169,13 @@ export const requestAllTablesFromConnection = async (): Promise<ComboItem[] | bo
         return false;
     }
 }
+
+// Get the app version
+export const get_app_version = async () => {
+    try {
+        return await invoke<string>('get_app_version');
+    } catch (error) {
+        log_error(error);
+        return "1.0.0";
+    }
+}

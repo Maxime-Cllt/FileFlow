@@ -30,7 +30,8 @@ fn main() {
             get_all_database_configs_name,
             delete_database_config,
             get_table_list,
-            download_table
+            download_table,
+            get_app_version
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

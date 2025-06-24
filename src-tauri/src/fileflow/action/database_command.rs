@@ -11,6 +11,7 @@ use crate::fileflow::enumeration::database_engine::DatabaseEngine;
 use crate::fileflow::stuct::combo_item::ComboItem;
 use crate::fileflow::stuct::db_config::DbConfig;
 use crate::fileflow::stuct::download_config::DownloadConfig;
+use crate::fileflow::stuct::string_formater::StringFormatter;
 use csv::{Reader, StringRecord};
 use serde_json::{json, Value};
 use sqlx::Row;
@@ -19,7 +20,7 @@ use std::fs::File;
 use std::sync::Arc;
 use std::time::Instant;
 use tauri::{command, State};
-use crate::fileflow::stuct::string_formater::StringFormatter;
+use std::fmt::Write;
 
 #[command]
 pub async fn connect_to_database(
@@ -190,8 +191,9 @@ pub async fn fast_insert(
         return Err(err);
     }
 
-    let build_create_table_statement: String = build_create_table_sql(db_driver, final_table_name, final_columns_name);
-    
+    let build_create_table_statement: String =
+        build_create_table_sql(db_driver, final_table_name, final_columns_name);
+
     // Create the table
     if let Err(err) = execute_query(
         connection,
@@ -210,8 +212,8 @@ pub async fn fast_insert(
 
     // Prepare the insert query
     let insert_query_base: &str =
-        &build_prepared_statement_sql(db_driver, final_table_name, &final_columns_name);
-    
+        &build_prepared_statement_sql(db_driver, final_table_name, final_columns_name);
+
     for result in reader.records() {
         let values: String = match result {
             Ok(record) => StringFormatter::escape_record(record),
@@ -265,7 +267,7 @@ pub async fn optimized_insert(
     // Initialize variables
     const MAX_BATCH_SIZE: usize = 5_000;
     let insert_query_base: String =
-        build_prepared_statement_sql(db_driver, &temporary_table_name, &final_columns_name);
+        build_prepared_statement_sql(db_driver, &temporary_table_name, final_columns_name);
 
     let mut columns_size_map: HashMap<&str, usize> = final_columns_name
         .iter()
@@ -274,25 +276,39 @@ pub async fn optimized_insert(
     let mut line_count: u32 = 0;
     let mut batch: Vec<String> = Vec::with_capacity(MAX_BATCH_SIZE);
 
+
     for result in reader.records() {
         let record: StringRecord = match result {
             Ok(record) => record,
             Err(_) => continue,
         };
 
-        let mut values: Vec<String> = Vec::with_capacity(record.len());
+        let mut row_buffer = String::with_capacity(256);
+        row_buffer.push('(');
 
         for (i, value) in record.iter().enumerate() {
-            let sanitized_value: String = StringFormatter::sanitize_value(value);
+            if i > 0 {
+                row_buffer.push_str(", ");
+            }
+
+            // Assume sanitize_value returns Cow<str> now
+            let sanitized_value = StringFormatter::sanitize_value(value);
+
+            // Update column size tracking
+            let column_name = &final_columns_name[i];
             let max_length: &mut usize = columns_size_map
-                .get_mut(final_columns_name[i].as_str())
+                .get_mut(column_name.as_str())
                 .ok_or("Column name mismatch")
                 .expect("Column name mismatch");
+
             *max_length = (*max_length).max(sanitized_value.len() + 1);
-            values.push(format!("'{sanitized_value}'"));
+
+            // Write directly to buffer
+            write!(row_buffer, "'{sanitized_value}'").unwrap();
         }
 
-        batch.push(format!("({})", values.join(", ")));
+        row_buffer.push(')');
+        batch.push(row_buffer);
 
         if batch.len() >= MAX_BATCH_SIZE {
             line_count += insert_batch(connection, &insert_query_base, &batch).await;

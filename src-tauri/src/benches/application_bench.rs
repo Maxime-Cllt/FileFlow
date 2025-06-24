@@ -43,7 +43,7 @@ async fn test_insert_file() {
     let final_columns_name: Vec<String> = StringFormatter::get_formated_column_names(
         &first_line
             .split(separator)
-            .map(|s| StringFormatter::sanitize_column(s))
+            .map(StringFormatter::sanitize_column)
             .collect::<Vec<String>>(),
     );
 

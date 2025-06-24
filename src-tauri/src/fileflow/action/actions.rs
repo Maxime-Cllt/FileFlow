@@ -36,14 +36,15 @@ pub async fn insert_csv_data(
         Err(e) => return Err(format!("Error: Failed to open file: {}", e.to_string())),
     };
 
-    let first_line: String = read_first_line(&csv.file_path).map_err(|e| format!("Error: Failed to read first line: {}", e.to_string()))?;
+    let first_line: String = read_first_line(&csv.file_path)
+        .map_err(|e| format!("Error: Failed to read first line: {}", e.to_string()))?;
 
     let separator: char = find_separator(&first_line)?;
 
     let final_columns_name: Vec<String> = StringFormatter::get_formated_column_names(
         &first_line
             .split(separator)
-            .map(|s| StringFormatter::sanitize_column(s))
+            .map(StringFormatter::sanitize_column)
             .collect::<Vec<String>>(),
     );
 

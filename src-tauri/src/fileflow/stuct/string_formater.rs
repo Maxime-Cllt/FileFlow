@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use csv::StringRecord;
 
 pub struct StringFormatter;
@@ -26,10 +27,20 @@ impl StringFormatter {
 
     /// Sanitize a value for safe insertion into the database
     #[inline]
-    pub fn sanitize_value(value: &str) -> String {
-        let mut sanitized: String = String::with_capacity(value.len());
+    pub fn sanitize_value(value: &str) -> Cow<str> {
+        let trimmed: &str = value.trim();
 
-        for c in value.trim().chars() {
+        let needs_sanitization: bool = trimmed
+            .chars()
+            .any(|c| matches!(c, '\'' | '\\' | '\"' | '\0' | '\r' | '\n'));
+
+        if !needs_sanitization {
+            return Cow::Borrowed(trimmed);
+        }
+
+        let mut sanitized = String::with_capacity(trimmed.len());
+
+        for c in trimmed.chars() {
             match c {
                 '\'' => sanitized.push_str("''"),   // Escape single quotes
                 '\\' => sanitized.push_str("\\\\"), // Escape backslashes
@@ -39,7 +50,7 @@ impl StringFormatter {
             }
         }
 
-        sanitized
+        Cow::Owned(sanitized)
     }
 
     /// Sanitize a column name for safe insertion into the database

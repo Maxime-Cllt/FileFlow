@@ -77,7 +77,7 @@ pub fn build_create_with_fixed_size_sql(
     let mut total_length: usize = 0;
 
     // Build column definitions
-    for header in snake_case_headers {
+    for header in snake_case_headers.iter() {
         let max_length = map_column_max_length
             .get(header.as_str())
             .copied()
@@ -261,7 +261,7 @@ mod test {
         let snake_case_headers: Vec<String> = vec!["header1".into(), "header2".into()];
         assert_eq!(
             build_create_table_sql(&DatabaseEngine::SQLite, "table_name", &snake_case_headers),
-            "CREATE TABLE \"table_name\" (header1 TEXT, header2 TEXT)"
+            "CREATE TABLE \"table_name\" (\"header1\" TEXT, \"header2\" TEXT)"
         );
         assert_eq!(
             build_create_table_sql(&DatabaseEngine::MySQL, "table_name", &snake_case_headers),
@@ -269,13 +269,13 @@ mod test {
         );
         assert_eq!(
             build_create_table_sql(&DatabaseEngine::Postgres, "table_name", &snake_case_headers),
-            "CREATE TABLE \"table_name\" (header1 TEXT, header2 TEXT)"
+            "CREATE TABLE \"table_name\" (\"header1\" TEXT, \"header2\" TEXT)"
         );
 
         let snake_case_headers: Vec<String> = vec!["header1".into()];
         assert_eq!(
             build_create_table_sql(&DatabaseEngine::SQLite, "table_name", &snake_case_headers),
-            "CREATE TABLE \"table_name\" (header1 TEXT)"
+            "CREATE TABLE \"table_name\" (\"header1\" TEXT)"
         );
         assert_eq!(
             build_create_table_sql(&DatabaseEngine::MySQL, "table_name", &snake_case_headers),
@@ -283,7 +283,7 @@ mod test {
         );
         assert_eq!(
             build_create_table_sql(&DatabaseEngine::Postgres, "table_name", &snake_case_headers),
-            "CREATE TABLE \"table_name\" (header1 TEXT)"
+            "CREATE TABLE \"table_name\" (\"header1\" TEXT)"
         );
     }
 

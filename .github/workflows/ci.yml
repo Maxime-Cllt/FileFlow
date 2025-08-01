@@ -2,7 +2,7 @@ name: Full Stack CI
 
 on:
   push:
-    branches: [ "1.0.4" ]
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:

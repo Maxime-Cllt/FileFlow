@@ -78,6 +78,24 @@ To quickly test FileFlow:
 4. **Upload and Insert**: Upload your CSV file and start the insertion process. Monitor progress with the on-screen
    loader.
 
+## 🧪 Code Quality
+
+### Unit Tests available
+
+To run unit tests, use the following command:
+
+```bash
+cargo test
+```
+
+### Benchmarks available
+
+To run benchmarks, use the following command:
+
+```bash
+cargo bench
+```
+
 ## 🤝 Contributing
 
 Contributions are welcome! To contribute:

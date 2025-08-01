@@ -30,7 +30,7 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
                 return;
             }
 
-            if (!props.dbConfig.is_connected) {
+            if (!props.dbConfig.isConnected) {
                 toast.warning('Please connect to the database');
                 return;
             }
@@ -45,7 +45,7 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
                     csv: {
                         table_name: tableName[index],
                         file_path: file,
-                        db_driver: props.dbConfig.db_driver.toLowerCase(),
+                        db_driver: props.dbConfig.dbDriver.toLowerCase(),
                         mode: props.mode,
                     },
                 });
@@ -63,13 +63,13 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
     };
 
     const handleReset = (): void => {
-        props.updateDbConfigField('db_driver', '');
-        props.updateDbConfigField('db_host', '');
+        props.updateDbConfigField("dbDriver", '');
+        props.updateDbConfigField("dbHost", '');
         props.updateDbConfigField('port', '');
         props.updateDbConfigField('username', '');
         props.updateDbConfigField('password', '');
-        props.updateDbConfigField('db_name', '');
-        props.updateDbConfigField('sqlite_file_path', '');
+        props.updateDbConfigField("dbName", '');
+        props.updateDbConfigField("sqliteFilePath", '');
 
         props.setMode(InsertionType.Fast);
         props.setFilesPath([]);
@@ -77,7 +77,7 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
         props.setShowLoader(false);
     };
 
-    const insertOk: boolean = props.filesPath.length > 0 && props.dbConfig.is_connected;
+    const insertOk: boolean = props.filesPath.length > 0 && props.dbConfig.isConnected;
 
     return (
         <div className="flex items-center justify-center gap-x-6 mt-4 p-4">
@@ -100,7 +100,7 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
                         </button>
                     </TooltipTrigger>
                     <TooltipContent>
-                        {props.dbConfig.is_connected ? "Start insertion" : "Connect first"}
+                        {props.dbConfig.isConnected ? "Start insertion" : "Connect first"}
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>

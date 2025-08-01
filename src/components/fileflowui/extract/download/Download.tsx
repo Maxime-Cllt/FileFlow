@@ -11,24 +11,25 @@ import ConnectionForm from "@/components/hooks/database/ConnectionForm.tsx";
 import {AnimatePresence, motion} from 'framer-motion';
 import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 import {CheckBoxCombo} from "@/components/hooks/component/CheckBoxCombo.tsx";
+import {SeparatorType, separatorTypeToString} from "@/state/SeparatorType.tsx";
 
 const Download: React.FC = () => {
 
         const [dbConfig, setDbConfig] = useState<DatabaseConfig>({
-            config_name: '',
-            db_driver: '',
-            db_host: '',
-            db_name: '',
+            configName: '',
+            dbDriver: '',
+            dbHost: '',
+            dbName: '',
             password: '',
             port: '',
-            sqlite_file_path: '',
+            sqliteFilePath: '',
             username: '',
-            is_connected: false
+            isConnected: false
         });
 
         const [tables, setTables] = useState<Array<ComboItem>>([]);
         const [selectedTables, setSelectedTables] = useState<string[]>([]);
-        const [separator, setSeparator] = useState<',' | ';' | ' ' | '|'>(',');
+        const [separator, setSeparator] = useState<SeparatorType>(SeparatorType.COMMA);
         const [absolutePath, setAbsolutePath] = useState<string>('');
         const [showLoader, setShowLoader] = useState<boolean>(false);
 
@@ -58,18 +59,13 @@ const Download: React.FC = () => {
                     throw new Error('Please fill in all required fields');
                 }
 
-                selectedTables.forEach((table) => {
-                        console.log(`Selected table: ${table}`);
-                    }
-                );
-
                 setShowLoader(true);
 
                 const download_table_response: string = await invoke<string>('download_table', {
                     config: {
                         table_name_list: selectedTables,
                         location: absolutePath,
-                        separator: getSeparatorName(separator).toLocaleLowerCase()
+                        separator: separatorTypeToString(separator).toLocaleLowerCase()
                     }
                 });
 
@@ -85,24 +81,12 @@ const Download: React.FC = () => {
             setShowLoader(false);
         }
 
-        const getSeparatorName = (separator: ',' | ';' | ' ' | '|') => {
-            switch (separator) {
-                case ',':
-                    return 'Comma';
-                case ';':
-                    return 'Semicolon';
-                case ' ':
-                    return 'Space';
-                case '|':
-                    return 'Pipe';
-            }
-        }
 
         useEffect(() => {
-            if (dbConfig.is_connected) {
+            if (dbConfig.isConnected) {
                 retrieveTables().then()
             }
-        }, [dbConfig.is_connected]);
+        }, [dbConfig.isConnected]);
 
         return (
             <div className="h-full w-full">
@@ -133,7 +117,7 @@ const Download: React.FC = () => {
                             <div className="space-y-8">
                                 {/* Tables Display Section */}
                                 <AnimatePresence>
-                                    {(tables.length > 0 && dbConfig.is_connected) && (
+                                    {(tables.length > 0 && dbConfig.isConnected) && (
                                         <motion.section
                                             initial={{opacity: 0, y: -10}}
                                             animate={{opacity: 1, y: 0}}
@@ -167,10 +151,10 @@ const Download: React.FC = () => {
                                             </Label>
                                             <Select
                                                 value={separator}
-                                                onValueChange={(value) => setSeparator(value as ',' | ';' | ' ' | '|')}
+                                                onValueChange={(value) => setSeparator(value as SeparatorType)}
                                             >
                                                 <SelectTrigger id="separator" className="w-32">
-                                                    {getSeparatorName(separator)}
+                                                    {separatorTypeToString(separator)}
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     <SelectItem value=",">Comma</SelectItem>

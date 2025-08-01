@@ -9,8 +9,8 @@ import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 
 interface SqliteFormProps {
     dbConfig: {
-        sqlite_file_path: string;
-        db_driver: string;
+        sqliteFilePath: string;
+        dbDriver: string;
     };
     updateDbConfigField: (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => void;
 }
@@ -27,7 +27,7 @@ const SqliteForm: React.FC<SqliteFormProps> = ({dbConfig, updateDbConfigField}) 
                 return;
             }
 
-            updateDbConfigField("sqlite_file_path", selectedFilePath);
+            updateDbConfigField("sqliteFilePath", selectedFilePath);
         } catch (error) {
             toast.error(error as string);
         }
@@ -41,12 +41,12 @@ const SqliteForm: React.FC<SqliteFormProps> = ({dbConfig, updateDbConfigField}) 
                     onClick={openFileDialog}
                     className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white font-medium py-3 px-5 rounded-lg shadow-md transition duration-300"
                 >
-                    <HardDrive className="w-5 h-5" />
+                    <HardDrive className="w-5 h-5"/>
                     Select SQLite File
                 </Button>
                 <Input
                     type="text"
-                    value={dbConfig.sqlite_file_path}
+                    value={dbConfig.sqliteFilePath}
                     placeholder="Path to SQLite file"
                     disabled
                     className="w-full border rounded-lg px-4 py-3 text-sm text-gray-700 bg-gray-100"
@@ -56,7 +56,7 @@ const SqliteForm: React.FC<SqliteFormProps> = ({dbConfig, updateDbConfigField}) 
             <div className="flex items-center gap-4 justify-center">
                 <span className="text-sm font-medium text-gray-800">Database Engine:</span>
                 <SelectDBMS
-                    db_driver={dbConfig.db_driver}
+                    dbDriver={dbConfig.dbDriver}
                     updateDbConfigField={updateDbConfigField}
                 />
             </div>

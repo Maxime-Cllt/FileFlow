@@ -12,7 +12,7 @@ import {DropdownMenuTrigger} from "@/components/ui/dropdown-menu.tsx";
 import {Settings} from "lucide-react";
 import {getAllConfigs, log_error} from "@/components/hooks/utils.tsx";
 import ConfigItemList from "@/components/hooks/component/ConfigItemList.tsx";
-import { DatabaseFormProps } from '@/interfaces/DatabaseFormProps';
+import {DatabaseFormProps} from '@/interfaces/DatabaseFormProps';
 
 
 const ButtonConfigComponent: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) => {
@@ -34,13 +34,13 @@ const ButtonConfigComponent: React.FC<DatabaseFormProps> = (props: DatabaseFormP
             const response: boolean = await invoke<boolean>('save_database_config', {
                 save: {
                     config_name: configName,
-                    db_driver: props.dbConfig.db_driver.toLowerCase(),
-                    db_host: props.dbConfig.db_host,
+                    db_driver: props.dbConfig.dbDriver.toLowerCase(),
+                    db_host: props.dbConfig.dbHost,
                     port: props.dbConfig.port,
                     username: props.dbConfig.username,
                     password: props.dbConfig.password,
-                    db_name: props.dbConfig.db_name,
-                    sqlite_file_path: props.dbConfig.sqlite_file_path,
+                    db_name: props.dbConfig.dbName,
+                    sqlite_file_path: props.dbConfig.sqliteFilePath,
                 },
             });
             if (!response) {

@@ -84,8 +84,16 @@ To quickly test FileFlow:
 
 To run unit tests, use the following command:
 
+#### For the Rust backend:
+
 ```bash
 cargo test
+```
+
+#### For the Tauri frontend:
+
+```bash
+pnpm test
 ```
 
 ### Benchmarks available

@@ -9,8 +9,9 @@ use fileflow::fileflow::utils::csv_utils::{find_separator, read_first_line};
 use sqlx::Error;
 use std::fs::File;
 
+#[allow(dead_code)]
 async fn test_insert_file() {
-    const TEST_FILE: &str = r"C:\Users\HHBL8703\Downloads\reference.csv";
+    const TEST_FILE: &str = "reference.csv";
 
     let config: DbConfig = DbConfig {
         db_driver: DatabaseEngine::SQLite,
@@ -19,7 +20,7 @@ async fn test_insert_file() {
         db_host: String::new(),
         port: String::new(),
         db_name: String::new(),
-        sqlite_file_path: r"C:\Users\HHBL8703\RustroverProjects\FileFlow\test.db".into(),
+        sqlite_file_path: r"test.db".into(),
     };
 
     let conn: Result<Connection, Error> = Connection::connect(&config).await;
@@ -63,6 +64,7 @@ async fn test_insert_file() {
     .unwrap();
 }
 
+#[allow(dead_code)]
 fn benchmark_application(c: &mut Criterion) {
     let mut group = c.benchmark_group("benchmark_application");
 
@@ -76,4 +78,5 @@ fn benchmark_application(c: &mut Criterion) {
 }
 
 criterion_group!(benches, benchmark_application);
+
 criterion_main!(benches);

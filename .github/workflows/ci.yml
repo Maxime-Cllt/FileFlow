@@ -145,6 +145,12 @@ jobs:
       - name: Build Frontend
         run: pnpm run build
 
+      # Run Tauri integration tests
+      - name: Run Tauri Integration Tests
+        run: |
+          cd src-tauri
+          cargo test
+
       # Start backend for integration tests (if needed)
       - name: Start Backend for Integration Tests
         if: needs.changes.outputs.frontend == 'true' && needs.changes.outputs.backend == 'true'
@@ -157,9 +163,3 @@ jobs:
         run: pnpm tauri build --verbose
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Run Tauri integration tests
-      - name: Run Tauri Integration Tests
-        run: |
-          cd src-tauri
-          cargo test --verbose --all-features

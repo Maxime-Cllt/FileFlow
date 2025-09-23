@@ -71,7 +71,7 @@ mod tests {
     async fn test_save_config_struct() {
         let config = get_test_config();
 
-        assert_eq!(config.db_driver, DatabaseEngine::Postgres);
+        assert_eq!(config.db_driver, DatabaseEngine::SQLite);
         assert_eq!(config.db_host, "db_host");
         assert_eq!(config.port, "port");
         assert_eq!(config.username, "username");
@@ -87,7 +87,7 @@ mod tests {
         let serialized = serde_json::to_string(&config).unwrap();
         let deserialized: SaveConfig = serde_json::from_str(&serialized).unwrap();
 
-        assert_eq!(deserialized.db_driver, DatabaseEngine::MySQL);
+        assert_eq!(deserialized.db_driver, DatabaseEngine::SQLite);
         assert_eq!(deserialized.config_name, "config_name");
         assert_eq!(deserialized.db_host, "db_host");
         assert_eq!(deserialized.port, "port");

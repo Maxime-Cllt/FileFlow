@@ -16,57 +16,193 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract version from Cargo.toml
+      - name: Extract version from Tauri Cargo.toml
         id: get_version
         run: |
+          # Check if Tauri Cargo.toml exists
+          if [ ! -f "src-tauri/Cargo.toml" ]; then
+            echo "Error: src-tauri/Cargo.toml not found"
+            exit 1
+          fi
+          
           # Extract version using multiple methods for robustness
+          VERSION=""
+          
+          # Method 1: Using toml command if available
           if command -v toml &> /dev/null; then
-            VERSION=$(toml get Cargo.toml package.version --raw 2>/dev/null)
+            VERSION=$(toml get src-tauri/Cargo.toml package.version --raw 2>/dev/null)
           fi
           
+          # Method 2: Using grep and sed (fallback)
           if [ -z "$VERSION" ]; then
-            VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+            VERSION=$(grep '^version = ' src-tauri/Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
           fi
           
+          # Method 3: Using awk (another fallback)
           if [ -z "$VERSION" ]; then
-            echo "Error: Could not extract version from Cargo.toml"
+            VERSION=$(awk -F'"' '/^version = / {print $2; exit}' src-tauri/Cargo.toml)
+          fi
+          
+          # Validate version format
+          if [ -z "$VERSION" ]; then
+            echo "Error: Could not extract version from src-tauri/Cargo.toml"
+            cat src-tauri/Cargo.toml | head -20  # Debug: show first 20 lines
+            exit 1
+          fi
+          
+          # Validate version format (semantic versioning)
+          if ! echo "$VERSION" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+' > /dev/null; then
+            echo "Error: Invalid version format: $VERSION"
             exit 1
           fi
           
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Extracted version: $VERSION"
+          echo "✅ Extracted version: $VERSION"
 
       - name: Update version badges in all markdown files
         run: |
           VERSION="${{ steps.get_version.outputs.version }}"
-          echo "Updating badges to version: $VERSION"
+          echo "🔄 Updating badges to version: $VERSION"
+          
+          # Counter for updated files
+          UPDATED_COUNT=0
           
           # Find all markdown files and update the version badge
-          find . -name "*.md" -type f | while read -r file; do
-            echo "Checking file: $file"
+          find . -name "*.md" -type f -not -path "./node_modules/*" -not -path "./.git/*" | while read -r file; do
+            echo "🔍 Checking file: $file"
+          
+            # Check if file contains version badge
             if grep -q "img.shields.io/badge/Version-" "$file"; then
-              echo "Updating badge in: $file"
+              echo "📝 Updating badge in: $file"
+          
+              # Create backup
+              cp "$file" "$file.bak"
+          
+              # Update the badge (handle different badge formats)
               sed -i "s|https://img\.shields\.io/badge/Version-[^-]*-informational|https://img.shields.io/badge/Version-$VERSION-informational|g" "$file"
+              sed -i "s|https://img\.shields\.io/badge/Version-[^-]*-blue|https://img.shields.io/badge/Version-$VERSION-blue|g" "$file"
+              sed -i "s|https://img\.shields\.io/badge/Version-[^-]*-green|https://img.shields.io/badge/Version-$VERSION-green|g" "$file"
+              sed -i "s|https://img\.shields\.io/badge/version-[^-]*-informational|https://img.shields.io/badge/version-$VERSION-informational|g" "$file"
+          
+              # Check if the update was successful
+              if grep -q "Version-$VERSION-" "$file"; then
+                echo "✅ Successfully updated: $file"
+                rm "$file.bak"
+                UPDATED_COUNT=$((UPDATED_COUNT + 1))
+              else
+                echo "❌ Failed to update: $file"
+                mv "$file.bak" "$file"  # Restore backup
+              fi
             fi
           done
+          
+          echo "📊 Updated $UPDATED_COUNT file(s)"
+
+      - name: Update package.json version (if exists)
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          
+          if [ -f "package.json" ]; then
+            echo "📦 Updating package.json version to: $VERSION"
+          
+            # Install jq if not available
+            if ! command -v jq &> /dev/null; then
+              sudo apt-get update && sudo apt-get install -y jq
+            fi
+          
+            # Update version in package.json
+            jq --arg version "$VERSION" '.version = $version' package.json > package.json.tmp
+            mv package.json.tmp package.json
+          
+            echo "✅ Updated package.json version"
+          else
+            echo "ℹ️ No package.json found, skipping"
+          fi
+
+      - name: Update Tauri config version
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          
+          if [ -f "src-tauri/tauri.conf.json" ]; then
+            echo "⚙️ Updating tauri.conf.json version to: $VERSION"
+          
+            # Install jq if not available
+            if ! command -v jq &> /dev/null; then
+              sudo apt-get update && sudo apt-get install -y jq
+            fi
+          
+            # Update version in tauri.conf.json
+            jq --arg version "$VERSION" '.package.version = $version' src-tauri/tauri.conf.json > src-tauri/tauri.conf.json.tmp
+            mv src-tauri/tauri.conf.json.tmp src-tauri/tauri.conf.json
+          
+            echo "✅ Updated tauri.conf.json version"
+          else
+            echo "ℹ️ No tauri.conf.json found, skipping"
+          fi
 
       - name: Check for changes
         id: check_changes
         run: |
           if git diff --quiet; then
             echo "changes=false" >> $GITHUB_OUTPUT
-            echo "No changes detected"
+            echo "ℹ️ No changes detected"
           else
             echo "changes=true" >> $GITHUB_OUTPUT
-            echo "Changes detected:"
+            echo "📋 Changes detected:"
             git diff --name-only
+            echo ""
+            echo "📊 Changed files summary:"
+            git diff --stat
           fi
 
       - name: Commit and push changes
         if: steps.check_changes.outputs.changes == 'true'
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          
+          # Add all changes
           git add -A
-          git commit -m "🔖 Update version badge to v${{ steps.get_version.outputs.version }}"
-          git push
+          
+          # Create detailed commit message
+          VERSION="${{ steps.get_version.outputs.version }}"
+          COMMIT_MSG="🔖 Update version to v$VERSION
+
+          - Updated version badges in markdown files
+          - Synchronized package.json version (if exists)
+          - Synchronized tauri.conf.json version (if exists)
+          
+          Auto-generated by GitHub Actions"
+          
+          git commit -m "$COMMIT_MSG"
+          
+          # Push with retry logic
+          for i in {1..3}; do
+            if git push; then
+              echo "✅ Successfully pushed changes"
+              break
+            else
+              echo "⚠️ Push failed, retrying in 5 seconds... (attempt $i/3)"
+              sleep 5
+              git pull --rebase
+            fi
+          done
+
+      - name: Create summary
+        if: always()
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          
+          echo "## 🔖 Version Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** \`v$VERSION\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ steps.check_changes.outputs.changes }}" == "true" ]; then
+            echo "✅ **Status:** Successfully updated version badges and configuration files" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Files updated:**" >> $GITHUB_STEP_SUMMARY
+            git diff --name-only HEAD~1 | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ **Status:** No changes required" >> $GITHUB_STEP_SUMMARY
+          fi

@@ -1,6 +1,5 @@
-use fileflow::fileflow::database::connection::{Connection, QueryResult};
 use fileflow::fileflow::database::database_actions::export_table;
-use fileflow::fileflow::enums::separator::SeparatorType;
+use fileflow::fileflow::enums::separator_type::SeparatorType;
 use fileflow::fileflow::stuct::db_config::DatabaseConfig;
 use fileflow::fileflow::stuct::download_config::DownloadConfig;
 use crate::tests::utils_tests::{
@@ -10,23 +9,25 @@ use crate::tests::utils_tests::{
 use sqlx::testing::TestTermination;
 use sqlx::{Error, Row};
 use std::path::PathBuf;
+use fileflow::fileflow::enums::query_result::QueryRows;
+use fileflow::fileflow::stuct::database_connection::DatabaseConnection;
 
 #[tokio::test]
 async fn test_get_connection_url() {
     assert_eq!(
-        Connection::get_connection_url(&get_test_pg_config()),
+        DatabaseConnection::get_connection_url(&get_test_pg_config()),
         "postgres://postgres:password@localhost:5432/test_db"
     );
     assert_eq!(
-        Connection::get_connection_url(&get_test_maridb_config()),
+        DatabaseConnection::get_connection_url(&get_test_maridb_config()),
         "mysql://root:password@localhost:3306/test_db"
     );
     assert_eq!(
-        Connection::get_connection_url(&get_test_mysql_config()),
+        DatabaseConnection::get_connection_url(&get_test_mysql_config()),
         "mysql://root:password@localhost:3306/test_db"
     );
     assert_eq!(
-        Connection::get_connection_url(&get_test_sqlite_config(String::new())),
+        DatabaseConnection::get_connection_url(&get_test_sqlite_config(String::new())),
         "test_db.db"
     );
 }
@@ -35,12 +36,12 @@ async fn test_get_connection_url() {
 async fn test_sqlite_connection() {
     let file_path: String = create_test_db("sqlite_connection");
     let config: DatabaseConfig = get_test_sqlite_config(file_path);
-    let conn = Connection::connect(&config).await;
+    let conn = DatabaseConnection::connect(&config).await;
 
     assert!(conn.is_success(), "Failed to connect to the database");
     assert!(conn.is_ok());
 
-    let conn: Connection = conn.unwrap();
+    let conn: DatabaseConnection = conn.unwrap();
     conn.disconnect();
     drop(conn);
     remove_test_db("sqlite_connection").expect("Failed to remove test table");
@@ -50,12 +51,12 @@ async fn test_sqlite_connection() {
 async fn test_query_many_with_result() {
     let file_path: String = create_test_db("test_query_many_with_result");
     let config: DatabaseConfig = get_test_sqlite_config(file_path);
-    let conn: Result<Connection, Error> = Connection::connect(&config).await;
+    let conn: Result<DatabaseConnection, Error> = DatabaseConnection::connect(&config).await;
 
     assert!(conn.is_success(), "Failed to connect to the database");
     assert!(conn.is_ok());
 
-    let conn: Connection = conn.unwrap();
+    let conn: DatabaseConnection = conn.unwrap();
 
     const SQL_ARRAY: [&str; 3] = [
         "DROP TABLE IF EXISTS test_table",
@@ -69,14 +70,14 @@ async fn test_query_many_with_result() {
         }
     }
 
-    let query_result: Result<QueryResult, Error> = conn
+    let query_result: Result<QueryRows, Error> = conn
         .query_many_with_result("SELECT * FROM test_table")
         .await;
     assert!(query_result.is_ok());
 
-    let query_result: QueryResult = query_result.unwrap();
+    let query_result: QueryRows = query_result.unwrap();
 
-    if let QueryResult::SQLite(rows) = query_result {
+    if let QueryRows::SQLite(rows) = query_result {
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].len(), 2);
     }
@@ -90,12 +91,12 @@ async fn test_query_many_with_result() {
 async fn test_download_table() {
     let file_path: String = create_test_db("test_download_table");
     let config: DatabaseConfig = get_test_sqlite_config(file_path);
-    let conn: Result<Connection, Error> = Connection::connect(&config).await;
+    let conn: Result<DatabaseConnection, Error> = DatabaseConnection::connect(&config).await;
 
     assert!(conn.is_success(), "Failed to connect to the database");
     assert!(conn.is_ok());
 
-    let conn: Connection = conn.unwrap();
+    let conn: DatabaseConnection = conn.unwrap();
 
     const SQL_ARRAY: [&str; 4] = [
         "DROP TABLE IF EXISTS test_table",
@@ -110,12 +111,12 @@ async fn test_download_table() {
         }
     }
 
-    let query_result: QueryResult = conn
+    let query_result: QueryRows = conn
         .query_many_with_result("SELECT * FROM test_table")
         .await
         .unwrap();
 
-    if let QueryResult::SQLite(rows) = query_result {
+    if let QueryRows::SQLite(rows) = query_result {
         assert_eq!(rows.len(), 2);
         assert_eq!(rows[0].len(), 2);
         assert_eq!(rows[1].len(), 2);

@@ -1,5 +1,4 @@
 use crate::fileflow::action::database_command::{fast_insert, optimized_insert};
-use crate::fileflow::database::connection::Connection;
 use crate::fileflow::enums::insertion_type::InsertionType;
 use crate::fileflow::stuct::insert_config::InsertConfig;
 use crate::fileflow::stuct::save_config::SaveConfig;
@@ -13,8 +12,9 @@ use std::sync::Arc;
 use std::time::Instant;
 use tauri::{command, State};
 use tokio::sync::Mutex;
+use crate::fileflow::stuct::database_connection::DatabaseConnection;
 
-pub struct DatabaseState(pub Mutex<Option<Connection>>);
+pub struct DatabaseState(pub Mutex<Option<DatabaseConnection>>);
 
 #[command]
 pub async fn insert_csv_data(
@@ -27,7 +27,7 @@ pub async fn insert_csv_data(
         return Err("Error: Connection is not established".into());
     }
 
-    let connection: &Connection = conn_guard.as_ref().unwrap();
+    let connection: &DatabaseConnection = conn_guard.as_ref().unwrap();
     let mut total_lines: u64 = 0; // Counter for the total number of lines inserted
     let start: Instant = Instant::now(); // Timer for the insertion process
 

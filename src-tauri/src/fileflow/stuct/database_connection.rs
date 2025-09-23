@@ -1,86 +1,83 @@
+use crate::fileflow::enums::connection_type::ConnectionPool;
 use crate::fileflow::enums::database_engine::DatabaseEngine;
+use crate::fileflow::enums::query_result::QueryRows;
 use crate::fileflow::stuct::db_config::DatabaseConfig;
 use sqlx::{Error, MySql, MySqlPool, PgPool, Pool, Postgres, Sqlite, SqlitePool};
 
-pub enum ConnectionEnum {
-    Postgres(PgPool),
-    MySQL(MySqlPool),
-    SQLite(SqlitePool),
+/// Represents a connection to a database, supporting multiple database engines.
+#[must_use]
+pub struct DatabaseConnection {
+    pub database_config: DatabaseConfig,
+    pub engine: ConnectionPool,
 }
 
-pub enum QueryResult {
-    Postgres(Vec<sqlx::postgres::PgRow>),
-    MySQL(Vec<sqlx::mysql::MySqlRow>),
-    SQLite(Vec<sqlx::sqlite::SqliteRow>),
-}
-
-pub struct Connection {
-    pub db_config: DatabaseConfig,
-    pub connection: ConnectionEnum,
-}
-
-impl Connection {
+impl DatabaseConnection {
+    /// Establishes a connection to the database based on the provided configuration.
+    /// Returns a Connection instance if successful, or an Error if the connection fails.
     pub async fn connect(config: &DatabaseConfig) -> Result<Self, Error> {
         let connection_str: String = Self::get_connection_url(config);
 
-        let connection_enum: ConnectionEnum = match config.db_driver {
+        let connection_enum: ConnectionPool = match config.db_driver {
             DatabaseEngine::Postgres => {
                 let pool: Pool<Postgres> = PgPool::connect(&connection_str).await?;
-                ConnectionEnum::Postgres(pool)
+                ConnectionPool::Postgres(pool)
             }
             DatabaseEngine::MariaDB | DatabaseEngine::MySQL => {
                 let pool: Pool<MySql> = MySqlPool::connect(&connection_str).await?;
-                ConnectionEnum::MySQL(pool)
+                ConnectionPool::MySQL(pool)
             }
             DatabaseEngine::SQLite => {
                 let pool: Pool<Sqlite> = SqlitePool::connect(&connection_str).await?;
-                ConnectionEnum::SQLite(pool)
+                ConnectionPool::SQLite(pool)
             }
         };
 
         Ok(Self {
-            db_config: config.clone(),
-            connection: connection_enum,
+            database_config: config.clone(),
+            engine: connection_enum,
         })
     }
 
+    /// Returns a reference to the database configuration.
     pub const fn get_db_config(&self) -> &DatabaseConfig {
-        &self.db_config
+        &self.database_config
     }
 
     /// Executes a query and returns the query result wrapped in a QueryResult enum.
-    pub async fn query_many_with_result(&self, query: &str) -> Result<QueryResult, Error> {
-        match &self.connection {
-            ConnectionEnum::Postgres(pool) => {
+    pub async fn query_many_with_result(&self, query: &str) -> Result<QueryRows, Error> {
+        match &self.engine {
+            ConnectionPool::Postgres(pool) => {
                 let rows = sqlx::query(query).fetch_all(pool).await?;
-                Ok(QueryResult::Postgres(rows))
+                Ok(QueryRows::Postgres(rows))
             }
-            ConnectionEnum::MySQL(pool) => {
+            ConnectionPool::MySQL(pool) => {
                 let rows = sqlx::query(query).fetch_all(pool).await?;
-                Ok(QueryResult::MySQL(rows))
+                Ok(QueryRows::MySQL(rows))
             }
-            ConnectionEnum::SQLite(pool) => {
+            ConnectionPool::SQLite(pool) => {
                 let rows = sqlx::query(query).fetch_all(pool).await?;
-                Ok(QueryResult::SQLite(rows))
+                Ok(QueryRows::SQLite(rows))
             }
         }
     }
 
+    /// Executes a query without returning any result.
     pub async fn query(&self, query: &str) -> Result<(), Error> {
-        match &self.connection {
-            ConnectionEnum::Postgres(pool) => {
+        match &self.engine {
+            ConnectionPool::Postgres(pool) => {
                 sqlx::query(query).execute(pool).await?;
             }
-            ConnectionEnum::MySQL(pool) => {
+            ConnectionPool::MySQL(pool) => {
                 sqlx::query(query).execute(pool).await?;
             }
-            ConnectionEnum::SQLite(pool) => {
+            ConnectionPool::SQLite(pool) => {
                 sqlx::query(query).execute(pool).await?;
             }
         }
         Ok(())
     }
 
+    /// Constructs the database connection URL based on the provided configuration.
     pub fn get_connection_url(config: &DatabaseConfig) -> String {
         match config.db_driver {
             DatabaseEngine::Postgres => format!(
@@ -111,15 +108,16 @@ impl Connection {
         }
     }
 
+    /// Closes the database connection.
     pub fn disconnect(&self) {
-        match &self.connection {
-            ConnectionEnum::Postgres(pool) => {
+        match &self.engine {
+            ConnectionPool::Postgres(pool) => {
                 drop(pool.close());
             }
-            ConnectionEnum::MySQL(pool) => {
+            ConnectionPool::MySQL(pool) => {
                 drop(pool.close());
             }
-            ConnectionEnum::SQLite(pool) => {
+            ConnectionPool::SQLite(pool) => {
                 drop(pool.close());
             }
         }

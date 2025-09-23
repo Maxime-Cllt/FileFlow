@@ -1,4 +1,4 @@
-use crate::fileflow::enums::separator::SeparatorType;
+use crate::fileflow::enums::separator_type::SeparatorType;
 use serde::{Deserialize, Serialize};
 
 /// Configuration for downloading data from database tables

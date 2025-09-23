@@ -1,13 +1,13 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use csv::{Reader, ReaderBuilder};
 use fileflow::fileflow::action::database_command::fast_insert;
-use fileflow::fileflow::database::connection::Connection;
 use fileflow::fileflow::enums::database_engine::DatabaseEngine;
 use fileflow::fileflow::stuct::db_config::DatabaseConfig;
 use fileflow::fileflow::stuct::string_formater::StringFormatter;
 use fileflow::fileflow::utils::csv_utils::{find_separator, read_first_line};
 use sqlx::Error;
 use std::fs::File;
+use fileflow::fileflow::stuct::database_connection::DatabaseConnection;
 
 #[allow(dead_code)]
 async fn test_insert_file() {
@@ -23,14 +23,14 @@ async fn test_insert_file() {
         sqlite_file_path: r"test.db".into(),
     };
 
-    let conn: Result<Connection, Error> = Connection::connect(&config).await;
+    let conn: Result<DatabaseConnection, Error> = DatabaseConnection::connect(&config).await;
 
     if conn.is_err() {
         eprintln!("Error connecting to the database");
         return;
     }
 
-    let connection: &Connection = conn.as_ref().unwrap();
+    let connection: &DatabaseConnection = conn.as_ref().unwrap();
 
     let file: File = match File::open(TEST_FILE) {
         Ok(file) => file,

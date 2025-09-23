@@ -1,5 +1,4 @@
 use crate::fileflow::action::actions::DatabaseState;
-use crate::fileflow::database::connection::{Connection, QueryResult};
 use crate::fileflow::database::database_actions::{
     batch_insert, create_and_copy_final_table, drop_existing_tables, drop_table_if_exists,
     execute_query, export_table,
@@ -21,6 +20,8 @@ use std::sync::Arc;
 use std::time::Instant;
 use tauri::{command, State};
 use std::fmt::Write;
+use crate::fileflow::enums::query_result::QueryRows;
+use crate::fileflow::stuct::database_connection::DatabaseConnection;
 
 #[command]
 pub async fn connect_to_database(
@@ -33,7 +34,7 @@ pub async fn connect_to_database(
         return Err("Already connected to the database.".into());
     }
 
-    match Connection::connect(&config).await {
+    match DatabaseConnection::connect(&config).await {
         Ok(connection) => {
             *conn_guard = Some(connection);
             Ok(true)
@@ -52,7 +53,7 @@ pub async fn disconnect_from_database(
         return Err("No active database connection to disconnect.".into());
     }
 
-    let conn: Connection = match conn_guard.take() {
+    let conn: DatabaseConnection = match conn_guard.take() {
         Some(conn) => conn,
         None => return Err("No active database connection to disconnect.".into()),
     };
@@ -70,7 +71,7 @@ pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String
         return Ok(String::new());
     }
 
-    let connection: &Connection = conn_guard.as_ref().unwrap();
+    let connection: &DatabaseConnection = conn_guard.as_ref().unwrap();
     let db_config: &DatabaseConfig = connection.get_db_config();
 
     // Return the database configuration as JSON string
@@ -88,7 +89,7 @@ pub async fn get_table_list(state: State<'_, Arc<DatabaseState>>) -> Result<Valu
         return Err(false);
     }
 
-    let connection: &Connection = match conn_guard.as_ref() {
+    let connection: &DatabaseConnection = match conn_guard.as_ref() {
         Some(conn) => conn,
         None => return Err(false),
     };
@@ -96,7 +97,7 @@ pub async fn get_table_list(state: State<'_, Arc<DatabaseState>>) -> Result<Valu
     let db_config: &DatabaseConfig = connection.get_db_config();
     let sql: &str = &build_query_all_tables(&db_config.db_driver, &db_config.db_name);
 
-    let result: QueryResult = connection
+    let result: QueryRows = connection
         .query_many_with_result(sql)
         .await
         .map_err(|_| false)?;
@@ -104,7 +105,7 @@ pub async fn get_table_list(state: State<'_, Arc<DatabaseState>>) -> Result<Valu
     let mut vec: Vec<ComboItem> = Vec::new();
 
     match result {
-        QueryResult::MySQL(rows) => {
+        QueryRows::MySQL(rows) => {
             for row in rows {
                 vec.push(ComboItem {
                     value: row.get("TABLE_NAME"),
@@ -112,7 +113,7 @@ pub async fn get_table_list(state: State<'_, Arc<DatabaseState>>) -> Result<Valu
                 });
             }
         }
-        QueryResult::Postgres(rows) => {
+        QueryRows::Postgres(rows) => {
             for row in rows {
                 vec.push(ComboItem {
                     value: row.get("table_name"),
@@ -120,7 +121,7 @@ pub async fn get_table_list(state: State<'_, Arc<DatabaseState>>) -> Result<Valu
                 });
             }
         }
-        QueryResult::SQLite(rows) => {
+        QueryRows::SQLite(rows) => {
             for row in rows {
                 vec.push(ComboItem {
                     value: row.get("name"),
@@ -150,7 +151,7 @@ pub async fn download_table(
         return Err("Some required fields are missing.".into());
     }
 
-    let connection: &Connection = match conn_guard.as_ref() {
+    let connection: &DatabaseConnection = match conn_guard.as_ref() {
         Some(conn) => conn,
         None => return Err("No active database connection.".into()),
     };
@@ -179,7 +180,7 @@ pub async fn download_table(
 
 /// Fast insert data the csv file into the database table
 pub async fn fast_insert(
-    connection: &Connection,
+    connection: &DatabaseConnection,
     reader: &mut Reader<File>,
     final_columns_name: &[String],
     final_table_name: &str,
@@ -236,7 +237,7 @@ pub async fn fast_insert(
 
 /// Insert data into the database using the optimized table creation and insertion method
 pub async fn optimized_insert(
-    connection: &Connection,
+    connection: &DatabaseConnection,
     reader: &mut Reader<File>,
     final_columns_name: &[String],
     final_table_name: &str,
@@ -338,7 +339,7 @@ pub async fn optimized_insert(
 }
 
 /// Insert a batch of records into the database
-async fn insert_batch(connection: &Connection, insert_query_base: &str, batch: &[String]) -> u32 {
+async fn insert_batch(connection: &DatabaseConnection, insert_query_base: &str, batch: &[String]) -> u32 {
     match batch_insert(
         connection,
         insert_query_base,

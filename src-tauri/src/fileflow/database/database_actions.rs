@@ -1,4 +1,3 @@
-use crate::fileflow::database::connection::{Connection, QueryResult};
 use crate::fileflow::database::sql_builder::{
     build_copy_table_sql, build_create_with_fixed_size_sql, build_drop_statement_sql,
 };
@@ -8,10 +7,12 @@ use csv::{Writer, WriterBuilder};
 use sqlx::{Column, Row};
 use std::collections::HashMap;
 use std::fs::File;
+use crate::fileflow::enums::query_result::QueryRows;
+use crate::fileflow::stuct::database_connection::DatabaseConnection;
 
 /// Exports a table’s data into a CSV file. It uses offset/LIMIT pagination to retrieve data in batches
 pub async fn export_table(
-    connection: &Connection,
+    connection: &DatabaseConnection,
     download_config: &DownloadConfig,
     table_name: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -29,10 +30,10 @@ pub async fn export_table(
 
     loop {
         let sql_query: String = format!("{base_sql} LIMIT {LIMIT} OFFSET {offset}");
-        let query_result: QueryResult = connection.query_many_with_result(&sql_query).await?;
+        let query_result: QueryRows = connection.query_many_with_result(&sql_query).await?;
 
         let (columns, rows): (Vec<String>, Vec<Vec<String>>) = match query_result {
-            QueryResult::MySQL(rows) => {
+            QueryRows::MySQL(rows) => {
                 if rows.is_empty() {
                     break;
                 }
@@ -56,7 +57,7 @@ pub async fn export_table(
                     .collect();
                 (cols, data)
             }
-            QueryResult::Postgres(rows) => {
+            QueryRows::Postgres(rows) => {
                 if rows.is_empty() {
                     break;
                 }
@@ -80,7 +81,7 @@ pub async fn export_table(
                     .collect();
                 (cols, data)
             }
-            QueryResult::SQLite(rows) => {
+            QueryRows::SQLite(rows) => {
                 if rows.is_empty() {
                     break;
                 }
@@ -125,7 +126,7 @@ pub async fn export_table(
 
 /// Helper function to drop a table if it exists
 pub async fn drop_table_if_exists(
-    connection: &Connection,
+    connection: &DatabaseConnection,
     db_driver: &DatabaseEngine,
     table_name: &str,
 ) -> Result<(), String> {
@@ -140,7 +141,7 @@ pub async fn drop_table_if_exists(
 
 /// Helper function to execute a query and handle errors
 pub async fn execute_query(
-    connection: &Connection,
+    connection: &DatabaseConnection,
     query: &str,
     context: &str,
 ) -> Result<(), String> {
@@ -152,7 +153,7 @@ pub async fn execute_query(
 
 /// Helper function to batch-insert records into a table
 pub async fn batch_insert(
-    connection: &Connection,
+    connection: &DatabaseConnection,
     insert_query_base: &str,
     batch: &[String],
     context: &str,
@@ -166,7 +167,7 @@ pub async fn batch_insert(
 
 /// Create the final table and copy data from the temporary table
 pub async fn create_and_copy_final_table(
-    connection: &Connection,
+    connection: &DatabaseConnection,
     db_driver: &DatabaseEngine,
     final_table_name: &str,
     temporary_table_name: &str,
@@ -201,7 +202,7 @@ pub async fn create_and_copy_final_table(
 
 /// Drop a list of tables if they exist
 pub async fn drop_existing_tables(
-    connection: &Connection,
+    connection: &DatabaseConnection,
     table_names: &[&str],
     db_driver: &DatabaseEngine,
 ) -> Result<(), String> {

@@ -1,4 +1,3 @@
-use fileflow::fileflow::database::connection::Connection;
 use fileflow::fileflow::enums::database_engine::DatabaseEngine;
 use fileflow::fileflow::stuct::db_config::DatabaseConfig;
 use fileflow::fileflow::stuct::save_config::SaveConfig;
@@ -12,16 +11,17 @@ use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Pool, Row, Sqlite};
 use std::fs::File;
 use fileflow::fileflow::action::database_command::fast_insert;
+use fileflow::fileflow::stuct::database_connection::DatabaseConnection;
 
 #[tokio::test]
 async fn test_fast_insert() {
     let sqlite_file_path: String = create_test_db("fast_insert");
     let config: DatabaseConfig = get_test_sqlite_config(sqlite_file_path.clone());
-    let conn: Result<Connection, Error> = Connection::connect(&config).await;
+    let conn: Result<DatabaseConnection, Error> = DatabaseConnection::connect(&config).await;
 
     assert!(conn.is_ok(), "Failed to connect to the database");
 
-    let conn: Connection = conn.unwrap();
+    let conn: DatabaseConnection = conn.unwrap();
 
     let csv_file_path: String =
         generate_csv_file("test_fast_insert").expect("Failed to generate csv file");

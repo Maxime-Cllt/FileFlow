@@ -9,6 +9,7 @@ import {getNormalizedTableName} from "@/components/hooks/utils.tsx";
 import ConnectionForm from "@/components/hooks/database/ConnectionForm.tsx";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.tsx";
 import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
+import {DatabaseEngineType} from "@/state/DatabaseEngineType.tsx";
 
 
 export enum InsertionType {
@@ -20,14 +21,14 @@ const Insert: React.FC = () => {
 
     const [dbConfig, setDbConfig] = useState<DatabaseConfig>({
         config_name: '',
-        db_driver: '',
+        db_driver: DatabaseEngineType.UNDEFINED,
         db_host: '',
         db_name: '',
         password: '',
         port: '',
         sqlite_file_path: '',
         username: '',
-        is_connected: false
+        isConnected : false
     });
 
     const [filesPath, setFilesPath] = useState<string[]>([]);

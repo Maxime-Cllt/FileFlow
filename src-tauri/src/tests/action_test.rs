@@ -1,27 +1,24 @@
-use crate::fileflow::database::connection::Connection;
-use crate::fileflow::enumeration::database_engine::DatabaseEngine;
-use crate::fileflow::stuct::db_config::DbConfig;
-use crate::fileflow::stuct::save_config::SaveConfig;
-use crate::fileflow::utils::fileflowlib::{get_all_saved_configs, save_config};
 use crate::tests::utils_tests::{
-    create_test_db, delete_config_file, generate_csv_file, get_test_save_config,
-    get_test_sqlite_config, remove_csv_file, remove_test_db,
+    create_test_db, generate_csv_file, get_test_sqlite_config, remove_csv_file, remove_test_db,
 };
 use csv::{Reader, ReaderBuilder};
+use fileflow::fileflow::action::database_command::fast_insert;
+use fileflow::fileflow::enums::database_engine::DatabaseEngine;
+use fileflow::fileflow::stuct::config::db_config::DatabaseConfig;
+use fileflow::fileflow::stuct::database::database_connection::DatabaseConnection;
 use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Pool, Row, Sqlite};
 use std::fs::File;
-use crate::fileflow::action::database_command::fast_insert;
 
 #[tokio::test]
 async fn test_fast_insert() {
     let sqlite_file_path: String = create_test_db("fast_insert");
-    let config: DbConfig = get_test_sqlite_config(sqlite_file_path.clone());
-    let conn: Result<Connection, Error> = Connection::connect(&config).await;
+    let config: DatabaseConfig = get_test_sqlite_config(sqlite_file_path.clone());
+    let conn: Result<DatabaseConnection, Error> = DatabaseConnection::connect(&config).await;
 
     assert!(conn.is_ok(), "Failed to connect to the database");
 
-    let conn: Connection = conn.unwrap();
+    let conn: DatabaseConnection = conn.unwrap();
 
     let csv_file_path: String =
         generate_csv_file("test_fast_insert").expect("Failed to generate csv file");
@@ -81,35 +78,4 @@ async fn test_fast_insert() {
 
     remove_test_db("fast_insert").expect("Failed to remove test table");
     remove_csv_file("test_fast_insert").expect("Failed to remove CSV file");
-}
-
-#[tokio::test]
-async fn test_configs_serealization_deserialization() {
-    const CONFIG_NAME: &str = "test_get_all_configs.json";
-
-    let config1: SaveConfig = get_test_save_config("config1");
-    let config2: SaveConfig = get_test_save_config("config2");
-    let config3: SaveConfig = get_test_save_config("config3");
-    let configs_list: Vec<SaveConfig> = vec![config1, config2, config3];
-
-    save_config(&configs_list, CONFIG_NAME).expect("Failed to save configs");
-
-    let deserialized_configs: Vec<SaveConfig> = get_all_saved_configs("test_get_all_configs.json");
-
-    assert_eq!(3, deserialized_configs.len());
-
-    assert_eq!(
-        configs_list[0].config_name,
-        deserialized_configs[0].config_name
-    );
-    assert_eq!(
-        configs_list[1].config_name,
-        deserialized_configs[1].config_name
-    );
-    assert_eq!(
-        configs_list[2].config_name,
-        deserialized_configs[2].config_name
-    );
-
-    delete_config_file(CONFIG_NAME).expect("Failed to delete config file");
 }

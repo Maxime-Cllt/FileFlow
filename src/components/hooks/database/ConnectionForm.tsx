@@ -23,19 +23,13 @@ import DatabaseForm from "@/components/hooks/database/DatabaseForm.tsx";
 
 const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) => {
 
-        const [configName, setConfigName] = React.useState<string>('');
+        const [config_name, setConfigName] = React.useState<string>('');
         const [configNameList, setConfigNameList] = useState<Array<Item>>([]);
         const [attemptedConnection, setAttemptedConnection] = useState<boolean>(false);
 
         const handleConnect = async (): Promise<void> => {
             try {
                 setAttemptedConnection(true);
-
-                if (props.dbConfig.db_driver !== 'sqlite' && (!props.dbConfig.db_driver || !props.dbConfig.db_host || !props.dbConfig.port || !props.dbConfig.username || !props.dbConfig.db_name)) {
-                    throw new Error('Please fill all fields');
-                } else if (props.dbConfig.db_driver === 'sqlite' && !props.dbConfig.sqlite_file_path) {
-                    throw new Error('Please fill all fields');
-                }
 
                 const connect_to_database_response: boolean | void = await connect_to_database(
                     props.dbConfig.db_driver,
@@ -44,7 +38,7 @@ const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) =
                     props.dbConfig.username,
                     props.dbConfig.password,
                     props.dbConfig.db_name,
-                    props.dbConfig.sqlite_file_path
+                    props.dbConfig.sqlite_file_path ?? '',
                 );
 
                 if (typeof connect_to_database_response !== "boolean") {
@@ -55,7 +49,7 @@ const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) =
                     throw new Error("Failed to connect to database, please check your connection");
                 }
 
-                props.updateDbConfigField('is_connected', true);
+                props.updateDbConfigField('isConnected', true);
 
             } catch
                 (error) {
@@ -74,14 +68,14 @@ const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) =
             is_connected().then(
                 (connected: string | boolean) => {
                     if (typeof connected !== "string" || !connected) {
-                        props.updateDbConfigField('is_connected', false);
+                        props.updateDbConfigField('isConnected', false);
                         return;
                     }
                     const loadDbConfig = JSON.parse(connected);
                     Object.keys(loadDbConfig).forEach((key) => {
                         props.updateDbConfigField(key as keyof typeof props.dbConfig, loadDbConfig[key]);
                     });
-                    props.updateDbConfigField('is_connected', true);
+                    props.updateDbConfigField('isConnected', true);
                 }
             )
 
@@ -116,7 +110,7 @@ const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) =
                                 <div className="p-6 mr-10 ml-10">
                                     <SelectDatabaseConfig
                                         updateConfigName={setConfigName}
-                                        configName={configName}
+                                        config_name={config_name}
                                         configNameList={configNameList}
                                         updateDbConfigField={props.updateDbConfigField}
                                     />
@@ -141,11 +135,11 @@ const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) =
                                                     disabled={attemptedConnection}
                                                     className={`flex items-center justify-center p-3 rounded-full shadow-md transition duration-300  focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
                                                     ${
-                                                        props.dbConfig.is_connected
+                                                        props.dbConfig.isConnected
                                                             ? "bg-green-500 hover:bg-green-600 text-white"
                                                             : "bg-yellow-500 hover:bg-yellow-600 text-white"
                                                     }`}
-                                                    title={props.dbConfig.is_connected ? "Disconnect from database" : "Connect to database"}
+                                                    title={props.dbConfig.isConnected ? "Disconnect from database" : "Connect to database"}
                                                 >
                                                     <Database className="w-6 h-6"/>
                                                 </button>
@@ -158,13 +152,13 @@ const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) =
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
                                     <DropdownMenuItem onClick={handleConnect}
-                                                      disabled={props.dbConfig.is_connected}>Connect</DropdownMenuItem>
+                                                      disabled={props.dbConfig.isConnected}>Connect</DropdownMenuItem>
                                     <DropdownMenuItem onClick={async function () {
                                         const response = await disconnect_from_database();
                                         if (response) {
-                                            props.updateDbConfigField('is_connected', false);
+                                            props.updateDbConfigField('isConnected', false);
                                         }
-                                    }} disabled={!props.dbConfig.is_connected}>Disconnect</DropdownMenuItem>
+                                    }} disabled={!props.dbConfig.isConnected}>Disconnect</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         </div>

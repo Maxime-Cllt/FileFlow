@@ -1,6 +1,7 @@
 // Return the file name from a path
 import {invoke} from "@tauri-apps/api/core";
 import {toast} from "sonner";
+import {DatabaseEngineType, databaseEngineTypeToString} from "@/state/DatabaseEngineType.tsx";
 
 export const getFileNameFromPath = (path: string) => {
     if (!path) return '';
@@ -95,7 +96,7 @@ export const disconnect_from_database = async () => {
 }
 
 // Connect to the database and disconnect if already connected for the user
-export const connect_to_database = async (db_driver: string, db_host: string, port: string, username: string, password: string, db_name: string, sqlite_file_path: string): Promise<void | boolean> => {
+export const connect_to_database = async (db_driver: DatabaseEngineType, db_host: string, port: string, username: string, password: string, db_name: string, sqlite_file_path: string): Promise<void | boolean> => {
     try {
         const is_connected_response: string | boolean = await is_connected();
 
@@ -103,15 +104,15 @@ export const connect_to_database = async (db_driver: string, db_host: string, po
             await disconnect_from_database();
         }
 
-        if (db_driver !== 'sqlite' && (!db_host || !port || !username)) {
+        if (db_driver !== DatabaseEngineType.SQLITE && (!db_host || !port || !username)) {
             throw new Error("Please fill in all the required fields");
-        } else if (db_driver === 'sqlite' && sqlite_file_path === '') {
+        } else if (db_driver === DatabaseEngineType.SQLITE && sqlite_file_path === '') {
             throw new Error('Please select a SQLite file');
         }
 
         const response: string | boolean = await invoke<string | boolean>('connect_to_database', {
             config: {
-                db_driver: db_driver.toLowerCase(),
+                db_driver: databaseEngineTypeToString(db_driver).toLowerCase(),
                 db_host: db_host,
                 port: port,
                 username: username,
@@ -167,5 +168,15 @@ export const requestAllTablesFromConnection = async (): Promise<ComboItem[] | bo
     } catch (error) {
         log_error(error)
         return false;
+    }
+}
+
+// Get the app version
+export const get_app_version = async () => {
+    try {
+        return await invoke<string>('get_app_version');
+    } catch (error) {
+        log_error(error);
+        return "1.0.0";
     }
 }

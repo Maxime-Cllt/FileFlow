@@ -1,12 +1,13 @@
-use crate::fileflow::database::connection::{Connection, QueryResult};
-use crate::fileflow::database::database_actions::export_table;
-use crate::fileflow::enumeration::separator::SeparatorType;
-use crate::fileflow::stuct::db_config::DbConfig;
-use crate::fileflow::stuct::download_config::DownloadConfig;
 use crate::tests::utils_tests::{
     create_test_db, get_test_maridb_config, get_test_mysql_config, get_test_pg_config,
     get_test_sqlite_config, remove_test_db,
 };
+use fileflow::fileflow::enums::query_rows::QueryRows;
+use fileflow::fileflow::enums::separator_type::SeparatorType;
+use fileflow::fileflow::stuct::config::db_config::DatabaseConfig;
+use fileflow::fileflow::stuct::config::download_config::DownloadConfig;
+use fileflow::fileflow::stuct::database::database_connection::DatabaseConnection;
+use fileflow::fileflow::stuct::io::table_exporter::TableExporter;
 use sqlx::testing::TestTermination;
 use sqlx::{Error, Row};
 use std::path::PathBuf;
@@ -14,19 +15,19 @@ use std::path::PathBuf;
 #[tokio::test]
 async fn test_get_connection_url() {
     assert_eq!(
-        Connection::get_connection_url(&get_test_pg_config()),
+        DatabaseConnection::get_connection_url(&get_test_pg_config()),
         "postgres://postgres:password@localhost:5432/test_db"
     );
     assert_eq!(
-        Connection::get_connection_url(&get_test_maridb_config()),
+        DatabaseConnection::get_connection_url(&get_test_maridb_config()),
         "mysql://root:password@localhost:3306/test_db"
     );
     assert_eq!(
-        Connection::get_connection_url(&get_test_mysql_config()),
+        DatabaseConnection::get_connection_url(&get_test_mysql_config()),
         "mysql://root:password@localhost:3306/test_db"
     );
     assert_eq!(
-        Connection::get_connection_url(&get_test_sqlite_config(String::new())),
+        DatabaseConnection::get_connection_url(&get_test_sqlite_config(String::new())),
         "test_db.db"
     );
 }
@@ -34,13 +35,13 @@ async fn test_get_connection_url() {
 #[tokio::test]
 async fn test_sqlite_connection() {
     let file_path: String = create_test_db("sqlite_connection");
-    let config: DbConfig = get_test_sqlite_config(file_path);
-    let conn = Connection::connect(&config).await;
+    let config: DatabaseConfig = get_test_sqlite_config(file_path);
+    let conn = DatabaseConnection::connect(&config).await;
 
     assert!(conn.is_success(), "Failed to connect to the database");
     assert!(conn.is_ok());
 
-    let conn: Connection = conn.unwrap();
+    let conn: DatabaseConnection = conn.unwrap();
     conn.disconnect();
     drop(conn);
     remove_test_db("sqlite_connection").expect("Failed to remove test table");
@@ -49,13 +50,13 @@ async fn test_sqlite_connection() {
 #[tokio::test]
 async fn test_query_many_with_result() {
     let file_path: String = create_test_db("test_query_many_with_result");
-    let config: DbConfig = get_test_sqlite_config(file_path);
-    let conn: Result<Connection, Error> = Connection::connect(&config).await;
+    let config: DatabaseConfig = get_test_sqlite_config(file_path);
+    let conn: Result<DatabaseConnection, Error> = DatabaseConnection::connect(&config).await;
 
     assert!(conn.is_success(), "Failed to connect to the database");
     assert!(conn.is_ok());
 
-    let conn: Connection = conn.unwrap();
+    let conn: DatabaseConnection = conn.unwrap();
 
     const SQL_ARRAY: [&str; 3] = [
         "DROP TABLE IF EXISTS test_table",
@@ -69,14 +70,14 @@ async fn test_query_many_with_result() {
         }
     }
 
-    let query_result: Result<QueryResult, Error> = conn
+    let query_result: Result<QueryRows, Error> = conn
         .query_many_with_result("SELECT * FROM test_table")
         .await;
     assert!(query_result.is_ok());
 
-    let query_result: QueryResult = query_result.unwrap();
+    let query_result: QueryRows = query_result.unwrap();
 
-    if let QueryResult::SQLite(rows) = query_result {
+    if let QueryRows::SQLite(rows) = query_result {
         assert_eq!(rows.len(), 1);
         assert_eq!(rows[0].len(), 2);
     }
@@ -89,13 +90,13 @@ async fn test_query_many_with_result() {
 #[tokio::test]
 async fn test_download_table() {
     let file_path: String = create_test_db("test_download_table");
-    let config: DbConfig = get_test_sqlite_config(file_path);
-    let conn: Result<Connection, Error> = Connection::connect(&config).await;
+    let config: DatabaseConfig = get_test_sqlite_config(file_path);
+    let conn: Result<DatabaseConnection, Error> = DatabaseConnection::connect(&config).await;
 
     assert!(conn.is_success(), "Failed to connect to the database");
     assert!(conn.is_ok());
 
-    let conn: Connection = conn.unwrap();
+    let conn: DatabaseConnection = conn.unwrap();
 
     const SQL_ARRAY: [&str; 4] = [
         "DROP TABLE IF EXISTS test_table",
@@ -110,12 +111,12 @@ async fn test_download_table() {
         }
     }
 
-    let query_result: QueryResult = conn
+    let query_result: QueryRows = conn
         .query_many_with_result("SELECT * FROM test_table")
         .await
         .unwrap();
 
-    if let QueryResult::SQLite(rows) = query_result {
+    if let QueryRows::SQLite(rows) = query_result {
         assert_eq!(rows.len(), 2);
         assert_eq!(rows[0].len(), 2);
         assert_eq!(rows[1].len(), 2);
@@ -132,7 +133,7 @@ async fn test_download_table() {
         download_config.location, download_config.table_name_list[0]
     ));
 
-    export_table(&conn, &download_config, &download_config.table_name_list[0])
+    TableExporter::export_table(&conn, &download_config, &download_config.table_name_list[0])
         .await
         .expect("Failed to export table");
 
@@ -151,7 +152,7 @@ async fn test_download_table() {
         location: "./".into(),
     };
 
-    export_table(&conn, &download_config, &download_config.table_name_list[0])
+    TableExporter::export_table(&conn, &download_config, &download_config.table_name_list[0])
         .await
         .expect("Failed to export table");
 
@@ -164,7 +165,6 @@ async fn test_download_table() {
         content, "header1,header2\nvalue1,value2\nvalue3,value4\n",
         "Failed to export table"
     );
-
 
     // Clean up
     std::fs::remove_file(&file_path).expect("Failed to remove file");

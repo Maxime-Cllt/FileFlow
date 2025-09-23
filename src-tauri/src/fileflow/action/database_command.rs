@@ -1,30 +1,28 @@
 use crate::fileflow::action::actions::DatabaseState;
-use crate::fileflow::database::connection::{Connection, QueryResult};
-use crate::fileflow::database::database_actions::{
-    batch_insert, create_and_copy_final_table, drop_existing_tables, drop_table_if_exists,
-    execute_query, export_table,
-};
-use crate::fileflow::database::sql_builder::{
-    build_create_table_sql, build_prepared_statement_sql, build_query_all_tables,
-};
-use crate::fileflow::enumeration::database_engine::DatabaseEngine;
-use crate::fileflow::stuct::combo_item::ComboItem;
-use crate::fileflow::stuct::db_config::DbConfig;
-use crate::fileflow::stuct::download_config::DownloadConfig;
+use crate::fileflow::enums::database_engine::DatabaseEngine;
+use crate::fileflow::enums::query_rows::QueryRows;
+use crate::fileflow::stuct::config::combo_item::ComboItem;
+use crate::fileflow::stuct::config::db_config::DatabaseConfig;
+use crate::fileflow::stuct::config::download_config::DownloadConfig;
+use crate::fileflow::stuct::database::database_action::DatabaseAction;
+use crate::fileflow::stuct::database::database_connection::DatabaseConnection;
+use crate::fileflow::stuct::database::sql_builder::SqlBuilder;
+use crate::fileflow::stuct::io::table_exporter::TableExporter;
+use crate::fileflow::stuct::string_formater::StringFormatter;
 use csv::{Reader, StringRecord};
 use serde_json::{json, Value};
 use sqlx::Row;
 use std::collections::HashMap;
+use std::fmt::Write;
 use std::fs::File;
 use std::sync::Arc;
 use std::time::Instant;
 use tauri::{command, State};
-use crate::fileflow::stuct::string_formater::StringFormatter;
 
 #[command]
 pub async fn connect_to_database(
     state: State<'_, Arc<DatabaseState>>,
-    config: DbConfig,
+    config: DatabaseConfig,
 ) -> Result<bool, String> {
     let mut conn_guard = state.0.lock().await;
 
@@ -32,7 +30,7 @@ pub async fn connect_to_database(
         return Err("Already connected to the database.".into());
     }
 
-    match Connection::connect(&config).await {
+    match DatabaseConnection::connect(&config).await {
         Ok(connection) => {
             *conn_guard = Some(connection);
             Ok(true)
@@ -51,7 +49,7 @@ pub async fn disconnect_from_database(
         return Err("No active database connection to disconnect.".into());
     }
 
-    let conn: Connection = match conn_guard.take() {
+    let conn: DatabaseConnection = match conn_guard.take() {
         Some(conn) => conn,
         None => return Err("No active database connection to disconnect.".into()),
     };
@@ -69,8 +67,8 @@ pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String
         return Ok(String::new());
     }
 
-    let connection: &Connection = conn_guard.as_ref().unwrap();
-    let db_config: &DbConfig = connection.get_db_config();
+    let connection: &DatabaseConnection = conn_guard.as_ref().unwrap();
+    let db_config: &DatabaseConfig = connection.get_db_config();
 
     // Return the database configuration as JSON string
     match serde_json::to_string(db_config) {
@@ -87,23 +85,23 @@ pub async fn get_table_list(state: State<'_, Arc<DatabaseState>>) -> Result<Valu
         return Err(false);
     }
 
-    let connection: &Connection = match conn_guard.as_ref() {
+    let connection: &DatabaseConnection = match conn_guard.as_ref() {
         Some(conn) => conn,
         None => return Err(false),
     };
 
-    let db_config: &DbConfig = connection.get_db_config();
-    let sql: &str = &build_query_all_tables(&db_config.db_driver, &db_config.db_name);
+    let db_config: &DatabaseConfig = connection.get_db_config();
+    let sql: String = SqlBuilder::build_query_all_tables(&db_config.db_driver, &db_config.db_name);
 
-    let result: QueryResult = connection
-        .query_many_with_result(sql)
+    let result: QueryRows = connection
+        .query_many_with_result(&sql)
         .await
         .map_err(|_| false)?;
 
     let mut vec: Vec<ComboItem> = Vec::new();
 
     match result {
-        QueryResult::MySQL(rows) => {
+        QueryRows::MySQL(rows) => {
             for row in rows {
                 vec.push(ComboItem {
                     value: row.get("TABLE_NAME"),
@@ -111,7 +109,7 @@ pub async fn get_table_list(state: State<'_, Arc<DatabaseState>>) -> Result<Valu
                 });
             }
         }
-        QueryResult::Postgres(rows) => {
+        QueryRows::Postgres(rows) => {
             for row in rows {
                 vec.push(ComboItem {
                     value: row.get("table_name"),
@@ -119,7 +117,7 @@ pub async fn get_table_list(state: State<'_, Arc<DatabaseState>>) -> Result<Valu
                 });
             }
         }
-        QueryResult::SQLite(rows) => {
+        QueryRows::SQLite(rows) => {
             for row in rows {
                 vec.push(ComboItem {
                     value: row.get("name"),
@@ -149,14 +147,14 @@ pub async fn download_table(
         return Err("Some required fields are missing.".into());
     }
 
-    let connection: &Connection = match conn_guard.as_ref() {
+    let connection: &DatabaseConnection = match conn_guard.as_ref() {
         Some(conn) => conn,
         None => return Err("No active database connection.".into()),
     };
 
     let mut exported_table: u32 = 0;
     for table_name in config.table_name_list.iter() {
-        if let Err(err) = export_table(connection, &config, table_name).await {
+        if let Err(err) = TableExporter::export_table(connection, &config, table_name).await {
             println!("{err}");
             continue;
         }
@@ -178,23 +176,25 @@ pub async fn download_table(
 
 /// Fast insert data the csv file into the database table
 pub async fn fast_insert(
-    connection: &Connection,
+    connection: &DatabaseConnection,
     reader: &mut Reader<File>,
     final_columns_name: &[String],
     final_table_name: &str,
     db_driver: &DatabaseEngine,
 ) -> Result<u32, String> {
     // Drop the table if it exists
-    if let Err(err) = drop_table_if_exists(connection, db_driver, final_table_name).await {
+    if let Err(err) =
+        DatabaseAction::drop_table_if_exists(connection, db_driver, final_table_name).await
+    {
         eprintln!("Error: {err}");
         return Err(err);
     }
 
     let build_create_table_statement: String =
-        build_create_table_sql(db_driver, final_table_name, final_columns_name);
+        SqlBuilder::build_create_table(db_driver, final_table_name, final_columns_name)?;
 
     // Create the table
-    if let Err(err) = execute_query(
+    if let Err(err) = DatabaseAction::execute_query(
         connection,
         &build_create_table_statement,
         "Failed to create table",
@@ -210,32 +210,32 @@ pub async fn fast_insert(
     let mut batch: Vec<String> = Vec::with_capacity(MAX_BATCH_SIZE);
 
     // Prepare the insert query
-    let insert_query_base: &str =
-        &build_prepared_statement_sql(db_driver, final_table_name, &final_columns_name);
+    let insert_query_base: String =
+        SqlBuilder::build_prepared_statement(db_driver, final_table_name, final_columns_name)?;
 
     for result in reader.records() {
         let values: String = match result {
-            Ok(record) => StringFormatter::escaped_record(record),
+            Ok(record) => StringFormatter::escape_record(record),
             Err(_) => continue,
         };
 
         batch.push(format!("({values})"));
 
         if batch.len() >= MAX_BATCH_SIZE {
-            line_count += insert_batch(connection, insert_query_base, &batch).await;
+            line_count += insert_batch(connection, &insert_query_base, &batch).await;
             batch.clear();
         }
     }
 
     // Insert the remaining records if any
-    line_count += insert_batch(connection, insert_query_base, &batch).await;
+    line_count += insert_batch(connection, &insert_query_base, &batch).await;
 
     Ok(line_count)
 }
 
 /// Insert data into the database using the optimized table creation and insertion method
 pub async fn optimized_insert(
-    connection: &Connection,
+    connection: &DatabaseConnection,
     reader: &mut Reader<File>,
     final_columns_name: &[String],
     final_table_name: &str,
@@ -243,7 +243,7 @@ pub async fn optimized_insert(
 ) -> Result<u32, String> {
     // Drop existing tables
     let temporary_table_name: String = format!("{final_table_name}_temporary");
-    drop_existing_tables(
+    DatabaseAction::drop_existing_tables(
         connection,
         &[&temporary_table_name, final_table_name],
         db_driver,
@@ -253,9 +253,9 @@ pub async fn optimized_insert(
 
     // Create the temporary table
     let create_temp_table_query: String =
-        build_create_table_sql(db_driver, &temporary_table_name, final_columns_name);
+        SqlBuilder::build_create_table(db_driver, &temporary_table_name, final_columns_name)?;
 
-    execute_query(
+    DatabaseAction::execute_query(
         connection,
         &create_temp_table_query,
         "Failed to create temporary table",
@@ -266,7 +266,7 @@ pub async fn optimized_insert(
     // Initialize variables
     const MAX_BATCH_SIZE: usize = 5_000;
     let insert_query_base: String =
-        build_prepared_statement_sql(db_driver, &temporary_table_name, &final_columns_name);
+        SqlBuilder::build_prepared_statement(db_driver, &temporary_table_name, final_columns_name)?;
 
     let mut columns_size_map: HashMap<&str, usize> = final_columns_name
         .iter()
@@ -281,19 +281,32 @@ pub async fn optimized_insert(
             Err(_) => continue,
         };
 
-        let mut values: Vec<String> = Vec::with_capacity(record.len());
+        let mut row_buffer = String::with_capacity(256);
+        row_buffer.push('(');
 
         for (i, value) in record.iter().enumerate() {
-            let sanitized_value: String = StringFormatter::sanitize_value(value);
+            if i > 0 {
+                row_buffer.push_str(", ");
+            }
+
+            // Assume sanitize_value returns Cow<str> now
+            let sanitized_value = StringFormatter::sanitize_value(value);
+
+            // Update column size tracking
+            let column_name = &final_columns_name[i];
             let max_length: &mut usize = columns_size_map
-                .get_mut(final_columns_name[i].as_str())
+                .get_mut(column_name.as_str())
                 .ok_or("Column name mismatch")
                 .expect("Column name mismatch");
+
             *max_length = (*max_length).max(sanitized_value.len() + 1);
-            values.push(format!("'{sanitized_value}'"));
+
+            // Write directly to buffer
+            write!(row_buffer, "'{sanitized_value}'").unwrap();
         }
 
-        batch.push(format!("({})", values.join(", ")));
+        row_buffer.push(')');
+        batch.push(row_buffer);
 
         if batch.len() >= MAX_BATCH_SIZE {
             line_count += insert_batch(connection, &insert_query_base, &batch).await;
@@ -307,7 +320,7 @@ pub async fn optimized_insert(
     }
 
     // Create final table and copy data
-    create_and_copy_final_table(
+    DatabaseAction::create_and_copy_final_table(
         connection,
         db_driver,
         final_table_name,
@@ -317,14 +330,18 @@ pub async fn optimized_insert(
     )
     .await?;
 
-    drop_table_if_exists(connection, db_driver, &temporary_table_name).await?; // Drop the temporary table
+    DatabaseAction::drop_table_if_exists(connection, db_driver, &temporary_table_name).await?; // Drop the temporary table
 
     Ok(line_count)
 }
 
 /// Insert a batch of records into the database
-async fn insert_batch(connection: &Connection, insert_query_base: &str, batch: &[String]) -> u32 {
-    match batch_insert(
+async fn insert_batch(
+    connection: &DatabaseConnection,
+    insert_query_base: &str,
+    batch: &[String],
+) -> u32 {
+    match DatabaseAction::batch_insert(
         connection,
         insert_query_base,
         batch,

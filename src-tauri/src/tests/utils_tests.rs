@@ -1,14 +1,13 @@
-use crate::fileflow::enumeration::database_engine::DatabaseEngine;
-use crate::fileflow::stuct::db_config::DbConfig;
-use crate::fileflow::stuct::save_config::SaveConfig;
 use csv::Writer;
+use fileflow::fileflow::enums::database_engine::DatabaseEngine;
+use fileflow::fileflow::stuct::config::db_config::DatabaseConfig;
 use std::error::Error;
 use std::fs::File;
 use std::path::PathBuf;
 
 /// Get a test PostgreSQL configuration
-pub fn get_test_pg_config() -> DbConfig {
-    DbConfig {
+pub fn get_test_pg_config() -> DatabaseConfig {
+    DatabaseConfig {
         db_driver: DatabaseEngine::Postgres,
         username: "postgres".into(),
         password: String::from("password"),
@@ -20,8 +19,8 @@ pub fn get_test_pg_config() -> DbConfig {
 }
 
 /// Get a test SQLite configuration
-pub fn get_test_sqlite_config(str: String) -> DbConfig {
-    DbConfig {
+pub fn get_test_sqlite_config(str: String) -> DatabaseConfig {
+    DatabaseConfig {
         db_driver: DatabaseEngine::SQLite,
         username: String::new(),
         password: String::new(),
@@ -37,8 +36,8 @@ pub fn get_test_sqlite_config(str: String) -> DbConfig {
 }
 
 /// Get a test MySQL configuration
-pub fn get_test_mysql_config() -> DbConfig {
-    DbConfig {
+pub fn get_test_mysql_config() -> DatabaseConfig {
+    DatabaseConfig {
         db_driver: DatabaseEngine::MySQL,
         username: "root".into(),
         password: "password".into(),
@@ -50,8 +49,8 @@ pub fn get_test_mysql_config() -> DbConfig {
 }
 
 /// Get a test MariaDB configuration
-pub fn get_test_maridb_config() -> DbConfig {
-    DbConfig {
+pub fn get_test_maridb_config() -> DatabaseConfig {
+    DatabaseConfig {
         db_driver: DatabaseEngine::MariaDB,
         username: String::from("root"),
         password: String::from("password"),
@@ -60,29 +59,6 @@ pub fn get_test_maridb_config() -> DbConfig {
         db_name: "test_db".into(),
         sqlite_file_path: String::new(),
     }
-}
-/// Get a test save configuration
-pub fn get_test_save_config(config_name: &str) -> SaveConfig {
-    SaveConfig {
-        config_name: config_name.into(),
-        db_driver: DatabaseEngine::SQLite,
-        db_host: String::new(),
-        port: String::new(),
-        username: String::new(),
-        password: String::new(),
-        db_name: "test_db".into(),
-        sqlite_file_path: String::new(),
-    }
-}
-
-/// Delete the configuration file with the given file name
-pub fn delete_config_file(config_file_name: &str) -> Result<(), Box<dyn Error>> {
-    if !std::path::Path::new(&config_file_name).exists() {
-        println!("File does not exist");
-        Err("Failed to create SQLite file")?;
-    }
-    std::fs::remove_file(config_file_name).expect("Failed to remove SQLite file");
-    Ok(())
 }
 
 /// Create a test SQLite database file if it does not exist and return the file path

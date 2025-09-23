@@ -6,11 +6,12 @@ import SelectDBMS from "@/components/hooks/database/SelectDatabaseEngine.tsx";
 import * as dialog from "@tauri-apps/plugin-dialog";
 import {toast} from "sonner";
 import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
+import {DatabaseEngineType} from "@/state/DatabaseEngineType.tsx";
 
 interface SqliteFormProps {
     dbConfig: {
         sqlite_file_path: string;
-        db_driver: string;
+        db_driver: DatabaseEngineType;
     };
     updateDbConfigField: (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => void;
 }
@@ -41,7 +42,7 @@ const SqliteForm: React.FC<SqliteFormProps> = ({dbConfig, updateDbConfigField}) 
                     onClick={openFileDialog}
                     className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:opacity-90 text-white font-medium py-3 px-5 rounded-lg shadow-md transition duration-300"
                 >
-                    <HardDrive className="w-5 h-5" />
+                    <HardDrive className="w-5 h-5"/>
                     Select SQLite File
                 </Button>
                 <Input

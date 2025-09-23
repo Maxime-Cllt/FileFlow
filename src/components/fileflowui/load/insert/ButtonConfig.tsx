@@ -12,11 +12,11 @@ import {DropdownMenuTrigger} from "@/components/ui/dropdown-menu.tsx";
 import {Settings} from "lucide-react";
 import {getAllConfigs, log_error} from "@/components/hooks/utils.tsx";
 import ConfigItemList from "@/components/hooks/component/ConfigItemList.tsx";
-import { DatabaseFormProps } from '@/interfaces/DatabaseFormProps';
+import {DatabaseFormProps} from '@/interfaces/DatabaseFormProps';
 
 
 const ButtonConfigComponent: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) => {
-    const [configName, setConfigName] = useState<string>('');
+    const [config_name, setConfigName] = useState<string>('');
     const [configNameList, setConfigNameList] = useState<Array<Item>>([]);
     const [hasChanged, setHasChanged] = useState<boolean>(false);
 
@@ -27,13 +27,13 @@ const ButtonConfigComponent: React.FC<DatabaseFormProps> = (props: DatabaseFormP
     const saveConfig = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            if (!configName) {
+            if (!config_name) {
                 toast.error('Please enter a name for the configuration');
                 return;
             }
             const response: boolean = await invoke<boolean>('save_database_config', {
                 save: {
-                    config_name: configName,
+                    config_name: config_name,
                     db_driver: props.dbConfig.db_driver.toLowerCase(),
                     db_host: props.dbConfig.db_host,
                     port: props.dbConfig.port,
@@ -46,7 +46,7 @@ const ButtonConfigComponent: React.FC<DatabaseFormProps> = (props: DatabaseFormP
             if (!response) {
                 throw new Error('Error saving config');
             }
-            toast.success(`Config "${configName}" saved successfully`);
+            toast.success(`Config "${config_name}" saved successfully`);
             setHasChanged(prev => !prev);
         } catch (error) {
             log_error(error);
@@ -103,7 +103,7 @@ const ButtonConfigComponent: React.FC<DatabaseFormProps> = (props: DatabaseFormP
                         {/* Save Configuration Button */}
                         <div className="flex flex-col items-center">
                             <InputTextDialog
-                                message_text={configName}
+                                message_text={config_name}
                                 updateMessage={updateConfigName}
                                 fonction={saveConfig}
                             />

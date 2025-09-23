@@ -4,7 +4,7 @@
   <div align="center">
     <img src="https://img.shields.io/badge/Rust-dea584?style=for-the-badge&logo=rust&logoColor=white" alt="Rust" />
     <img src="https://img.shields.io/badge/Tauri-ffc130?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri" />
-    <img src="https://img.shields.io/badge/Version-1.0.3-7073f6?style=for-the-badge" alt="Version" />
+    <img src="https://img.shields.io/badge/Version-1.0.4-7073f6?style=for-the-badge" alt="Version" />
   </div>
 </div>
 
@@ -77,6 +77,32 @@ To quickly test FileFlow:
 3. **Select Insertion Mode**: Choose between Optimized Mode and Fast Mode based on your needs.
 4. **Upload and Insert**: Upload your CSV file and start the insertion process. Monitor progress with the on-screen
    loader.
+
+## 🧪 Code Quality
+
+### Unit Tests available
+
+To run unit tests, use the following command:
+
+#### For the Rust backend:
+
+```bash
+cargo test
+```
+
+#### For the Tauri frontend:
+
+```bash
+pnpm test
+```
+
+### Benchmarks available
+
+To run benchmarks, use the following command:
+
+```bash
+cargo bench
+```
 
 ## 🤝 Contributing
 

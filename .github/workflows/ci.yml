@@ -1,30 +1,163 @@
-name: Rust CI
+name: Full Stack CI
 
 on:
   push:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
   workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
 
 jobs:
-  build:
-    runs-on: macos-latest
-
+  # Check if we should skip CI
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+      general: ${{ steps.changes.outputs.general }}
+      gha: ${{ steps.changes.outputs.gha }}
     steps:
-      - name: Fetch Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install stable Rust toolchain
+      - name: Check for changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          # Define filters for different parts of the project to conditionally run jobs
+          filters: |
+            backend:
+              - 'src-tauri/**'
+            frontend:
+              - 'src/**'
+              - 'public/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'index.html'
+              - 'vite.config.*'
+              - 'tsconfig.json'
+              - 'tsconfig.node.json'
+              - 'postcss.config.js'
+              - 'tailwind.config.*'
+              - 'components.json'
+              - 'app-icon.png'
+              - 'pnpm-lock.yaml'
+            general:
+              - '**.md'
+              - '.gitignore'
+              - 'LICENSE'
+              - 'docs/**'
+            gha:
+              - '.github/**'
+  
+
+  # Combined Full Stack Test and Build
+  full-stack-test-build:
+    name: Full Stack Test & Build
+    runs-on: ${{ matrix.os }}
+    needs: changes
+    if: needs.changes.outputs.general == 'false' || (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.gha == 'true')
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ macos-latest ]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Setup all required tools
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install Rust Toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-          target: x86_64-unknown-linux-gnu
+          cache: true
 
-      - name: Run tests
+      # Enhanced caching strategy
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Cache All Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.STORE_PATH }}
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            src-tauri/target/
+            node_modules
+            dist/
+          key: ${{ runner.os }}-fullstack-${{ hashFiles('**/Cargo.lock', '**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-fullstack-
+            ${{ runner.os }}-
+
+      # Install all dependencies
+      - name: Install Frontend Dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Backend tests and checks (if backend changed)
+      - name: Run Rust Unit Tests
+        if: needs.changes.outputs.backend == 'true'
         run: |
           cd src-tauri
-          cargo test --verbose
+          cargo test --verbose --all-features --lib
+
+      # Frontend tests and checks (if frontend changed)
+      - name: Run Frontend Unit Tests
+        if: needs.changes.outputs.frontend == 'true'
+        run: pnpm test
+        env:
+          NODE_ENV: test
+
+      # Build frontend first (required for Tauri)
+      - name: Build Frontend
+        run: pnpm run build
+
+      # Run Tauri integration tests
+      - name: Run Tauri Integration Tests
+        run: |
+          cd src-tauri
+          cargo test
+
+      # Start backend for integration tests (if needed)
+      - name: Start Backend for Integration Tests
+        if: needs.changes.outputs.frontend == 'true' && needs.changes.outputs.backend == 'true'
+        run: |
+          cd src-tauri
+          cargo check --release
+
+      # Build Tauri application (includes both frontend and backend)
+      - name: Build Tauri Application
+        run: pnpm tauri build --verbose
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -63,14 +63,15 @@ jobs:
               - 'docs/**'
             gha:
               - '.github/**'
-            
+  
 
   # Combined Full Stack Test and Build
   full-stack-test-build:
     name: Full Stack Test & Build
     runs-on: ${{ matrix.os }}
     needs: changes
-    if: needs.changes.outputs.general == 'false' && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.tauri == 'true' || needs.changes.outputs.gha == 'true')
+    # if: needs.changes.outputs.general == 'false' && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.tauri == 'true' || needs.changes.outputs.gha == 'true')
+    if: true
 
     strategy:
       fail-fast: false
@@ -277,7 +278,7 @@ jobs:
   ci-success:
     name: CI Success
     runs-on: ubuntu-latest
-    needs: [full-stack-test-build, quick-validation]
+    needs: [ full-stack-test-build, quick-validation ]
     if: always() && needs.changes.outputs.skip_ci == 'false'
 
     steps:

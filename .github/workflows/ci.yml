@@ -21,50 +21,52 @@ env:
 
 jobs:
   # Check if we should skip CI
-#  changes:
-#    name: Detect Changes
-#    runs-on: ubuntu-latest
-#    outputs:
-#      backend: ${{ steps.changes.outputs.backend }}
-#      frontend: ${{ steps.changes.outputs.frontend }}
-#      tauri: ${{ steps.changes.outputs.tauri }}
-#      skip_ci: ${{ steps.changes.outputs.skip_ci }}
-#    steps:
-#      - name: Checkout Repository
-#        uses: actions/checkout@v4
-#
-#      - name: Check for changes
-#        uses: dorny/paths-filter@v3
-#        id: changes
-#        with:
-#          filters: |
-#            backend:
-#              - 'src-tauri/**'
-#              - 'Cargo.toml'
-#              - 'Cargo.lock'
-#            frontend:
-#              - 'src/**'
-#              - 'public/**'
-#              - 'package.json'
-#              - 'pnpm-lock.yaml'
-#              - 'vite.config.*'
-#              - 'tsconfig.json'
-#              - 'tailwind.config.*'
-#            tauri:
-#              - 'src-tauri/tauri.conf.json'
-#              - 'src-tauri/capabilities/**'
-#              - 'src-tauri/icons/**'
-#            skip_ci:
-#              - '**.md'
-#              - '.gitignore'
-#              - 'LICENSE'
-#              - 'docs/**'
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+      tauri: ${{ steps.changes.outputs.tauri }}
+      skip_ci: ${{ steps.changes.outputs.skip_ci }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Check for changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          # Define filters for different parts of the project to conditionally run jobs
+          filters: |
+            backend:
+              - 'src-tauri/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+            frontend:
+              - 'src/**'
+              - 'public/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'vite.config.*'
+              - 'tsconfig.json'
+              - 'tailwind.config.*'
+            tauri:
+              - 'src-tauri/tauri.conf.json'
+              - 'src-tauri/capabilities/**'
+              - 'src-tauri/icons/**'
+            skip_ci:
+              - '**.md'
+              - '.gitignore'
+              - 'LICENSE'
+              - 'docs/**'
+              - '.github/**'
 
   # Combined Full Stack Test and Build
   full-stack-test-build:
     name: Full Stack Test & Build
     runs-on: ${{ matrix.os }}
-#    needs: changes
+    needs: changes
     if: needs.changes.outputs.skip_ci == 'false' && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.tauri == 'true')
 
     strategy:
@@ -227,7 +229,7 @@ jobs:
   quick-validation:
     name: Quick Validation
     runs-on: ubuntu-latest
-#    needs: changes
+    needs: changes
     if: github.event_name == 'pull_request' && needs.changes.outputs.skip_ci == 'false'
 
     steps:

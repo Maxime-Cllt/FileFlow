@@ -2,8 +2,8 @@ use criterion::{criterion_group, criterion_main, Criterion};
 use csv::{Reader, ReaderBuilder};
 use fileflow::fileflow::action::database_command::fast_insert;
 use fileflow::fileflow::database::connection::Connection;
-use fileflow::fileflow::enumeration::database_engine::DatabaseEngine;
-use fileflow::fileflow::stuct::db_config::DbConfig;
+use fileflow::fileflow::enums::database_engine::DatabaseEngine;
+use fileflow::fileflow::stuct::db_config::DatabaseConfig;
 use fileflow::fileflow::stuct::string_formater::StringFormatter;
 use fileflow::fileflow::utils::csv_utils::{find_separator, read_first_line};
 use sqlx::Error;
@@ -13,7 +13,7 @@ use std::fs::File;
 async fn test_insert_file() {
     const TEST_FILE: &str = "reference.csv";
 
-    let config: DbConfig = DbConfig {
+    let config: DatabaseConfig = DatabaseConfig {
         db_driver: DatabaseEngine::SQLite,
         username: String::new(),
         password: String::new(),

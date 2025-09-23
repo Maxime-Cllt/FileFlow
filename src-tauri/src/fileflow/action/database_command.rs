@@ -7,9 +7,9 @@ use crate::fileflow::database::database_actions::{
 use crate::fileflow::database::sql_builder::{
     build_create_table_sql, build_prepared_statement_sql, build_query_all_tables,
 };
-use crate::fileflow::enumeration::database_engine::DatabaseEngine;
+use crate::fileflow::enums::database_engine::DatabaseEngine;
 use crate::fileflow::stuct::combo_item::ComboItem;
-use crate::fileflow::stuct::db_config::DbConfig;
+use crate::fileflow::stuct::db_config::DatabaseConfig;
 use crate::fileflow::stuct::download_config::DownloadConfig;
 use crate::fileflow::stuct::string_formater::StringFormatter;
 use csv::{Reader, StringRecord};
@@ -25,7 +25,7 @@ use std::fmt::Write;
 #[command]
 pub async fn connect_to_database(
     state: State<'_, Arc<DatabaseState>>,
-    config: DbConfig,
+    config: DatabaseConfig,
 ) -> Result<bool, String> {
     let mut conn_guard = state.0.lock().await;
 
@@ -71,7 +71,7 @@ pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String
     }
 
     let connection: &Connection = conn_guard.as_ref().unwrap();
-    let db_config: &DbConfig = connection.get_db_config();
+    let db_config: &DatabaseConfig = connection.get_db_config();
 
     // Return the database configuration as JSON string
     match serde_json::to_string(db_config) {
@@ -93,7 +93,7 @@ pub async fn get_table_list(state: State<'_, Arc<DatabaseState>>) -> Result<Valu
         None => return Err(false),
     };
 
-    let db_config: &DbConfig = connection.get_db_config();
+    let db_config: &DatabaseConfig = connection.get_db_config();
     let sql: &str = &build_query_all_tables(&db_config.db_driver, &db_config.db_name);
 
     let result: QueryResult = connection

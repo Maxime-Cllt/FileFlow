@@ -1,14 +1,14 @@
 use csv::Writer;
-use fileflow::fileflow::enumeration::database_engine::DatabaseEngine;
-use fileflow::fileflow::stuct::db_config::DbConfig;
+use fileflow::fileflow::enums::database_engine::DatabaseEngine;
+use fileflow::fileflow::stuct::db_config::DatabaseConfig;
 use fileflow::fileflow::stuct::save_config::SaveConfig;
 use std::error::Error;
 use std::fs::File;
 use std::path::PathBuf;
 
 /// Get a test PostgreSQL configuration
-pub fn get_test_pg_config() -> DbConfig {
-    DbConfig {
+pub fn get_test_pg_config() -> DatabaseConfig {
+    DatabaseConfig {
         db_driver: DatabaseEngine::Postgres,
         username: "postgres".into(),
         password: String::from("password"),
@@ -20,8 +20,8 @@ pub fn get_test_pg_config() -> DbConfig {
 }
 
 /// Get a test SQLite configuration
-pub fn get_test_sqlite_config(str: String) -> DbConfig {
-    DbConfig {
+pub fn get_test_sqlite_config(str: String) -> DatabaseConfig {
+    DatabaseConfig {
         db_driver: DatabaseEngine::SQLite,
         username: String::new(),
         password: String::new(),
@@ -37,8 +37,8 @@ pub fn get_test_sqlite_config(str: String) -> DbConfig {
 }
 
 /// Get a test MySQL configuration
-pub fn get_test_mysql_config() -> DbConfig {
-    DbConfig {
+pub fn get_test_mysql_config() -> DatabaseConfig {
+    DatabaseConfig {
         db_driver: DatabaseEngine::MySQL,
         username: "root".into(),
         password: "password".into(),
@@ -50,8 +50,8 @@ pub fn get_test_mysql_config() -> DbConfig {
 }
 
 /// Get a test MariaDB configuration
-pub fn get_test_maridb_config() -> DbConfig {
-    DbConfig {
+pub fn get_test_maridb_config() -> DatabaseConfig {
+    DatabaseConfig {
         db_driver: DatabaseEngine::MariaDB,
         username: String::from("root"),
         password: String::from("password"),

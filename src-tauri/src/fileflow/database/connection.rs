@@ -1,5 +1,5 @@
-use crate::fileflow::enumeration::database_engine::DatabaseEngine;
-use crate::fileflow::stuct::db_config::DbConfig;
+use crate::fileflow::enums::database_engine::DatabaseEngine;
+use crate::fileflow::stuct::db_config::DatabaseConfig;
 use sqlx::{Error, MySql, MySqlPool, PgPool, Pool, Postgres, Sqlite, SqlitePool};
 
 pub enum ConnectionEnum {
@@ -15,12 +15,12 @@ pub enum QueryResult {
 }
 
 pub struct Connection {
-    pub db_config: DbConfig,
+    pub db_config: DatabaseConfig,
     pub connection: ConnectionEnum,
 }
 
 impl Connection {
-    pub async fn connect(config: &DbConfig) -> Result<Self, Error> {
+    pub async fn connect(config: &DatabaseConfig) -> Result<Self, Error> {
         let connection_str: String = Self::get_connection_url(config);
 
         let connection_enum: ConnectionEnum = match config.db_driver {
@@ -44,7 +44,7 @@ impl Connection {
         })
     }
 
-    pub const fn get_db_config(&self) -> &DbConfig {
+    pub const fn get_db_config(&self) -> &DatabaseConfig {
         &self.db_config
     }
 
@@ -81,7 +81,7 @@ impl Connection {
         Ok(())
     }
 
-    pub fn get_connection_url(config: &DbConfig) -> String {
+    pub fn get_connection_url(config: &DatabaseConfig) -> String {
         match config.db_driver {
             DatabaseEngine::Postgres => format!(
                 "postgres://{}{}@{}:{}/{}",

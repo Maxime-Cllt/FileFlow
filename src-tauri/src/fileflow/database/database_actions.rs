@@ -2,7 +2,7 @@ use crate::fileflow::database::connection::{Connection, QueryResult};
 use crate::fileflow::database::sql_builder::{
     build_copy_table_sql, build_create_with_fixed_size_sql, build_drop_statement_sql,
 };
-use crate::fileflow::enumeration::database_engine::DatabaseEngine;
+use crate::fileflow::enums::database_engine::DatabaseEngine;
 use crate::fileflow::stuct::download_config::DownloadConfig;
 use csv::{Writer, WriterBuilder};
 use sqlx::{Column, Row};
@@ -15,8 +15,8 @@ pub async fn export_table(
     download_config: &DownloadConfig,
     table_name: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    const LIMIT: i32 = 5_000;
-    let mut offset: i32 = 0;
+    const LIMIT: u16 = 5_000;
+    let mut offset: u32 = 0;
     let mut header_written: bool = false;
     let file_path: String = format!("{}/{table_name}_export.csv", download_config.location);
 
@@ -116,7 +116,7 @@ pub async fn export_table(
                 .expect("Failed to write record to CSV");
         }
 
-        offset += LIMIT;
+        offset += u32::from(LIMIT);
     }
 
     wtr.flush().expect("Failed to flush CSV writer");

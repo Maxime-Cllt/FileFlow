@@ -1,4 +1,4 @@
-use crate::fileflow::enumeration::database_engine::DatabaseEngine;
+use crate::fileflow::enums::database_engine::DatabaseEngine;
 use std::collections::HashMap;
 
 /// This function is used to generate the DROP TABLE statement for different database drivers.
@@ -163,7 +163,7 @@ mod test {
         build_create_table_sql, build_create_with_fixed_size_sql, build_drop_statement_sql,
         build_prepared_statement_sql, build_query_all_tables,
     };
-    use crate::fileflow::enumeration::database_engine::DatabaseEngine;
+    use crate::fileflow::enums::database_engine::DatabaseEngine;
     use std::collections::HashMap;
 
     #[tokio::test]

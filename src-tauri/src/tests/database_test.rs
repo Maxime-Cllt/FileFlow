@@ -1,7 +1,7 @@
 use fileflow::fileflow::database::connection::{Connection, QueryResult};
 use fileflow::fileflow::database::database_actions::export_table;
-use fileflow::fileflow::enumeration::separator::SeparatorType;
-use fileflow::fileflow::stuct::db_config::DbConfig;
+use fileflow::fileflow::enums::separator::SeparatorType;
+use fileflow::fileflow::stuct::db_config::DatabaseConfig;
 use fileflow::fileflow::stuct::download_config::DownloadConfig;
 use crate::tests::utils_tests::{
     create_test_db, get_test_maridb_config, get_test_mysql_config, get_test_pg_config,
@@ -34,7 +34,7 @@ async fn test_get_connection_url() {
 #[tokio::test]
 async fn test_sqlite_connection() {
     let file_path: String = create_test_db("sqlite_connection");
-    let config: DbConfig = get_test_sqlite_config(file_path);
+    let config: DatabaseConfig = get_test_sqlite_config(file_path);
     let conn = Connection::connect(&config).await;
 
     assert!(conn.is_success(), "Failed to connect to the database");
@@ -49,7 +49,7 @@ async fn test_sqlite_connection() {
 #[tokio::test]
 async fn test_query_many_with_result() {
     let file_path: String = create_test_db("test_query_many_with_result");
-    let config: DbConfig = get_test_sqlite_config(file_path);
+    let config: DatabaseConfig = get_test_sqlite_config(file_path);
     let conn: Result<Connection, Error> = Connection::connect(&config).await;
 
     assert!(conn.is_success(), "Failed to connect to the database");
@@ -89,7 +89,7 @@ async fn test_query_many_with_result() {
 #[tokio::test]
 async fn test_download_table() {
     let file_path: String = create_test_db("test_download_table");
-    let config: DbConfig = get_test_sqlite_config(file_path);
+    let config: DatabaseConfig = get_test_sqlite_config(file_path);
     let conn: Result<Connection, Error> = Connection::connect(&config).await;
 
     assert!(conn.is_success(), "Failed to connect to the database");

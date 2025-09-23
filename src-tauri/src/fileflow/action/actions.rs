@@ -1,6 +1,6 @@
 use crate::fileflow::action::database_command::{fast_insert, optimized_insert};
 use crate::fileflow::database::connection::Connection;
-use crate::fileflow::enumeration::insertion_type::InsertionType;
+use crate::fileflow::enums::insertion_type::InsertionType;
 use crate::fileflow::stuct::insert_config::InsertConfig;
 use crate::fileflow::stuct::save_config::SaveConfig;
 use crate::fileflow::stuct::string_formater::StringFormatter;

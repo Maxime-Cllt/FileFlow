@@ -1,6 +1,6 @@
 use fileflow::fileflow::database::connection::Connection;
-use fileflow::fileflow::enumeration::database_engine::DatabaseEngine;
-use fileflow::fileflow::stuct::db_config::DbConfig;
+use fileflow::fileflow::enums::database_engine::DatabaseEngine;
+use fileflow::fileflow::stuct::db_config::DatabaseConfig;
 use fileflow::fileflow::stuct::save_config::SaveConfig;
 use fileflow::fileflow::utils::fileflowlib::{get_all_saved_configs, save_config};
 use crate::tests::utils_tests::{
@@ -16,7 +16,7 @@ use fileflow::fileflow::action::database_command::fast_insert;
 #[tokio::test]
 async fn test_fast_insert() {
     let sqlite_file_path: String = create_test_db("fast_insert");
-    let config: DbConfig = get_test_sqlite_config(sqlite_file_path.clone());
+    let config: DatabaseConfig = get_test_sqlite_config(sqlite_file_path.clone());
     let conn: Result<Connection, Error> = Connection::connect(&config).await;
 
     assert!(conn.is_ok(), "Failed to connect to the database");

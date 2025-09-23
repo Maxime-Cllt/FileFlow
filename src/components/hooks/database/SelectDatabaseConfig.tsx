@@ -33,7 +33,6 @@ const SelectDatabaseDialog: React.FC<SelectDatabaseDialogProps> = (props) => {
             const loadDbConfig: DatabaseConfig = JSON.parse(config) as DatabaseConfig;
             Object.keys(loadDbConfig).forEach((key) => {
                 if (key !== 'db_driver') {
-                    console.log('Updating field:', key, 'with value:', loadDbConfig[key as keyof DatabaseConfig]);
                     props.updateDbConfigField(key as keyof DatabaseConfig, loadDbConfig[key as keyof DatabaseConfig]);
                 } else {
                     props.updateDbConfigField('db_driver', stringToDatabaseEngineType(loadDbConfig.db_driver));

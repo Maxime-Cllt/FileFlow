@@ -10,7 +10,6 @@ pub(crate) struct BatchProcessor<'a> {
 }
 
 impl<'a> BatchProcessor<'a> {
-    
     /// Creates a new BatchProcessor for the given table
     #[inline]
     pub(crate) fn new(connection: &'a DatabaseConnection, table_name: &str) -> Self {
@@ -20,7 +19,7 @@ impl<'a> BatchProcessor<'a> {
             offset: 0,
         }
     }
-    
+
     /// Fetches the next batch of rows from the database
     pub(crate) async fn next_batch(
         &mut self,

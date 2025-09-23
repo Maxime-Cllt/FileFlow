@@ -2,6 +2,8 @@ use crate::fileflow::action::database_command::{fast_insert, optimized_insert};
 use crate::fileflow::enums::insertion_type::InsertionType;
 use crate::fileflow::stuct::config::insert_config::InsertConfig;
 use crate::fileflow::stuct::config::save_config::SaveConfig;
+use crate::fileflow::stuct::database::database_connection::DatabaseConnection;
+use crate::fileflow::stuct::io::file_utils::FileUtils;
 use crate::fileflow::stuct::string_formater::StringFormatter;
 use crate::fileflow::utils::constants::DATABASE_CONFIG_FILE;
 use csv::{Reader, ReaderBuilder};
@@ -10,8 +12,6 @@ use std::sync::Arc;
 use std::time::Instant;
 use tauri::{command, State};
 use tokio::sync::Mutex;
-use crate::fileflow::stuct::database::database_connection::DatabaseConnection;
-use crate::fileflow::stuct::io::file_utils::FileUtils;
 
 pub struct DatabaseState(pub Mutex<Option<DatabaseConnection>>);
 

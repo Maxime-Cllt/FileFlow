@@ -402,12 +402,15 @@ mod tests {
     async fn test_sql_builder_create_table_with_empty_headers() {
         for engine in ENGINES {
             let table_name = "test_table";
-            let headers = vec!["col1".to_string(), "   ".to_string(), "".to_string(), "col3".to_string()];
+            let headers = vec![
+                "col1".to_string(),
+                "   ".to_string(),
+                "".to_string(),
+                "col3".to_string(),
+            ];
             let expected = match engine {
                 DatabaseEngine::SQLite | DatabaseEngine::Postgres => {
-                    format!(
-                        "CREATE TABLE \"{table_name}\" (\"col1\" TEXT, \"col3\" TEXT)"
-                    )
+                    format!("CREATE TABLE \"{table_name}\" (\"col1\" TEXT, \"col3\" TEXT)")
                 }
                 DatabaseEngine::MySQL | DatabaseEngine::MariaDB => {
                     format!("CREATE TABLE `{table_name}` (`col1` TEXT, `col3` TEXT)")

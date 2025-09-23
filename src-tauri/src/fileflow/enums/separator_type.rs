@@ -65,5 +65,4 @@ mod tests {
         assert_eq!(space, r#""space""#);
         assert_eq!(pipe, r#""pipe""#);
     }
-
 }

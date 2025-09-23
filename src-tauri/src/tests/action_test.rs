@@ -1,6 +1,5 @@
 use crate::tests::utils_tests::{
-    create_test_db, generate_csv_file,
-    get_test_sqlite_config, remove_csv_file, remove_test_db,
+    create_test_db, generate_csv_file, get_test_sqlite_config, remove_csv_file, remove_test_db,
 };
 use csv::{Reader, ReaderBuilder};
 use fileflow::fileflow::action::database_command::fast_insert;

@@ -1,4 +1,4 @@
-pub mod table_exporter;
 mod batch_processor;
-mod row_extractor;
 pub mod file_utils;
+mod row_extractor;
+pub mod table_exporter;

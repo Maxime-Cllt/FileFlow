@@ -1,8 +1,8 @@
-name: Full Stack CI/CD
+name: Full Stack CI
 
 on:
   push:
-    branches: [ "main", "1.0.4" ]
+    branches: [ "main" ]
     paths-ignore:
       - '**.md'
       - '.gitignore'
@@ -27,7 +27,6 @@ jobs:
     outputs:
       backend: ${{ steps.changes.outputs.backend }}
       frontend: ${{ steps.changes.outputs.frontend }}
-      tauri: ${{ steps.changes.outputs.tauri }}
       general: ${{ steps.changes.outputs.general }}
       gha: ${{ steps.changes.outputs.gha }}
     steps:
@@ -42,20 +41,20 @@ jobs:
           filters: |
             backend:
               - 'src-tauri/**'
-              - 'Cargo.toml'
-              - 'Cargo.lock'
             frontend:
               - 'src/**'
               - 'public/**'
               - 'package.json'
               - 'pnpm-lock.yaml'
+              - 'index.html'
               - 'vite.config.*'
               - 'tsconfig.json'
+              - 'tsconfig.node.json'
+              - 'postcss.config.js'
               - 'tailwind.config.*'
-            tauri:
-              - 'src-tauri/tauri.conf.json'
-              - 'src-tauri/capabilities/**'
-              - 'src-tauri/icons/**'
+              - 'components.json'
+              - 'app-icon.png'
+              - 'pnpm-lock.yaml'
             general:
               - '**.md'
               - '.gitignore'
@@ -70,13 +69,12 @@ jobs:
     name: Full Stack Test & Build
     runs-on: ${{ matrix.os }}
     needs: changes
-    # if: needs.changes.outputs.general == 'false' && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.tauri == 'true' || needs.changes.outputs.gha == 'true')
-    if: true
+    if: needs.changes.outputs.general == 'false' || (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.gha == 'true')
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ macos-latest, windows-latest ]
+        os: [ macos-latest ]
 
     steps:
       - name: Checkout Repository

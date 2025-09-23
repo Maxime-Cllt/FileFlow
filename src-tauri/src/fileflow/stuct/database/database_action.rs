@@ -7,7 +7,6 @@ use std::collections::HashMap;
 pub struct DatabaseAction;
 
 impl DatabaseAction {
-
     /// Helper function to drop a table if it exists
     pub async fn drop_table_if_exists(
         connection: &DatabaseConnection,
@@ -15,7 +14,7 @@ impl DatabaseAction {
         table_name: &str,
     ) -> Result<(), String> {
         Self::validate_table_name(table_name).map_err(|e| format!("Invalid table name: {}", e))?;
-        let drop_query:String = SqlBuilder::build_drop_statement(db_driver, table_name)?;
+        let drop_query: String = SqlBuilder::build_drop_statement(db_driver, table_name)?;
         Self::execute_query(
             connection,
             &drop_query,

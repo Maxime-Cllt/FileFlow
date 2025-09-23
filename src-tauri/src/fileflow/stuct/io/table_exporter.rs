@@ -1,6 +1,6 @@
-use crate::fileflow::stuct::io::batch_processor::BatchProcessor;
-use crate::fileflow::stuct::database::database_connection::DatabaseConnection;
 use crate::fileflow::stuct::config::download_config::DownloadConfig;
+use crate::fileflow::stuct::database::database_connection::DatabaseConnection;
+use crate::fileflow::stuct::io::batch_processor::BatchProcessor;
 use csv::{Writer, WriterBuilder};
 use std::fs::File;
 
@@ -8,7 +8,7 @@ use std::fs::File;
 pub struct TableExporter;
 
 impl TableExporter {
-    pub const  BATCH_SIZE: u16 = 5_000;
+    pub const BATCH_SIZE: u16 = 5_000;
 
     /// Exports a table's data to CSV using paginated queries
     pub async fn export_table(
@@ -57,6 +57,7 @@ impl TableExporter {
         format!("{}/{}_export.csv", download_config.location, table_name)
     }
 
+    /// Creates a CSV writer with the specified configuration
     fn create_csv_writer(
         download_config: &DownloadConfig,
         file_path: &str,
@@ -76,6 +77,7 @@ impl TableExporter {
             .map_err(|e| format!("Failed to write CSV header: {}", e).into())
     }
 
+    /// Writes multiple rows to the CSV file
     fn write_rows(
         writer: &mut Writer<File>,
         rows: &[Vec<String>],
@@ -88,6 +90,7 @@ impl TableExporter {
         Ok(())
     }
 
+    /// Finalizes the CSV writer by flushing any remaining data
     fn finalize_writer(mut writer: Writer<File>) -> Result<(), Box<dyn std::error::Error>> {
         writer
             .flush()

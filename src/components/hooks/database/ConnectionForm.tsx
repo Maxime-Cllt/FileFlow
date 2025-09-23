@@ -23,7 +23,7 @@ import DatabaseForm from "@/components/hooks/database/DatabaseForm.tsx";
 
 const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) => {
 
-        const [configName, setConfigName] = React.useState<string>('');
+        const [config_name, setConfigName] = React.useState<string>('');
         const [configNameList, setConfigNameList] = useState<Array<Item>>([]);
         const [attemptedConnection, setAttemptedConnection] = useState<boolean>(false);
 
@@ -32,13 +32,13 @@ const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) =
                 setAttemptedConnection(true);
 
                 const connect_to_database_response: boolean | void = await connect_to_database(
-                    props.dbConfig.dbDriver,
-                    props.dbConfig.dbHost,
+                    props.dbConfig.db_driver,
+                    props.dbConfig.db_host,
                     props.dbConfig.port,
                     props.dbConfig.username,
                     props.dbConfig.password,
-                    props.dbConfig.dbName,
-                    props.dbConfig.sqliteFilePath ?? '',
+                    props.dbConfig.db_name,
+                    props.dbConfig.sqlite_file_path ?? '',
                 );
 
                 if (typeof connect_to_database_response !== "boolean") {
@@ -110,7 +110,7 @@ const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) =
                                 <div className="p-6 mr-10 ml-10">
                                     <SelectDatabaseConfig
                                         updateConfigName={setConfigName}
-                                        configName={configName}
+                                        config_name={config_name}
                                         configNameList={configNameList}
                                         updateDbConfigField={props.updateDbConfigField}
                                     />

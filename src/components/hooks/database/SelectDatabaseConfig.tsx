@@ -3,11 +3,12 @@ import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/c
 import {Label} from "@/components/ui/label.tsx";
 import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 import {loadConfig, log_error} from "@/components/hooks/utils.tsx";
+import {stringToDatabaseEngineType} from "@/state/DatabaseEngineType.tsx";
 
 
 interface SelectDatabaseDialogProps {
     updateConfigName: (name: string) => void;
-    configName: string;
+    config_name: string;
     configNameList: Array<Item>;
     updateDbConfigField: (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => void;
 }
@@ -15,15 +16,15 @@ interface SelectDatabaseDialogProps {
 
 const SelectDatabaseDialog: React.FC<SelectDatabaseDialogProps> = (props) => {
 
-    const loadSelectedConfig = async (configName: string): Promise<void> => {
+    const loadSelectedConfig = async (config_name: string): Promise<void> => {
         try {
 
-            if (!configName) {
+            if (!config_name) {
                 throw new Error('Please select a configuration');
             }
 
 
-            const config: string | boolean = await loadConfig(configName);
+            const config: string | boolean = await loadConfig(config_name);
 
             if (typeof config !== "string") {
                 throw new Error('Failed to load config');
@@ -31,9 +32,15 @@ const SelectDatabaseDialog: React.FC<SelectDatabaseDialogProps> = (props) => {
 
             const loadDbConfig: DatabaseConfig = JSON.parse(config) as DatabaseConfig;
             Object.keys(loadDbConfig).forEach((key) => {
-                props.updateDbConfigField(key as keyof DatabaseConfig, loadDbConfig[key as keyof DatabaseConfig]);
+                if (key !== 'db_driver') {
+                    console.log('Updating field:', key, 'with value:', loadDbConfig[key as keyof DatabaseConfig]);
+                    props.updateDbConfigField(key as keyof DatabaseConfig, loadDbConfig[key as keyof DatabaseConfig]);
+                } else {
+                    props.updateDbConfigField('db_driver', stringToDatabaseEngineType(loadDbConfig.db_driver));
+                }
             });
-            props.updateConfigName(configName);
+            props.updateConfigName(config_name);
+
         } catch (error) {
             log_error(error);
         }
@@ -46,7 +53,7 @@ const SelectDatabaseDialog: React.FC<SelectDatabaseDialogProps> = (props) => {
                     Choose a database:
                 </Label>
 
-                <Select onValueChange={(value: string) => loadSelectedConfig(value)} value={props.configName}>
+                <Select onValueChange={(value: string) => loadSelectedConfig(value)} value={props.config_name}>
                     <SelectTrigger
                         className="w-full border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500">
                         <SelectValue placeholder="Select a configuration"/>

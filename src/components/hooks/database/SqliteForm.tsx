@@ -10,8 +10,8 @@ import {DatabaseEngineType} from "@/state/DatabaseEngineType.tsx";
 
 interface SqliteFormProps {
     dbConfig: {
-        sqliteFilePath: string;
-        dbDriver: DatabaseEngineType;
+        sqlite_file_path: string;
+        db_driver: DatabaseEngineType;
     };
     updateDbConfigField: (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => void;
 }
@@ -28,7 +28,7 @@ const SqliteForm: React.FC<SqliteFormProps> = ({dbConfig, updateDbConfigField}) 
                 return;
             }
 
-            updateDbConfigField("sqliteFilePath", selectedFilePath);
+            updateDbConfigField("sqlite_file_path", selectedFilePath);
         } catch (error) {
             toast.error(error as string);
         }
@@ -47,7 +47,7 @@ const SqliteForm: React.FC<SqliteFormProps> = ({dbConfig, updateDbConfigField}) 
                 </Button>
                 <Input
                     type="text"
-                    value={dbConfig.sqliteFilePath}
+                    value={dbConfig.sqlite_file_path}
                     placeholder="Path to SQLite file"
                     disabled
                     className="w-full border rounded-lg px-4 py-3 text-sm text-gray-700 bg-gray-100"
@@ -57,7 +57,7 @@ const SqliteForm: React.FC<SqliteFormProps> = ({dbConfig, updateDbConfigField}) 
             <div className="flex items-center gap-4 justify-center">
                 <span className="text-sm font-medium text-gray-800">Database Engine:</span>
                 <SelectDBMS
-                    dbDriver={dbConfig.dbDriver}
+                    db_driver={dbConfig.db_driver}
                     updateDbConfigField={updateDbConfigField}
                 />
             </div>

@@ -8,7 +8,7 @@ import {
 } from "@/state/DatabaseEngineType.tsx";
 
 interface SelectDatabaseProps {
-    dbDriver: DatabaseEngineType;
+    db_driver: DatabaseEngineType;
     updateDbConfigField: (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => void;
 }
 
@@ -17,12 +17,12 @@ const SelectDatabaseEngine: React.FC<SelectDatabaseProps> = (props: SelectDataba
     const handledbDriverChange = (value: string) => {
         const portMap: Record<string, string> = {mysql: '3306', mariadb: '3306', postgres: '5432'};
         props.updateDbConfigField('port', portMap[value] || '');
-        props.updateDbConfigField('dbDriver', stringToDatabaseEngineType(value));
+        props.updateDbConfigField('db_driver', stringToDatabaseEngineType(value));
     };
 
     return (
         <div>
-            <Select onValueChange={handledbDriverChange} value={props.dbDriver}>
+            <Select onValueChange={handledbDriverChange} value={props.db_driver}>
                 <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a database driver"/>
                 </SelectTrigger>

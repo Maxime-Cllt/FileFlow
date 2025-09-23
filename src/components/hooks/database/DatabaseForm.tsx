@@ -8,13 +8,13 @@ import {DatabaseEngineType} from "@/state/DatabaseEngineType.tsx";
 
 const DatabaseForm: React.FC<DatabaseFormProps> = ({dbConfig, updateDbConfigField}) => {
     const renderForm = () => {
-        if (dbConfig.dbDriver === DatabaseEngineType.SQLITE) {
+        if (dbConfig.db_driver === DatabaseEngineType.SQLITE) {
             return (
                 <SqliteForm
                     dbConfig={
                         {
-                            sqliteFilePath: dbConfig.sqliteFilePath || '',
-                            dbDriver: dbConfig.dbDriver
+                            sqlite_file_path: dbConfig.sqlite_file_path || '',
+                            db_driver: dbConfig.db_driver
                         }
                     }
                     updateDbConfigField={updateDbConfigField}
@@ -28,8 +28,8 @@ const DatabaseForm: React.FC<DatabaseFormProps> = ({dbConfig, updateDbConfigFiel
                     <div className="space-y-4">
                         <FormInput
                             label="URL of the database"
-                            value={dbConfig.dbHost}
-                            onChange={(value: string) => updateDbConfigField('dbHost', value)}
+                            value={dbConfig.db_host}
+                            onChange={(value: string) => updateDbConfigField('db_host', value)}
                             placeholder="localhost"
                             required
                         />
@@ -42,8 +42,8 @@ const DatabaseForm: React.FC<DatabaseFormProps> = ({dbConfig, updateDbConfigFiel
                         />
                         <FormInput
                             label="Name of the database"
-                            value={dbConfig.dbName}
-                            onChange={(value: string) => updateDbConfigField('dbName', value)}
+                            value={dbConfig.db_name}
+                            onChange={(value: string) => updateDbConfigField('db_name', value)}
                             placeholder="Database Name"
                             required
                         />
@@ -76,7 +76,7 @@ const DatabaseForm: React.FC<DatabaseFormProps> = ({dbConfig, updateDbConfigFiel
                                 Database Engine
                             </label>
                             <SelectDBMS
-                                dbDriver={dbConfig.dbDriver}
+                                db_driver={dbConfig.db_driver}
                                 updateDbConfigField={updateDbConfigField}
                             />
                         </div>

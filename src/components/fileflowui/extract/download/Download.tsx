@@ -17,13 +17,13 @@ import {DatabaseEngineType} from "@/state/DatabaseEngineType.tsx";
 const Download: React.FC = () => {
 
         const [dbConfig, setDbConfig] = useState<DatabaseConfig>({
-            configName: '',
-            dbDriver: DatabaseEngineType.UNDEFINED,
-            dbHost: '',
-            dbName: '',
+            config_name: '',
+            db_driver: DatabaseEngineType.UNDEFINED,
+            db_host: '',
+            db_name: '',
             password: '',
             port: '',
-            sqliteFilePath: '',
+            sqlite_file_path: '',
             username: '',
             isConnected: false
         });

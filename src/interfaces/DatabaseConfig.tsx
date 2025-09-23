@@ -8,16 +8,16 @@ import {DatabaseEngineType} from "@/state/DatabaseEngineType.tsx";
  */
 export interface DatabaseConfig {
     /** Human-readable name for this database configuration */
-    configName: string;
+    config_name: string;
 
     /** Database driver type (e.g., 'mysql', 'postgresql', 'sqlite') */
-    dbDriver: DatabaseEngineType;
+    db_driver: DatabaseEngineType;
 
     /** Database server hostname or IP address */
-    dbHost: string;
+    db_host: string;
 
     /** Name of the database to connect to */
-    dbName: string;
+    db_name: string;
 
     /** Database user password */
     password: string;
@@ -25,8 +25,8 @@ export interface DatabaseConfig {
     /** Database server port number */
     port: string;
 
-    /** File path for SQLite database (only used when dbDriver is 'sqlite') */
-    sqliteFilePath?: string;
+    /** File path for SQLite database (only used when db_driver is 'sqlite') */
+    sqlite_file_path?: string;
 
     /** Database username for authentication */
     username: string;

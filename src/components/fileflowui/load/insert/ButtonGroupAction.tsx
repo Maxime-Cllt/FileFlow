@@ -45,7 +45,7 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
                     csv: {
                         table_name: tableName[index],
                         file_path: file,
-                        db_driver: props.dbConfig.dbDriver.toLowerCase(),
+                        db_driver: props.dbConfig.db_driver.toLowerCase(),
                         mode: props.mode,
                     },
                 });
@@ -63,13 +63,13 @@ const ButtonGroupAction: React.FC<ButtonGroupProps> = (props: ButtonGroupProps) 
     };
 
     const handleReset = (): void => {
-        props.updateDbConfigField("dbDriver", '');
-        props.updateDbConfigField("dbHost", '');
+        props.updateDbConfigField("db_driver", '');
+        props.updateDbConfigField("db_host", '');
         props.updateDbConfigField('port', '');
         props.updateDbConfigField('username', '');
         props.updateDbConfigField('password', '');
-        props.updateDbConfigField("dbName", '');
-        props.updateDbConfigField("sqliteFilePath", '');
+        props.updateDbConfigField("db_name", '');
+        props.updateDbConfigField("sqlite_file_path", '');
 
         props.setMode(InsertionType.Fast);
         props.setFilesPath([]);

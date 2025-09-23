@@ -96,7 +96,7 @@ export const disconnect_from_database = async () => {
 }
 
 // Connect to the database and disconnect if already connected for the user
-export const connect_to_database = async (dbDriver: DatabaseEngineType, dbHost: string, port: string, username: string, password: string, dbName: string, sqliteFilePath: string): Promise<void | boolean> => {
+export const connect_to_database = async (db_driver: DatabaseEngineType, db_host: string, port: string, username: string, password: string, db_name: string, sqlite_file_path: string): Promise<void | boolean> => {
     try {
         const is_connected_response: string | boolean = await is_connected();
 
@@ -104,21 +104,21 @@ export const connect_to_database = async (dbDriver: DatabaseEngineType, dbHost: 
             await disconnect_from_database();
         }
 
-        if (dbDriver !== DatabaseEngineType.SQLITE && (!dbHost || !port || !username)) {
+        if (db_driver !== DatabaseEngineType.SQLITE && (!db_host || !port || !username)) {
             throw new Error("Please fill in all the required fields");
-        } else if (dbDriver === DatabaseEngineType.SQLITE && sqliteFilePath === '') {
+        } else if (db_driver === DatabaseEngineType.SQLITE && sqlite_file_path === '') {
             throw new Error('Please select a SQLite file');
         }
 
         const response: string | boolean = await invoke<string | boolean>('connect_to_database', {
             config: {
-                db_driver: databaseEngineTypeToString(dbDriver).toLowerCase(),
-                db_host: dbHost,
+                db_driver: databaseEngineTypeToString(db_driver).toLowerCase(),
+                db_host: db_host,
                 port: port,
                 username: username,
                 password: password,
-                db_name: dbName,
-                sqlite_file_path: sqliteFilePath,
+                db_name: db_name,
+                sqlite_file_path: sqlite_file_path,
             },
         });
 
@@ -126,7 +126,7 @@ export const connect_to_database = async (dbDriver: DatabaseEngineType, dbHost: 
             throw new Error(response as string);
         }
 
-        toast.success('Connected successfully to ' + dbName);
+        toast.success('Connected successfully to ' + db_name);
         return true;
     } catch (error) {
         log_error(error);

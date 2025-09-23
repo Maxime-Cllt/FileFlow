@@ -3,25 +3,23 @@ use crate::fileflow::database::database_actions::{
     batch_insert, create_and_copy_final_table, drop_existing_tables, drop_table_if_exists,
     execute_query, export_table,
 };
-use crate::fileflow::database::sql_builder::{
-    build_create_table_sql, build_prepared_statement_sql, build_query_all_tables,
-};
 use crate::fileflow::enums::database_engine::DatabaseEngine;
+use crate::fileflow::enums::query_result::QueryRows;
 use crate::fileflow::stuct::combo_item::ComboItem;
+use crate::fileflow::stuct::database_connection::DatabaseConnection;
 use crate::fileflow::stuct::db_config::DatabaseConfig;
 use crate::fileflow::stuct::download_config::DownloadConfig;
+use crate::fileflow::stuct::sql_builder::SqlBuilder;
 use crate::fileflow::stuct::string_formater::StringFormatter;
 use csv::{Reader, StringRecord};
 use serde_json::{json, Value};
 use sqlx::Row;
 use std::collections::HashMap;
+use std::fmt::Write;
 use std::fs::File;
 use std::sync::Arc;
 use std::time::Instant;
 use tauri::{command, State};
-use std::fmt::Write;
-use crate::fileflow::enums::query_result::QueryRows;
-use crate::fileflow::stuct::database_connection::DatabaseConnection;
 
 #[command]
 pub async fn connect_to_database(
@@ -95,10 +93,10 @@ pub async fn get_table_list(state: State<'_, Arc<DatabaseState>>) -> Result<Valu
     };
 
     let db_config: &DatabaseConfig = connection.get_db_config();
-    let sql: &str = &build_query_all_tables(&db_config.db_driver, &db_config.db_name);
+    let sql: String = SqlBuilder::build_query_all_tables(&db_config.db_driver, &db_config.db_name);
 
     let result: QueryRows = connection
-        .query_many_with_result(sql)
+        .query_many_with_result(&sql)
         .await
         .map_err(|_| false)?;
 
@@ -193,7 +191,7 @@ pub async fn fast_insert(
     }
 
     let build_create_table_statement: String =
-        build_create_table_sql(db_driver, final_table_name, final_columns_name);
+        SqlBuilder::build_create_table(db_driver, final_table_name, final_columns_name)?;
 
     // Create the table
     if let Err(err) = execute_query(
@@ -212,8 +210,7 @@ pub async fn fast_insert(
     let mut batch: Vec<String> = Vec::with_capacity(MAX_BATCH_SIZE);
 
     // Prepare the insert query
-    let insert_query_base: &str =
-        &build_prepared_statement_sql(db_driver, final_table_name, final_columns_name);
+    let insert_query_base: String =SqlBuilder::build_prepared_statement(db_driver, final_table_name, final_columns_name)?;
 
     for result in reader.records() {
         let values: String = match result {
@@ -224,13 +221,13 @@ pub async fn fast_insert(
         batch.push(format!("({values})"));
 
         if batch.len() >= MAX_BATCH_SIZE {
-            line_count += insert_batch(connection, insert_query_base, &batch).await;
+            line_count += insert_batch(connection, &insert_query_base, &batch).await;
             batch.clear();
         }
     }
 
     // Insert the remaining records if any
-    line_count += insert_batch(connection, insert_query_base, &batch).await;
+    line_count += insert_batch(connection, &insert_query_base, &batch).await;
 
     Ok(line_count)
 }
@@ -255,7 +252,7 @@ pub async fn optimized_insert(
 
     // Create the temporary table
     let create_temp_table_query: String =
-        build_create_table_sql(db_driver, &temporary_table_name, final_columns_name);
+        SqlBuilder::build_create_table(db_driver, &temporary_table_name, final_columns_name)?;
 
     execute_query(
         connection,
@@ -268,7 +265,7 @@ pub async fn optimized_insert(
     // Initialize variables
     const MAX_BATCH_SIZE: usize = 5_000;
     let insert_query_base: String =
-        build_prepared_statement_sql(db_driver, &temporary_table_name, final_columns_name);
+        SqlBuilder::build_prepared_statement(db_driver, &temporary_table_name, final_columns_name)?;
 
     let mut columns_size_map: HashMap<&str, usize> = final_columns_name
         .iter()
@@ -276,7 +273,6 @@ pub async fn optimized_insert(
         .collect(); // Initialize column size map for each column -> 0 (id,size)
     let mut line_count: u32 = 0;
     let mut batch: Vec<String> = Vec::with_capacity(MAX_BATCH_SIZE);
-
 
     for result in reader.records() {
         let record: StringRecord = match result {
@@ -339,7 +335,11 @@ pub async fn optimized_insert(
 }
 
 /// Insert a batch of records into the database
-async fn insert_batch(connection: &DatabaseConnection, insert_query_base: &str, batch: &[String]) -> u32 {
+async fn insert_batch(
+    connection: &DatabaseConnection,
+    insert_query_base: &str,
+    batch: &[String],
+) -> u32 {
     match batch_insert(
         connection,
         insert_query_base,

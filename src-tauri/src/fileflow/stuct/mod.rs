@@ -5,3 +5,4 @@ pub mod insert_config;
 pub mod save_config;
 pub mod string_formater;
 pub mod database_connection;
+pub mod sql_builder;

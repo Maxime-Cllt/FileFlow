@@ -1,14 +1,12 @@
-use crate::fileflow::database::sql_builder::{
-    build_copy_table_sql, build_create_with_fixed_size_sql, build_drop_statement_sql,
-};
 use crate::fileflow::enums::database_engine::DatabaseEngine;
+use crate::fileflow::enums::query_result::QueryRows;
+use crate::fileflow::stuct::database_connection::DatabaseConnection;
 use crate::fileflow::stuct::download_config::DownloadConfig;
+use crate::fileflow::stuct::sql_builder::SqlBuilder;
 use csv::{Writer, WriterBuilder};
 use sqlx::{Column, Row};
 use std::collections::HashMap;
 use std::fs::File;
-use crate::fileflow::enums::query_result::QueryRows;
-use crate::fileflow::stuct::database_connection::DatabaseConnection;
 
 /// Exports a table’s data into a CSV file. It uses offset/LIMIT pagination to retrieve data in batches
 pub async fn export_table(
@@ -130,10 +128,10 @@ pub async fn drop_table_if_exists(
     db_driver: &DatabaseEngine,
     table_name: &str,
 ) -> Result<(), String> {
-    let drop_query: &str = &build_drop_statement_sql(db_driver, table_name)?;
+    let drop_query: String = SqlBuilder::build_drop_statement(db_driver, table_name)?;
     execute_query(
         connection,
-        drop_query,
+        &drop_query,
         &format!("Failed to drop table '{table_name}'"),
     )
     .await
@@ -174,12 +172,13 @@ pub async fn create_and_copy_final_table(
     columns_size_map: &HashMap<&str, usize>,
     final_columns_name: &[String],
 ) -> Result<(), String> {
-    let create_final_table_query: String = build_create_with_fixed_size_sql(
+    let create_final_table_query: String = SqlBuilder::build_create_with_fixed_size(
         db_driver,
         final_table_name,
         columns_size_map,
         final_columns_name,
-    );
+    )?;
+
     execute_query(
         connection,
         &create_final_table_query,
@@ -188,7 +187,7 @@ pub async fn create_and_copy_final_table(
     .await?;
 
     let copy_data_query: String =
-        build_copy_table_sql(db_driver, temporary_table_name, final_table_name);
+        SqlBuilder::build_copy_table(db_driver, temporary_table_name, final_table_name)?;
 
     execute_query(
         connection,

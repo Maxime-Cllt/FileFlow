@@ -1,6 +1,6 @@
-use crate::fileflow::stuct::batch_processor::BatchProcessor;
-use crate::fileflow::stuct::database_connection::DatabaseConnection;
-use crate::fileflow::stuct::download_config::DownloadConfig;
+use crate::fileflow::stuct::io::batch_processor::BatchProcessor;
+use crate::fileflow::stuct::database::database_connection::DatabaseConnection;
+use crate::fileflow::stuct::config::download_config::DownloadConfig;
 use csv::{Writer, WriterBuilder};
 use std::fs::File;
 

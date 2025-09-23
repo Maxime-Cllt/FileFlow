@@ -1,6 +1,6 @@
-use crate::fileflow::stuct::database_connection::DatabaseConnection;
-use crate::fileflow::stuct::row_extractor::RowExtractor;
-use crate::fileflow::stuct::table_exporter::TableExporter;
+use crate::fileflow::stuct::database::database_connection::DatabaseConnection;
+use crate::fileflow::stuct::io::row_extractor::RowExtractor;
+use crate::fileflow::stuct::io::table_exporter::TableExporter;
 
 /// Handles paginated database queries for table export
 pub(crate) struct BatchProcessor<'a> {

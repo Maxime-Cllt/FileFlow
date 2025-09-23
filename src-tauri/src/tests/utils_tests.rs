@@ -1,7 +1,7 @@
 use csv::Writer;
 use fileflow::fileflow::enums::database_engine::DatabaseEngine;
-use fileflow::fileflow::stuct::db_config::DatabaseConfig;
-use fileflow::fileflow::stuct::save_config::SaveConfig;
+use fileflow::fileflow::stuct::config::db_config::DatabaseConfig;
+use fileflow::fileflow::stuct::config::save_config::SaveConfig;
 use std::error::Error;
 use std::fs::File;
 use std::path::PathBuf;

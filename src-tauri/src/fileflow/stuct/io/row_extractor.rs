@@ -75,8 +75,8 @@ impl RowExtractor {
         for row in rows {
             let mut row_data = Vec::with_capacity(row.len());
 
-            for (idx, _column) in row.columns().iter().enumerate() {
-                let value = Self::get_mysql_column_value(&row, idx, _column.name())?;
+            for (idx, column) in row.columns().iter().enumerate() {
+                let value = Self::get_mysql_column_value(&row, idx, column.name())?;
                 row_data.push(value);
             }
 
@@ -95,7 +95,7 @@ impl RowExtractor {
         for row in rows {
             let mut row_data = Vec::with_capacity(row.len());
 
-            for (idx, column) in row.columns().iter().enumerate() {
+            for (idx, _) in row.columns().iter().enumerate() {
                 let value = Self::get_postgres_column_value(&row, idx)?;
                 row_data.push(value);
             }

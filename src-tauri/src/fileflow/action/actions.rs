@@ -1,10 +1,9 @@
 use crate::fileflow::action::database_command::{fast_insert, optimized_insert};
 use crate::fileflow::enums::insertion_type::InsertionType;
-use crate::fileflow::stuct::insert_config::InsertConfig;
-use crate::fileflow::stuct::save_config::SaveConfig;
+use crate::fileflow::stuct::config::insert_config::InsertConfig;
+use crate::fileflow::stuct::config::save_config::SaveConfig;
 use crate::fileflow::stuct::string_formater::StringFormatter;
 use crate::fileflow::utils::constants::DATABASE_CONFIG_FILE;
-use crate::fileflow::utils::csv_utils::{find_separator, read_first_line};
 use crate::fileflow::utils::fileflowlib::{get_all_saved_configs, save_config};
 use csv::{Reader, ReaderBuilder};
 use std::fs::{File, Metadata};
@@ -12,7 +11,8 @@ use std::sync::Arc;
 use std::time::Instant;
 use tauri::{command, State};
 use tokio::sync::Mutex;
-use crate::fileflow::stuct::database_connection::DatabaseConnection;
+use crate::fileflow::stuct::database::database_connection::DatabaseConnection;
+use crate::fileflow::stuct::io::file_utils::FileUtils;
 
 pub struct DatabaseState(pub Mutex<Option<DatabaseConnection>>);
 
@@ -36,10 +36,10 @@ pub async fn insert_csv_data(
         Err(e) => return Err(format!("Error: Failed to open file: {}", e.to_string())),
     };
 
-    let first_line: String = read_first_line(&csv.file_path)
+    let first_line: String = FileUtils::read_first_line(&csv.file_path)
         .map_err(|e| format!("Error: Failed to read first line: {}", e.to_string()))?;
 
-    let separator: char = find_separator(&first_line)?;
+    let separator: char = FileUtils::find_separator(&first_line)?;
 
     let final_columns_name: Vec<String> = StringFormatter::get_formated_column_names(
         &first_line

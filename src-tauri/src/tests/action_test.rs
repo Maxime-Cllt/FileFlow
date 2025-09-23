@@ -1,6 +1,6 @@
 use fileflow::fileflow::enums::database_engine::DatabaseEngine;
-use fileflow::fileflow::stuct::db_config::DatabaseConfig;
-use fileflow::fileflow::stuct::save_config::SaveConfig;
+use fileflow::fileflow::stuct::config::db_config::DatabaseConfig;
+use fileflow::fileflow::stuct::config::save_config::SaveConfig;
 use fileflow::fileflow::utils::fileflowlib::{get_all_saved_configs, save_config};
 use crate::tests::utils_tests::{
     create_test_db, delete_config_file, generate_csv_file, get_test_save_config,
@@ -11,7 +11,7 @@ use sqlx::sqlite::SqliteRow;
 use sqlx::{Error, Pool, Row, Sqlite};
 use std::fs::File;
 use fileflow::fileflow::action::database_command::fast_insert;
-use fileflow::fileflow::stuct::database_connection::DatabaseConnection;
+use fileflow::fileflow::stuct::database::database_connection::DatabaseConnection;
 
 #[tokio::test]
 async fn test_fast_insert() {

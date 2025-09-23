@@ -2,12 +2,12 @@ use criterion::{criterion_group, criterion_main, Criterion};
 use csv::{Reader, ReaderBuilder};
 use fileflow::fileflow::action::database_command::fast_insert;
 use fileflow::fileflow::enums::database_engine::DatabaseEngine;
-use fileflow::fileflow::stuct::db_config::DatabaseConfig;
+use fileflow::fileflow::stuct::config::db_config::DatabaseConfig;
 use fileflow::fileflow::stuct::string_formater::StringFormatter;
-use fileflow::fileflow::utils::csv_utils::{find_separator, read_first_line};
 use sqlx::Error;
 use std::fs::File;
-use fileflow::fileflow::stuct::database_connection::DatabaseConnection;
+use fileflow::fileflow::stuct::database::database_connection::DatabaseConnection;
+use fileflow::fileflow::stuct::io::file_utils::FileUtils;
 
 #[allow(dead_code)]
 async fn test_insert_file() {
@@ -37,9 +37,9 @@ async fn test_insert_file() {
         Err(_) => return,
     };
 
-    let first_line: String = read_first_line(TEST_FILE).unwrap();
+    let first_line: String = FileUtils::read_first_line(TEST_FILE).unwrap();
 
-    let separator: char = find_separator(&first_line).unwrap();
+    let separator: char = FileUtils::find_separator(&first_line).unwrap();
 
     let final_columns_name: Vec<String> = StringFormatter::get_formated_column_names(
         &first_line

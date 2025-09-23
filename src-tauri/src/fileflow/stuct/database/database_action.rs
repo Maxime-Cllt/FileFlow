@@ -1,6 +1,6 @@
 use crate::fileflow::enums::database_engine::DatabaseEngine;
-use crate::fileflow::stuct::database_connection::DatabaseConnection;
-use crate::fileflow::stuct::sql_builder::SqlBuilder;
+use crate::fileflow::stuct::database::database_connection::DatabaseConnection;
+use crate::fileflow::stuct::database::sql_builder::SqlBuilder;
 use std::collections::HashMap;
 
 /// Database operations utility struct

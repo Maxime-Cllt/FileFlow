@@ -1,7 +1,7 @@
-use crate::fileflow::stuct::save_config::SaveConfig;
 use std::fs::{File, OpenOptions};
 use std::io;
 use std::path::PathBuf;
+use crate::fileflow::stuct::config::save_config::SaveConfig;
 
 /// This function is used to get the size of a file.
 pub fn get_all_saved_configs(config_file: &str) -> Vec<SaveConfig> {

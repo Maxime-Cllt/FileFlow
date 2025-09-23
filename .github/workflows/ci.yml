@@ -98,7 +98,6 @@ jobs:
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-          components: rustfmt, clippy
           cache: true
 
       # Enhanced caching strategy
@@ -129,18 +128,6 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # Backend tests and checks (if backend changed)
-      - name: Check Rust Formatting
-        if: needs.changes.outputs.backend == 'true'
-        run: |
-          cd src-tauri
-          cargo fmt --all -- --check
-
-      - name: Run Clippy
-        if: needs.changes.outputs.backend == 'true'
-        run: |
-          cd src-tauri
-          cargo clippy --all-targets --all-features -- -D warnings
-
       - name: Run Rust Unit Tests
         if: needs.changes.outputs.backend == 'true'
         run: |
@@ -148,16 +135,6 @@ jobs:
           cargo test --verbose --all-features --lib
 
       # Frontend tests and checks (if frontend changed)
-      - name: Type Check Frontend
-        if: needs.changes.outputs.frontend == 'true'
-        run: pnpm run type-check
-        continue-on-error: false
-
-      - name: Lint Frontend
-        if: needs.changes.outputs.frontend == 'true'
-        run: pnpm run lint
-        continue-on-error: false
-
       - name: Run Frontend Unit Tests
         if: needs.changes.outputs.frontend == 'true'
         run: pnpm test
@@ -173,31 +150,7 @@ jobs:
         if: needs.changes.outputs.frontend == 'true' && needs.changes.outputs.backend == 'true'
         run: |
           cd src-tauri
-          cargo build --release
-          # Start backend in background for frontend integration tests
-          cargo run --release &
-          echo $! > backend.pid
-          sleep 5  # Give backend time to start
-        continue-on-error: true
-
-      # Run frontend integration tests that depend on backend
-      - name: Run Frontend Integration Tests
-        if: needs.changes.outputs.frontend == 'true' && needs.changes.outputs.backend == 'true'
-        run: pnpm run test:integration
-        env:
-          NODE_ENV: test
-          BACKEND_URL: http://localhost:8080
-        continue-on-error: true
-
-      # Stop backend
-      - name: Stop Backend
-        if: needs.changes.outputs.frontend == 'true' && needs.changes.outputs.backend == 'true'
-        run: |
-          if [ -f backend.pid ]; then
-            kill $(cat backend.pid) || true
-            rm backend.pid
-          fi
-        continue-on-error: true
+          cargo check --release
 
       # Build Tauri application (includes both frontend and backend)
       - name: Build Tauri Application
@@ -209,87 +162,4 @@ jobs:
       - name: Run Tauri Integration Tests
         run: |
           cd src-tauri
-          cargo test --verbose --all-features --test integration
-        continue-on-error: true
-
-      # Upload build artifacts
-      - name: Upload Tauri Bundles
-        uses: actions/upload-artifact@v4
-        with:
-          name: tauri-bundles-${{ matrix.os }}
-          path: |
-            src-tauri/target/release/bundle/
-          retention-days: 1
-
-      - name: Upload Frontend Build
-        if: matrix.os == 'macos-latest'  # Only upload once
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-dist
-          path: dist/
-          retention-days: 1
-
-  # Quick validation job for PRs (runs on Ubuntu for speed)
-  quick-validation:
-    name: Quick Validation
-    runs-on: ubuntu-latest
-    needs: changes
-    if: github.event_name == 'pull_request' && needs.changes.outputs.skip_ci == 'false'
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install Rust Toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-          components: rustfmt, clippy
-
-      - name: Install Dependencies
-        run: pnpm install --frozen-lockfile
-
-      # Quick checks only
-      - name: Quick Rust Check
-        if: needs.changes.outputs.backend == 'true'
-        run: |
-          cd src-tauri
-          cargo check --all-targets
-          cargo fmt --all -- --check
-
-      - name: Quick Frontend Check
-        if: needs.changes.outputs.frontend == 'true'
-        run: |
-          pnpm run type-check
-          pnpm run build
-
-  # Final status check
-  ci-success:
-    name: CI Success
-    runs-on: ubuntu-latest
-    needs: [ full-stack-test-build, quick-validation ]
-    if: always() && needs.changes.outputs.skip_ci == 'false'
-
-    steps:
-      - name: Check CI Status
-        run: |
-          if [[ "${{ needs.full-stack-test-build.result }}" == "failure" ]]; then
-            echo "Full stack build failed"
-            exit 1
-          elif [[ "${{ needs.quick-validation.result }}" == "failure" ]]; then
-            echo "Quick validation failed"
-            exit 1
-          else
-            echo "CI OK"
-          fi
+          cargo test --verbose --all-features

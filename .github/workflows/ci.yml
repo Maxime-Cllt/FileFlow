@@ -28,7 +28,8 @@ jobs:
       backend: ${{ steps.changes.outputs.backend }}
       frontend: ${{ steps.changes.outputs.frontend }}
       tauri: ${{ steps.changes.outputs.tauri }}
-      skip_ci: ${{ steps.changes.outputs.skip_ci }}
+      general: ${{ steps.changes.outputs.general }}
+      gha: ${{ steps.changes.outputs.gha }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -55,19 +56,21 @@ jobs:
               - 'src-tauri/tauri.conf.json'
               - 'src-tauri/capabilities/**'
               - 'src-tauri/icons/**'
-            skip_ci:
+            general:
               - '**.md'
               - '.gitignore'
               - 'LICENSE'
               - 'docs/**'
+            gha:
               - '.github/**'
+            
 
   # Combined Full Stack Test and Build
   full-stack-test-build:
     name: Full Stack Test & Build
     runs-on: ${{ matrix.os }}
     needs: changes
-    if: needs.changes.outputs.skip_ci == 'false' && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.tauri == 'true')
+    if: needs.changes.outputs.general == 'false' && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true' || needs.changes.outputs.tauri == 'true' || needs.changes.outputs.gha == 'true')
 
     strategy:
       fail-fast: false

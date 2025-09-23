@@ -1,6 +1,6 @@
 use crate::fileflow::enums::connection_type::ConnectionPool;
 use crate::fileflow::enums::database_engine::DatabaseEngine;
-use crate::fileflow::enums::query_result::QueryRows;
+use crate::fileflow::enums::query_rows::QueryRows;
 use crate::fileflow::stuct::db_config::DatabaseConfig;
 use sqlx::{Error, MySql, MySqlPool, PgPool, Pool, Postgres, Sqlite, SqlitePool};
 

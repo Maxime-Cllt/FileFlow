@@ -1,6 +1,6 @@
 use crate::fileflow::action::actions::DatabaseState;
 use crate::fileflow::enums::database_engine::DatabaseEngine;
-use crate::fileflow::enums::query_result::QueryRows;
+use crate::fileflow::enums::query_rows::QueryRows;
 use crate::fileflow::stuct::combo_item::ComboItem;
 use crate::fileflow::stuct::database_action::DatabaseAction;
 use crate::fileflow::stuct::database_connection::DatabaseConnection;
@@ -17,6 +17,7 @@ use std::fs::File;
 use std::sync::Arc;
 use std::time::Instant;
 use tauri::{command, State};
+use crate::fileflow::stuct::table_exporter::TableExporter;
 
 #[command]
 pub async fn connect_to_database(
@@ -153,7 +154,7 @@ pub async fn download_table(
 
     let mut exported_table: u32 = 0;
     for table_name in config.table_name_list.iter() {
-        if let Err(err) = DatabaseAction::export_table(connection, &config, table_name).await {
+        if let Err(err) = TableExporter::export_table(connection, &config, table_name).await {
             println!("{err}");
             continue;
         }

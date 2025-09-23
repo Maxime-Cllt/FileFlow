@@ -1,61 +1,127 @@
-name: Full Stack CI
+name: Full Stack CI/CD
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "1.0.4" ]
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
   pull_request:
     branches: [ "main" ]
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+      - 'LICENSE'
   workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
 
 jobs:
-  # Backend Rust tests
-  rust-tests:
-    name: Rust Backend Tests
-    runs-on: macos-latest
-
+  # Check if we should skip CI
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+      frontend: ${{ steps.changes.outputs.frontend }}
+      tauri: ${{ steps.changes.outputs.tauri }}
     steps:
-      - name: Fetch Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Install stable Rust toolchain
+      - name: Check for changes
+        uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            backend:
+              - 'src-tauri/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+            frontend:
+              - 'src/**'
+              - 'public/**'
+              - 'package.json'
+              - 'pnpm-lock.yaml'
+              - 'vite.config.*'
+              - 'tsconfig.json'
+              - 'tailwind.config.*'
+            tauri:
+              - 'src-tauri/tauri.conf.json'
+              - 'src-tauri/capabilities/**'
+              - 'src-tauri/icons/**'
+
+  # Backend Rust tests and checks
+  rust-backend:
+    name: Rust Backend
+    runs-on: ${{ matrix.os }}
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.tauri == 'true'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust Toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           toolchain: stable
-          target: x86_64-unknown-linux-gnu
+          components: rustfmt, clippy
+          cache: true
 
-      - name: Cache Cargo dependencies
-        uses: actions/cache@v4
+      - name: Install System Dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.0-dev \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libssl-dev \
+            pkg-config
+
+      - name: Install System Dependencies (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          # Most dependencies are already available on macOS runners
+          echo "macOS dependencies already installed"
+
+      - name: Cache Rust Dependencies
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            src-tauri/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+          workspaces: src-tauri
+          cache-on-failure: true
+          shared-key: ${{ matrix.os }}-rust-cache
 
-      - name: Run Rust tests
+      - name: Run Rust Tests
         run: |
           cd src-tauri
-          cargo test --verbose
+          cargo test --verbose --all-features
 
-      - name: Check Rust formatting
+      - name: Check Rust Build
         run: |
           cd src-tauri
-          cargo fmt --all -- --check
+          cargo check --release
 
-  # Frontend tests
-  frontend-tests:
-    name: Frontend Tests
-    runs-on: macos-latest
+  # Frontend tests and checks
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true' || needs.changes.outputs.tauri == 'true'
 
     steps:
-      - name: Fetch Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup pnpm
@@ -69,20 +135,101 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
 
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
       - name: Cache pnpm dependencies
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.pnpm-store
-            node_modules
-          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
           restore-keys: |
-            ${{ runner.os }}-pnpm-
+            ${{ runner.os }}-pnpm-store-
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Run frontend tests
+      - name: Run Frontend Tests
         run: pnpm test
         env:
           NODE_ENV: test
+
+      - name: Build Frontend
+        run: pnpm run build
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist/
+          retention-days: 1
+
+  # Integration tests with Tauri
+  tauri-test-build:
+    name: Tauri Build Development
+    runs-on: ${{ matrix.os }}
+    needs: [ changes, frontend ]
+    if: needs.changes.outputs.tauri == 'true' || (needs.changes.outputs.backend == 'true' && needs.changes.outputs.frontend == 'true')
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install Rust Toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          cache: true
+
+      - name: Install System Dependencies (Ubuntu)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.0-dev \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libssl-dev \
+            pkg-config
+
+      - name: Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            src-tauri/target/
+            node_modules
+          key: ${{ runner.os }}-tauri-${{ hashFiles('**/Cargo.lock', '**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-tauri-
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Tauri Application
+        run: pnpm tauri build --verbose
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

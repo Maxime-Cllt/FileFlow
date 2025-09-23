@@ -1,0 +1,72 @@
+name: Update Version Badge in Markdown Files
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    paths: [ 'src-tauri/Cargo.toml' ] # Trigger only when Cargo.toml changes
+  workflow_dispatch:
+
+jobs:
+  update-badge:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from Cargo.toml
+        id: get_version
+        run: |
+          # Extract version using multiple methods for robustness
+          if command -v toml &> /dev/null; then
+            VERSION=$(toml get Cargo.toml package.version --raw 2>/dev/null)
+          fi
+          
+          if [ -z "$VERSION" ]; then
+            VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          fi
+          
+          if [ -z "$VERSION" ]; then
+            echo "Error: Could not extract version from Cargo.toml"
+            exit 1
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+
+      - name: Update version badges in all markdown files
+        run: |
+          VERSION="${{ steps.get_version.outputs.version }}"
+          echo "Updating badges to version: $VERSION"
+          
+          # Find all markdown files and update the version badge
+          find . -name "*.md" -type f | while read -r file; do
+            echo "Checking file: $file"
+            if grep -q "img.shields.io/badge/Version-" "$file"; then
+              echo "Updating badge in: $file"
+              sed -i "s|https://img\.shields\.io/badge/Version-[^-]*-informational|https://img.shields.io/badge/Version-$VERSION-informational|g" "$file"
+            fi
+          done
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if git diff --quiet; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "No changes detected"
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected:"
+            git diff --name-only
+          fi
+
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git commit -m "🔖 Update version badge to v${{ steps.get_version.outputs.version }}"
+          git push

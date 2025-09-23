@@ -1,6 +1,7 @@
 // Return the file name from a path
 import {invoke} from "@tauri-apps/api/core";
 import {toast} from "sonner";
+import {DatabaseEngineType, databaseEngineTypeToString} from "@/state/DatabaseEngineType.tsx";
 
 export const getFileNameFromPath = (path: string) => {
     if (!path) return '';
@@ -95,7 +96,7 @@ export const disconnect_from_database = async () => {
 }
 
 // Connect to the database and disconnect if already connected for the user
-export const connect_to_database = async (db_driver: string, db_host: string, port: string, username: string, password: string, db_name: string, sqlite_file_path: string): Promise<void | boolean> => {
+export const connect_to_database = async (dbDriver: DatabaseEngineType, dbHost: string, port: string, username: string, password: string, dbName: string, sqliteFilePath: string): Promise<void | boolean> => {
     try {
         const is_connected_response: string | boolean = await is_connected();
 
@@ -103,21 +104,21 @@ export const connect_to_database = async (db_driver: string, db_host: string, po
             await disconnect_from_database();
         }
 
-        if (db_driver !== 'sqlite' && (!db_host || !port || !username)) {
+        if (dbDriver !== DatabaseEngineType.SQLITE && (!dbHost || !port || !username)) {
             throw new Error("Please fill in all the required fields");
-        } else if (db_driver === 'sqlite' && sqlite_file_path === '') {
+        } else if (dbDriver === DatabaseEngineType.SQLITE && sqliteFilePath === '') {
             throw new Error('Please select a SQLite file');
         }
 
         const response: string | boolean = await invoke<string | boolean>('connect_to_database', {
             config: {
-                db_driver: db_driver.toLowerCase(),
-                db_host: db_host,
+                db_driver: databaseEngineTypeToString(dbDriver).toLowerCase(),
+                db_host: dbHost,
                 port: port,
                 username: username,
                 password: password,
-                db_name: db_name,
-                sqlite_file_path: sqlite_file_path,
+                db_name: dbName,
+                sqlite_file_path: sqliteFilePath,
             },
         });
 
@@ -125,7 +126,7 @@ export const connect_to_database = async (db_driver: string, db_host: string, po
             throw new Error(response as string);
         }
 
-        toast.success('Connected successfully to ' + db_name);
+        toast.success('Connected successfully to ' + dbName);
         return true;
     } catch (error) {
         log_error(error);

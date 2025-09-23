@@ -12,12 +12,13 @@ import {AnimatePresence, motion} from 'framer-motion';
 import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
 import {CheckBoxCombo} from "@/components/hooks/component/CheckBoxCombo.tsx";
 import {SeparatorType, separatorTypeToString} from "@/state/SeparatorType.tsx";
+import {DatabaseEngineType} from "@/state/DatabaseEngineType.tsx";
 
 const Download: React.FC = () => {
 
         const [dbConfig, setDbConfig] = useState<DatabaseConfig>({
             configName: '',
-            dbDriver: '',
+            dbDriver: DatabaseEngineType.UNDEFINED,
             dbHost: '',
             dbName: '',
             password: '',

@@ -31,12 +31,6 @@ const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) =
             try {
                 setAttemptedConnection(true);
 
-                if (props.dbConfig.dbDriver !== 'sqlite' && (!props.dbConfig.dbDriver || !props.dbConfig.dbHost || !props.dbConfig.port || !props.dbConfig.username || !props.dbConfig.dbName)) {
-                    throw new Error('Please fill all fields');
-                } else if (props.dbConfig.dbDriver === 'sqlite' && !props.dbConfig.sqliteFilePath) {
-                    throw new Error('Please fill all fields');
-                }
-
                 const connect_to_database_response: boolean | void = await connect_to_database(
                     props.dbConfig.dbDriver,
                     props.dbConfig.dbHost,

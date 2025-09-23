@@ -6,11 +6,12 @@ import SelectDBMS from "@/components/hooks/database/SelectDatabaseEngine.tsx";
 import * as dialog from "@tauri-apps/plugin-dialog";
 import {toast} from "sonner";
 import {DatabaseConfig} from "@/interfaces/DatabaseConfig.tsx";
+import {DatabaseEngineType} from "@/state/DatabaseEngineType.tsx";
 
 interface SqliteFormProps {
     dbConfig: {
         sqliteFilePath: string;
-        dbDriver: string;
+        dbDriver: DatabaseEngineType;
     };
     updateDbConfigField: (field: keyof DatabaseConfig, value: DatabaseConfig[keyof DatabaseConfig]) => void;
 }

@@ -3,11 +3,12 @@ import SelectDBMS from "@/components/hooks/database/SelectDatabaseEngine.tsx";
 import {Input} from "@/components/ui/input.tsx";
 import SqliteForm from "@/components/hooks/database/SqliteForm.tsx";
 import {DatabaseFormProps} from "@/interfaces/DatabaseFormProps.tsx";
+import {DatabaseEngineType} from "@/state/DatabaseEngineType.tsx";
 
 
 const DatabaseForm: React.FC<DatabaseFormProps> = ({dbConfig, updateDbConfigField}) => {
     const renderForm = () => {
-        if (dbConfig.dbDriver === 'sqlite') {
+        if (dbConfig.dbDriver === DatabaseEngineType.SQLITE) {
             return (
                 <SqliteForm
                     dbConfig={
@@ -75,7 +76,7 @@ const DatabaseForm: React.FC<DatabaseFormProps> = ({dbConfig, updateDbConfigFiel
                                 Database Engine
                             </label>
                             <SelectDBMS
-                                db_driver={dbConfig.dbDriver}
+                                dbDriver={dbConfig.dbDriver}
                                 updateDbConfigField={updateDbConfigField}
                             />
                         </div>

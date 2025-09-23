@@ -4,7 +4,6 @@ use crate::fileflow::stuct::config::insert_config::InsertConfig;
 use crate::fileflow::stuct::config::save_config::SaveConfig;
 use crate::fileflow::stuct::string_formater::StringFormatter;
 use crate::fileflow::utils::constants::DATABASE_CONFIG_FILE;
-use crate::fileflow::utils::fileflowlib::{get_all_saved_configs, save_config};
 use csv::{Reader, ReaderBuilder};
 use std::fs::{File, Metadata};
 use std::sync::Arc;
@@ -101,7 +100,7 @@ pub async fn insert_csv_data(
 
 #[command]
 pub async fn save_database_config(save: SaveConfig) -> Result<bool, bool> {
-    let mut existing_configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE);
+    let mut existing_configs: Vec<SaveConfig> = SaveConfig::get_all_configs(DATABASE_CONFIG_FILE);
 
     for config in existing_configs.iter() {
         if config.config_name == save.config_name {
@@ -110,14 +109,14 @@ pub async fn save_database_config(save: SaveConfig) -> Result<bool, bool> {
     }
     existing_configs.push(save);
 
-    save_config(&existing_configs, DATABASE_CONFIG_FILE)
+    SaveConfig::save_config(&existing_configs, DATABASE_CONFIG_FILE)
         .map(|_| true)
         .map_err(|_| false)
 }
 
 #[command]
 pub async fn get_all_database_configs_name() -> Result<String, bool> {
-    let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE); // Get all saved configs
+    let configs: Vec<SaveConfig> = SaveConfig::get_all_configs(DATABASE_CONFIG_FILE); // Get all saved configs
     let configs_names: Vec<String> = configs.iter().map(|c| c.config_name.clone()).collect(); // Get only the names
     let configs_json: String = match serde_json::to_string(&configs_names) {
         Ok(json) => json, // Convert to json string
@@ -128,7 +127,7 @@ pub async fn get_all_database_configs_name() -> Result<String, bool> {
 
 #[command]
 pub async fn load_database_config_by_name(name: String) -> Result<String, bool> {
-    let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE); // Get all saved configs
+    let configs: Vec<SaveConfig> = SaveConfig::get_all_configs(DATABASE_CONFIG_FILE); // Get all saved configs
     for config in configs.iter() {
         // Find the config with the given name
         if config.config_name == name {
@@ -143,7 +142,7 @@ pub async fn load_database_config_by_name(name: String) -> Result<String, bool> 
 
 #[command]
 pub async fn delete_database_config(name: String) -> Result<bool, bool> {
-    let configs: Vec<SaveConfig> = get_all_saved_configs(DATABASE_CONFIG_FILE);
+    let configs: Vec<SaveConfig> = SaveConfig::get_all_configs(DATABASE_CONFIG_FILE);
 
     let mut new_configs: Vec<SaveConfig> = Vec::new();
     let mut found: bool = false;
@@ -160,7 +159,7 @@ pub async fn delete_database_config(name: String) -> Result<bool, bool> {
         return Err(false);
     }
 
-    save_config(&new_configs, DATABASE_CONFIG_FILE)
+    SaveConfig::save_config(&new_configs, DATABASE_CONFIG_FILE)
         .map(|_| true)
         .map_err(|_| false)
 }

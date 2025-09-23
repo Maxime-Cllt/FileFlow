@@ -213,7 +213,7 @@ jobs:
           name: tauri-bundles-${{ matrix.os }}
           path: |
             src-tauri/target/release/bundle/
-          retention-days: 7
+          retention-days: 1
 
       - name: Upload Frontend Build
         if: matrix.os == 'macos-latest'  # Only upload once
@@ -221,7 +221,7 @@ jobs:
         with:
           name: frontend-dist
           path: dist/
-          retention-days: 3
+          retention-days: 1
 
   # Quick validation job for PRs (runs on Ubuntu for speed)
   quick-validation:
@@ -267,49 +267,6 @@ jobs:
         run: |
           pnpm run type-check
           pnpm run build
-
-  # Security audit (optional, runs separately to not block main flow)
-  security-audit:
-    name: Security Audit
-    runs-on: ubuntu-latest
-    needs: changes
-    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.frontend == 'true'
-    continue-on-error: true  # Don't fail CI on audit issues
-
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Install Rust Toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-
-      - name: Install cargo-audit
-        run: cargo install cargo-audit
-
-      - name: Frontend Security Audit
-        if: needs.changes.outputs.frontend == 'true'
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm audit
-        continue-on-error: true
-
-      - name: Rust Security Audit
-        if: needs.changes.outputs.backend == 'true'
-        run: |
-          cd src-tauri
-          cargo audit
-        continue-on-error: true
 
   # Final status check
   ci-success:

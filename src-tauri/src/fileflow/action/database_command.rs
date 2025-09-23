@@ -1,11 +1,8 @@
 use crate::fileflow::action::actions::DatabaseState;
-use crate::fileflow::database::database_actions::{
-    batch_insert, create_and_copy_final_table, drop_existing_tables, drop_table_if_exists,
-    execute_query, export_table,
-};
 use crate::fileflow::enums::database_engine::DatabaseEngine;
 use crate::fileflow::enums::query_result::QueryRows;
 use crate::fileflow::stuct::combo_item::ComboItem;
+use crate::fileflow::stuct::database_action::DatabaseAction;
 use crate::fileflow::stuct::database_connection::DatabaseConnection;
 use crate::fileflow::stuct::db_config::DatabaseConfig;
 use crate::fileflow::stuct::download_config::DownloadConfig;
@@ -156,7 +153,7 @@ pub async fn download_table(
 
     let mut exported_table: u32 = 0;
     for table_name in config.table_name_list.iter() {
-        if let Err(err) = export_table(connection, &config, table_name).await {
+        if let Err(err) = DatabaseAction::export_table(connection, &config, table_name).await {
             println!("{err}");
             continue;
         }
@@ -185,7 +182,9 @@ pub async fn fast_insert(
     db_driver: &DatabaseEngine,
 ) -> Result<u32, String> {
     // Drop the table if it exists
-    if let Err(err) = drop_table_if_exists(connection, db_driver, final_table_name).await {
+    if let Err(err) =
+        DatabaseAction::drop_table_if_exists(connection, db_driver, final_table_name).await
+    {
         eprintln!("Error: {err}");
         return Err(err);
     }
@@ -194,7 +193,7 @@ pub async fn fast_insert(
         SqlBuilder::build_create_table(db_driver, final_table_name, final_columns_name)?;
 
     // Create the table
-    if let Err(err) = execute_query(
+    if let Err(err) = DatabaseAction::execute_query(
         connection,
         &build_create_table_statement,
         "Failed to create table",
@@ -210,7 +209,8 @@ pub async fn fast_insert(
     let mut batch: Vec<String> = Vec::with_capacity(MAX_BATCH_SIZE);
 
     // Prepare the insert query
-    let insert_query_base: String =SqlBuilder::build_prepared_statement(db_driver, final_table_name, final_columns_name)?;
+    let insert_query_base: String =
+        SqlBuilder::build_prepared_statement(db_driver, final_table_name, final_columns_name)?;
 
     for result in reader.records() {
         let values: String = match result {
@@ -242,7 +242,7 @@ pub async fn optimized_insert(
 ) -> Result<u32, String> {
     // Drop existing tables
     let temporary_table_name: String = format!("{final_table_name}_temporary");
-    drop_existing_tables(
+    DatabaseAction::drop_existing_tables(
         connection,
         &[&temporary_table_name, final_table_name],
         db_driver,
@@ -254,7 +254,7 @@ pub async fn optimized_insert(
     let create_temp_table_query: String =
         SqlBuilder::build_create_table(db_driver, &temporary_table_name, final_columns_name)?;
 
-    execute_query(
+    DatabaseAction::execute_query(
         connection,
         &create_temp_table_query,
         "Failed to create temporary table",
@@ -319,7 +319,7 @@ pub async fn optimized_insert(
     }
 
     // Create final table and copy data
-    create_and_copy_final_table(
+    DatabaseAction::create_and_copy_final_table(
         connection,
         db_driver,
         final_table_name,
@@ -329,7 +329,7 @@ pub async fn optimized_insert(
     )
     .await?;
 
-    drop_table_if_exists(connection, db_driver, &temporary_table_name).await?; // Drop the temporary table
+    DatabaseAction::drop_table_if_exists(connection, db_driver, &temporary_table_name).await?; // Drop the temporary table
 
     Ok(line_count)
 }
@@ -340,7 +340,7 @@ async fn insert_batch(
     insert_query_base: &str,
     batch: &[String],
 ) -> u32 {
-    match batch_insert(
+    match DatabaseAction::batch_insert(
         connection,
         insert_query_base,
         batch,

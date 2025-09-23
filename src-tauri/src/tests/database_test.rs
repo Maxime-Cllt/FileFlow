@@ -1,4 +1,3 @@
-use fileflow::fileflow::database::database_actions::export_table;
 use fileflow::fileflow::enums::separator_type::SeparatorType;
 use fileflow::fileflow::stuct::db_config::DatabaseConfig;
 use fileflow::fileflow::stuct::download_config::DownloadConfig;
@@ -10,6 +9,7 @@ use sqlx::testing::TestTermination;
 use sqlx::{Error, Row};
 use std::path::PathBuf;
 use fileflow::fileflow::enums::query_result::QueryRows;
+use fileflow::fileflow::stuct::database_action::DatabaseAction;
 use fileflow::fileflow::stuct::database_connection::DatabaseConnection;
 
 #[tokio::test]
@@ -133,7 +133,7 @@ async fn test_download_table() {
         download_config.location, download_config.table_name_list[0]
     ));
 
-    export_table(&conn, &download_config, &download_config.table_name_list[0])
+    DatabaseAction::export_table(&conn, &download_config, &download_config.table_name_list[0])
         .await
         .expect("Failed to export table");
 
@@ -152,7 +152,7 @@ async fn test_download_table() {
         location: "./".into(),
     };
 
-    export_table(&conn, &download_config, &download_config.table_name_list[0])
+    DatabaseAction::export_table(&conn, &download_config, &download_config.table_name_list[0])
         .await
         .expect("Failed to export table");
 

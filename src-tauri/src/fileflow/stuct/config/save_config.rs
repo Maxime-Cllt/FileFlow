@@ -54,6 +54,7 @@ impl SaveConfig {
 mod tests {
     use super::*;
 
+    #[allow(dead_code)]
     fn get_test_config() -> SaveConfig {
         SaveConfig {
             config_name: "config_name".into(),

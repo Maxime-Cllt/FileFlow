@@ -1,7 +1,6 @@
 use csv::Writer;
 use fileflow::fileflow::enums::database_engine::DatabaseEngine;
 use fileflow::fileflow::stuct::config::db_config::DatabaseConfig;
-use fileflow::fileflow::stuct::config::save_config::SaveConfig;
 use std::error::Error;
 use std::fs::File;
 use std::path::PathBuf;
@@ -60,29 +59,6 @@ pub fn get_test_maridb_config() -> DatabaseConfig {
         db_name: "test_db".into(),
         sqlite_file_path: String::new(),
     }
-}
-/// Get a test save configuration
-pub fn get_test_save_config(config_name: &str) -> SaveConfig {
-    SaveConfig {
-        config_name: config_name.into(),
-        db_driver: DatabaseEngine::SQLite,
-        db_host: String::new(),
-        port: String::new(),
-        username: String::new(),
-        password: String::new(),
-        db_name: "test_db".into(),
-        sqlite_file_path: String::new(),
-    }
-}
-
-/// Delete the configuration file with the given file name
-pub fn delete_config_file(config_file_name: &str) -> Result<(), Box<dyn Error>> {
-    if !std::path::Path::new(&config_file_name).exists() {
-        println!("File does not exist");
-        Err("Failed to create SQLite file")?;
-    }
-    std::fs::remove_file(config_file_name).expect("Failed to remove SQLite file");
-    Ok(())
 }
 
 /// Create a test SQLite database file if it does not exist and return the file path

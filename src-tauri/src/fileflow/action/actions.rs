@@ -22,21 +22,20 @@ pub async fn insert_csv_data(
 ) -> Result<String, String> {
     let conn_guard = state.0.lock().await;
 
-    if conn_guard.is_none() {
-        return Err("Error: Connection is not established".into());
-    }
-
-    let connection: &DatabaseConnection = conn_guard.as_ref().unwrap();
+    let connection: &DatabaseConnection = match conn_guard.as_ref() {
+        Some(conn) => conn,
+        None => return Err("Error: Connection is not established".into()),
+    };
     let mut total_lines: u64 = 0; // Counter for the total number of lines inserted
     let start: Instant = Instant::now(); // Timer for the insertion process
 
     let file: File = match File::open(&csv.file_path) {
         Ok(file) => file,
-        Err(e) => return Err(format!("Error: Failed to open file: {}", e.to_string())),
+        Err(e) => return Err(format!("Error: Failed to open file: {}", e)),
     };
 
     let first_line: String = FileUtils::read_first_line(&csv.file_path)
-        .map_err(|e| format!("Error: Failed to read first line: {}", e.to_string()))?;
+        .map_err(|e| format!("Error: Failed to read first line: {}", e))?;
 
     let separator: char = FileUtils::find_separator(&first_line)?;
 
@@ -47,8 +46,11 @@ pub async fn insert_csv_data(
             .collect::<Vec<String>>(),
     );
 
+    let separator_u8 = u8::try_from(separator)
+        .map_err(|_| "Error: Separator character must be ASCII".to_string())?;
+
     let mut reader: Reader<File> = ReaderBuilder::new()
-        .delimiter(u8::try_from(separator).unwrap())
+        .delimiter(separator_u8)
         .has_headers(true)
         .from_reader(file);
 
@@ -67,7 +69,7 @@ pub async fn insert_csv_data(
                     total_lines += u64::from(lines);
                 }
                 Err(e) => {
-                    return Err(format!("Error: Failed to insert data: {}", e.to_string()));
+                    return Err(format!("Error: Failed to insert data: {}", e));
                 }
             }
         }
@@ -85,7 +87,7 @@ pub async fn insert_csv_data(
                     total_lines += u64::from(lines);
                 }
                 Err(e) => {
-                    return Err(format!("Error: Failed to insert data: {}", e.to_string()));
+                    return Err(format!("Error: Failed to insert data: {}", e));
                 }
             }
         }

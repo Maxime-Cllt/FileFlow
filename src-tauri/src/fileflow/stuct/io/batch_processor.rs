@@ -1,4 +1,5 @@
 use crate::fileflow::stuct::database::database_connection::DatabaseConnection;
+use crate::fileflow::stuct::database::sql_builder::SqlBuilder;
 use crate::fileflow::stuct::io::row_extractor::RowExtractor;
 use crate::fileflow::stuct::io::table_exporter::TableExporter;
 
@@ -13,9 +14,11 @@ impl<'a> BatchProcessor<'a> {
     /// Creates a new BatchProcessor for the given table
     #[inline]
     pub(crate) fn new(connection: &'a DatabaseConnection, table_name: &str) -> Self {
+        let engine = &connection.database_config.db_driver;
+        let quote = SqlBuilder::get_quote_char(engine);
         Self {
             connection,
-            base_query: format!("SELECT * FROM {table_name}"),
+            base_query: format!("SELECT * FROM {quote}{table_name}{quote}"),
             offset: 0,
         }
     }

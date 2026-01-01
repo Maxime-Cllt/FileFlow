@@ -20,7 +20,7 @@ impl TableExporter {
         Self::validate_inputs(table_name, download_config)?;
 
         // Setup CSV writer
-        let file_path = Self::build_file_path(download_config, table_name);
+        let file_path = Self::build_file_path(download_config, table_name)?;
         let mut csv_writer = Self::create_csv_writer(download_config, &file_path)?;
 
         // Export data in batches
@@ -53,8 +53,25 @@ impl TableExporter {
         Ok(())
     }
 
-    fn build_file_path(download_config: &DownloadConfig, table_name: &str) -> String {
-        format!("{}/{}_export.csv", download_config.location, table_name)
+    fn sanitize_table_name_for_path(table_name: &str) -> Result<String, Box<dyn std::error::Error>> {
+        if table_name.contains("..") || table_name.contains('/') || table_name.contains('\\') || table_name.contains('\0') {
+            return Err("Invalid table name: contains forbidden path characters".into());
+        }
+
+        let sanitized: String = table_name.chars()
+            .filter(|c| c.is_alphanumeric() || *c == '_' || *c == '-')
+            .collect();
+
+        if sanitized.is_empty() {
+            return Err("Invalid table name after sanitization".into());
+        }
+
+        Ok(sanitized)
+    }
+
+    fn build_file_path(download_config: &DownloadConfig, table_name: &str) -> Result<String, Box<dyn std::error::Error>> {
+        let safe_table_name = Self::sanitize_table_name_for_path(table_name)?;
+        Ok(format!("{}/{}_export.csv", download_config.location, safe_table_name))
     }
 
     /// Creates a CSV writer with the specified configuration

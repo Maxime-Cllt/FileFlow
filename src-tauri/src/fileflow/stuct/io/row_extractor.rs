@@ -1,6 +1,10 @@
 use crate::fileflow::enums::query_rows::QueryRows;
 use sqlx::{Column, Row};
 
+type ColumnData = Vec<String>;
+type RowData = Vec<Vec<String>>;
+type ExtractionResult = Result<(ColumnData, RowData), Box<dyn std::error::Error>>;
+
 /// Extracts data from different database row types
 pub(crate) struct RowExtractor;
 
@@ -8,7 +12,7 @@ impl RowExtractor {
     /// Extracts column names and row data from the given QueryRows enum
     pub(crate) fn extract_data(
         query_result: QueryRows,
-    ) -> Result<(Vec<String>, Vec<Vec<String>>), Box<dyn std::error::Error>> {
+    ) -> ExtractionResult {
         match query_result {
             QueryRows::MySQL(rows) => Self::extract_mysql_data(rows),
             QueryRows::Postgres(rows) => Self::extract_postgres_data(rows),
@@ -19,7 +23,7 @@ impl RowExtractor {
     /// Extracts column names and row data from MySQL rows
     fn extract_mysql_data(
         rows: Vec<sqlx::mysql::MySqlRow>,
-    ) -> Result<(Vec<String>, Vec<Vec<String>>), Box<dyn std::error::Error>> {
+    ) -> ExtractionResult {
         if rows.is_empty() {
             return Ok((Vec::new(), Vec::new()));
         }
@@ -33,7 +37,7 @@ impl RowExtractor {
     /// Extracts column names and row data from PostgreSQL rows
     fn extract_postgres_data(
         rows: Vec<sqlx::postgres::PgRow>,
-    ) -> Result<(Vec<String>, Vec<Vec<String>>), Box<dyn std::error::Error>> {
+    ) -> ExtractionResult {
         if rows.is_empty() {
             return Ok((Vec::new(), Vec::new()));
         }
@@ -47,7 +51,7 @@ impl RowExtractor {
     /// Extracts column names and row data from SQLite rows
     fn extract_sqlite_data(
         rows: Vec<sqlx::sqlite::SqliteRow>,
-    ) -> Result<(Vec<String>, Vec<Vec<String>>), Box<dyn std::error::Error>> {
+    ) -> ExtractionResult {
         if rows.is_empty() {
             return Ok((Vec::new(), Vec::new()));
         }
@@ -69,7 +73,7 @@ impl RowExtractor {
     /// Extracts row data from MySQL rows
     fn extract_mysql_row_data(
         rows: Vec<sqlx::mysql::MySqlRow>,
-    ) -> Result<Vec<Vec<String>>, Box<dyn std::error::Error>> {
+    ) -> Result<RowData, Box<dyn std::error::Error>> {
         let mut result = Vec::with_capacity(rows.len());
 
         for row in rows {
@@ -89,7 +93,7 @@ impl RowExtractor {
     /// Extracts row data from PostgreSQL rows
     fn extract_postgres_row_data(
         rows: Vec<sqlx::postgres::PgRow>,
-    ) -> Result<Vec<Vec<String>>, Box<dyn std::error::Error>> {
+    ) -> Result<RowData, Box<dyn std::error::Error>> {
         let mut result = Vec::with_capacity(rows.len());
 
         for row in rows {
@@ -109,7 +113,7 @@ impl RowExtractor {
     /// Extracts row data from SQLite rows
     fn extract_sqlite_row_data(
         rows: Vec<sqlx::sqlite::SqliteRow>,
-    ) -> Result<Vec<Vec<String>>, Box<dyn std::error::Error>> {
+    ) -> Result<RowData, Box<dyn std::error::Error>> {
         let mut result = Vec::with_capacity(rows.len());
 
         for row in rows {

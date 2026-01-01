@@ -54,7 +54,7 @@ pub async fn disconnect_from_database(
         None => return Err("No active database connection to disconnect.".into()),
     };
 
-    conn.disconnect();
+    conn.disconnect().await;
 
     Ok(true)
 }
@@ -63,11 +63,10 @@ pub async fn disconnect_from_database(
 pub async fn is_connected(state: State<'_, Arc<DatabaseState>>) -> Result<String, bool> {
     let conn_guard = state.0.lock().await;
 
-    if conn_guard.is_none() {
-        return Ok(String::new());
-    }
-
-    let connection: &DatabaseConnection = conn_guard.as_ref().unwrap();
+    let connection: &DatabaseConnection = match conn_guard.as_ref() {
+        Some(conn) => conn,
+        None => return Ok(String::new()),
+    };
     let db_config: &DatabaseConfig = connection.get_db_config();
 
     // Return the database configuration as JSON string
@@ -249,7 +248,7 @@ pub async fn optimized_insert(
         db_driver,
     )
     .await
-    .expect("Failed to drop existing tables");
+    .map_err(|e| format!("Failed to drop existing tables: {}", e))?;
 
     // Create the temporary table
     let create_temp_table_query: String =
@@ -261,7 +260,7 @@ pub async fn optimized_insert(
         "Failed to create temporary table",
     )
     .await
-    .expect("Failed to create temporary table query");
+    .map_err(|e| format!("Failed to create temporary table: {}", e))?;
 
     // Initialize variables
     const MAX_BATCH_SIZE: usize = 5_000;
@@ -296,13 +295,13 @@ pub async fn optimized_insert(
             let column_name = &final_columns_name[i];
             let max_length: &mut usize = columns_size_map
                 .get_mut(column_name.as_str())
-                .ok_or("Column name mismatch")
-                .expect("Column name mismatch");
+                .ok_or_else(|| format!("Column name mismatch: {}", column_name))?;
 
             *max_length = (*max_length).max(sanitized_value.len() + 1);
 
             // Write directly to buffer
-            write!(row_buffer, "'{sanitized_value}'").unwrap();
+            write!(row_buffer, "'{sanitized_value}'")
+                .map_err(|e| format!("Failed to write to buffer: {}", e))?;
         }
 
         row_buffer.push(')');

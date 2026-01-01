@@ -42,8 +42,7 @@ async fn test_sqlite_connection() {
     assert!(conn.is_ok());
 
     let conn: DatabaseConnection = conn.unwrap();
-    conn.disconnect();
-    drop(conn);
+    conn.disconnect().await;
     remove_test_db("sqlite_connection").expect("Failed to remove test table");
 }
 
@@ -82,8 +81,7 @@ async fn test_query_many_with_result() {
         assert_eq!(rows[0].len(), 2);
     }
 
-    conn.disconnect();
-    drop(conn);
+    conn.disconnect().await;
     remove_test_db("test_query_many_with_result").expect("Failed to remove test query");
 }
 

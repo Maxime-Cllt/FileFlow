@@ -1,3 +1,4 @@
+use crate::fileflow::crypto::EncryptionManager;
 use crate::fileflow::enums::database_engine::DatabaseEngine;
 use serde::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
@@ -18,7 +19,23 @@ pub struct SaveConfig {
 }
 
 impl SaveConfig {
-    /// This function is used to get the size of a file.
+    /// Encrypts the password field
+    fn encrypt_password(&mut self) -> Result<(), String> {
+        if !self.password.is_empty() && !EncryptionManager::is_encrypted(&self.password) {
+            self.password = EncryptionManager::encrypt_password(&self.password)?;
+        }
+        Ok(())
+    }
+
+    /// Decrypts the password field
+    fn decrypt_password(&mut self) -> Result<(), String> {
+        if !self.password.is_empty() && EncryptionManager::is_encrypted(&self.password) {
+            self.password = EncryptionManager::decrypt_password(&self.password)?;
+        }
+        Ok(())
+    }
+
+    /// Gets all saved configurations and decrypts passwords
     pub fn get_all_configs(config_file: &str) -> Vec<SaveConfig> {
         let path: PathBuf = PathBuf::from(config_file);
         let file: File = match File::open(path) {
@@ -30,12 +47,26 @@ impl SaveConfig {
             return Vec::new();
         }
 
-        let configs: Vec<SaveConfig> = serde_json::from_reader(file).unwrap_or(Vec::new());
+        let mut configs: Vec<SaveConfig> = serde_json::from_reader(file).unwrap_or(Vec::new());
+
+        // Decrypt passwords
+        for config in configs.iter_mut() {
+            let _ = config.decrypt_password(); // Ignore errors for backward compatibility
+        }
+
         configs
     }
 
-    /// This function is used to save a vector of SaveConfig to a json file.
+    /// Saves configurations to a JSON file with encrypted passwords
     pub fn save_config(configs: &[SaveConfig], config_file: &str) -> io::Result<()> {
+        // Clone configs and encrypt passwords
+        let mut encrypted_configs = configs.to_vec();
+        for config in encrypted_configs.iter_mut() {
+            if let Err(e) = config.encrypt_password() {
+                eprintln!("Warning: Failed to encrypt password for {}: {}", config.config_name, e);
+            }
+        }
+
         let file: File = OpenOptions::new()
             .write(true)
             .create(true)
@@ -43,7 +74,7 @@ impl SaveConfig {
             .open(config_file)
             .map_err(|e| format!("Failed to open file for writing: {e}"))
             .expect("Failed to open file for writing");
-        serde_json::to_writer_pretty(file, &configs)
+        serde_json::to_writer_pretty(file, &encrypted_configs)
             .map_err(|e| format!("Failed to write to file: {e}"))
             .expect("Failed to write to file");
         Ok(())

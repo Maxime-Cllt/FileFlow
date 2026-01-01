@@ -109,16 +109,16 @@ impl DatabaseConnection {
     }
 
     /// Closes the database connection.
-    pub fn disconnect(&self) {
-        match &self.engine {
+    pub async fn disconnect(self) {
+        match self.engine {
             ConnectionPool::Postgres(pool) => {
-                drop(pool.close());
+                let _ = pool.close().await;
             }
             ConnectionPool::MySQL(pool) => {
-                drop(pool.close());
+                let _ = pool.close().await;
             }
             ConnectionPool::SQLite(pool) => {
-                drop(pool.close());
+                let _ = pool.close().await;
             }
         }
     }

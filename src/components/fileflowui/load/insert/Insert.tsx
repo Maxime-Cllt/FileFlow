@@ -75,10 +75,10 @@ const Insert: React.FC = () => {
             )}
 
             {/* Insertion Configuration Section */}
-            <div className="container mx-auto pt-8 px-4 md:px-8 space-y-6">
+            <div className="max-w-screen-2xl mx-auto space-y-6">
 
                 {/* Insertion Configuration Section */}
-                <Card>
+                <Card className="w-full">
                     <CardHeader>
                         {/* Section Header */}
                         <div className="flex items-center justify-between border-b pb-4">

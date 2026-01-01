@@ -104,8 +104,8 @@ const Download: React.FC = () => {
 
 
                 {/* Download Section */}
-                <div className="container mx-auto pt-8 px-4 md:px-8 space-y-6">
-                    <Card>
+                <div className="max-w-screen-2xl mx-auto space-y-6">
+                    <Card className="w-full">
                         <CardHeader>
                             <div className="flex items-center justify-between border-b pb-4">
                                 <CardTitle

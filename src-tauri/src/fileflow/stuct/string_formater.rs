@@ -191,11 +191,11 @@ mod tests {
     #[tokio::test]
     async fn test_get_formated_column_names() {
         assert_eq!(
-            StringFormatter::get_formated_column_names(&vec!["header 1".into(), " header2".into()]),
+            StringFormatter::get_formated_column_names(&["header 1".into(), " header2".into()]),
             vec!["header_1", "header2"]
         );
         assert_eq!(
-            StringFormatter::get_formated_column_names(&vec![
+            StringFormatter::get_formated_column_names(&[
                 "header    1".into(),
                 String::new(),
                 "header2".into(),
@@ -204,7 +204,7 @@ mod tests {
             vec!["header____1", "column_2", "header2", "column_4"]
         );
         assert_eq!(
-            StringFormatter::get_formated_column_names(&vec![
+            StringFormatter::get_formated_column_names(&[
                 "header'\" 1".into(),
                 "header 2''\\".into()
             ]),

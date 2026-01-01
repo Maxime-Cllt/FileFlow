@@ -82,10 +82,10 @@ const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) =
         }, []);
 
         return (
-            <div className="container mx-auto pt-8 px-4 md:px-8 mt-6 space-y-6">
+            <div className="max-w-7xl mx-auto pt-8 mt-6 space-y-6">
 
                 {/* Connection Mode Section */}
-                <Card>
+                <Card className="w-full">
                     <CardHeader>
                         <div className="flex items-center space-x-2 mb-6">
                             <CardTitle
@@ -107,7 +107,7 @@ const ConnectionForm: React.FC<DatabaseFormProps> = (props: DatabaseFormProps) =
                                 </TabsList>
                             </div>
                             <TabsContent value="predefined">
-                                <div className="p-6 mr-10 ml-10">
+                                <div className="p-6">
                                     <SelectDatabaseConfig
                                         updateConfigName={setConfigName}
                                         config_name={config_name}

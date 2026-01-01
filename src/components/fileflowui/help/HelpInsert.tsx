@@ -5,7 +5,7 @@ const HelpInsert: React.FC = () => {
     return (
         <div className="h-full w-full">
 
-            <div className="max-w-6xl mx-auto space-y-6">
+            <div className="container mx-auto pt-8 px-4 md:px-8 mt-6 space-y-6">
 
                 {/* Page Header with theme color */}
                 <h2
@@ -17,7 +17,7 @@ const HelpInsert: React.FC = () => {
 
                 <div className="space-y-6">
                     {/* Connection Mode Section */}
-                    <Card className="w-full">
+                    <Card>
                         <CardHeader>
                             <CardTitle className="text-2xl font-semibold">Connection Mode</CardTitle>
                         </CardHeader>
@@ -32,7 +32,7 @@ const HelpInsert: React.FC = () => {
                     </Card>
 
                     {/* Loader Section */}
-                    <Card className="w-full">
+                    <Card>
                         <CardHeader>
                             <CardTitle className="text-2xl font-semibold">Loader Indicator</CardTitle>
                         </CardHeader>
@@ -47,7 +47,7 @@ const HelpInsert: React.FC = () => {
                     </Card>
 
                     {/* Insertion Configuration Section */}
-                    <Card className="w-full">
+                    <Card>
                         <CardHeader>
                             <div className="flex items-center justify-between border-b pb-4">
                                 <CardTitle
